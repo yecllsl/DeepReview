@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (keep structure, ignore content)
+deep-review-mcp/data/wrong_questions/*.json
+deep-review-mcp/data/analysis_reports/*.json
+deep-review-mcp/data/review_plans/*.json
