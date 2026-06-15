@@ -1,0 +1,74 @@
+# tests/test_models.py
+import pytest
+from datetime import datetime, timezone
+from deep_review_mcp.models import (
+    StructuredQuestion, Classification, Analysis, Improvement,
+    WrongQuestion, ReviewPlan, ReviewScheduleItem,
+)
+
+
+def test_structured_question_creation():
+    sq = StructuredQuestion(
+        subject="数学", grade_level="初二",
+        knowledge_points=["一元二次方程", "因式分解"],
+        difficulty="中等", question_type="计算题",
+    )
+    assert sq.subject == "数学"
+    assert len(sq.knowledge_points) == 2
+
+
+def test_classification_error_type_validation():
+    with pytest.raises(ValueError):
+        Classification(error_type="无效类型", error_category="测试")
+
+
+def test_classification_valid_error_types():
+    for et in ["知识漏洞", "粗心失误", "方法错误", "审题失误"]:
+        c = Classification(error_type=et, error_category="测试分类")
+        assert c.error_type == et
+
+
+def test_wrong_question_creation():
+    wq = WrongQuestion(
+        question_id="wq_20260615_001",
+        created_at=datetime.now(timezone.utc),
+        raw_text="若x²-5x+6=0，则x=",
+    )
+    assert wq.question_id == "wq_20260615_001"
+    assert wq.structured is None
+
+
+def test_wrong_question_full():
+    wq = WrongQuestion(
+        question_id="wq_20260615_002",
+        created_at=datetime.now(timezone.utc),
+        raw_text="测试题目",
+        structured=StructuredQuestion(
+            subject="数学", grade_level="初二",
+            knowledge_points=["方程"], difficulty="基础", question_type="填空题",
+        ),
+        classification=Classification(error_type="知识漏洞", error_category="方程概念不清"),
+    )
+    assert wq.structured.subject == "数学"
+    assert wq.classification.error_type == "知识漏洞"
+
+
+def test_review_schedule_item():
+    item = ReviewScheduleItem(
+        date="2026-06-17", question_ids=["wq_001", "wq_002"],
+        subject="数学", estimated_minutes=30,
+    )
+    assert item.estimated_minutes == 30
+
+
+def test_review_plan():
+    plan = ReviewPlan(
+        plan_id="rp_20260615_001",
+        created_at=datetime.now(timezone.utc),
+        priority_topics=["一元二次方程", "因式分解"],
+        schedule=[ReviewScheduleItem(
+            date="2026-06-17", question_ids=["wq_001"],
+            subject="数学", estimated_minutes=20,
+        )],
+    )
+    assert len(plan.schedule) == 1
