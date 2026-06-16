@@ -83,8 +83,8 @@ Rules约束层
 
 - 名称：`deep-review-mcp`
 - 传输协议：stdio（Trae本地调用标准方式）
-- 开发语言：TypeScript + Node.js
-- 包管理：npm
+- 开发语言：Python（PaddleOCR原生支持，FastMCP框架成熟，AI/ML生态完善）
+- 包管理：uv（现代高速Python包管理器）
 
 ### 4.2 Tools接口定义
 
@@ -114,9 +114,9 @@ Rules约束层
 
 #### recommend_review
 
-- 输入：`{student_id: string, time_range?: string}`
+- 输入：`{time_range?: string, subject?: string}`
 - 输出：`{review_plan: object, priority_topics: string[], schedule: object[]}`
-- 说明：基于遗忘曲线和薄弱点生成复习计划
+- 说明：基于本地全部错题数据和遗忘曲线生成复习计划，无需传入student_id（本地单用户场景）
 
 #### save_wrong_question
 

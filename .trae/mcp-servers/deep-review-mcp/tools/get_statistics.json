@@ -1,0 +1,14 @@
+{
+  "name": "get_statistics",
+  "description": "统计分析错题分布和趋势",
+  "arguments": {
+    "properties": {
+      "group_by": {
+        "description": "分组维度，支持subject/error_type/knowledge_point/date",
+        "type": "string"
+      }
+    },
+    "required": ["group_by"],
+    "type": "object"
+  }
+}

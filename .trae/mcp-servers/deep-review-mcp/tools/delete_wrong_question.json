@@ -1,0 +1,14 @@
+{
+  "name": "delete_wrong_question",
+  "description": "删除错题记录",
+  "arguments": {
+    "properties": {
+      "question_id": {
+        "description": "要删除的错题ID",
+        "type": "string"
+      }
+    },
+    "required": ["question_id"],
+    "type": "object"
+  }
+}

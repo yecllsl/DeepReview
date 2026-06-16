@@ -1,0 +1,14 @@
+{
+  "name": "update_wrong_question",
+  "description": "更新错题记录",
+  "arguments": {
+    "properties": {
+      "question_data": {
+        "description": "完整的错题数据字典，需包含question_id",
+        "type": "object"
+      }
+    },
+    "required": ["question_data"],
+    "type": "object"
+  }
+}

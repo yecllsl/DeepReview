@@ -1,0 +1,20 @@
+{
+  "name": "DeepReview",
+  "description": "K12错题收集与智能分析Agent",
+  "version": "1.0.0",
+  "mcp_servers": ["deep-review-mcp"],
+  "skills": [
+    "wrong-question-capture",
+    "wrong-question-analyze", 
+    "review-plan-generate",
+    "wrong-question-stats"
+  ],
+  "rules": [
+    "classification-rules",
+    "analysis-rules",
+    "data-safety-rules",
+    "interaction-rules"
+  ],
+  "default_skill": null,
+  "auto_select_skill": true
+}

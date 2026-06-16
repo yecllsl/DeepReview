@@ -1,0 +1,22 @@
+{
+  "name": "analyze_error",
+  "description": "深度分析错题错误原因",
+  "arguments": {
+    "properties": {
+      "question_id": {
+        "description": "错题ID",
+        "type": "string"
+      },
+      "user_answer": {
+        "description": "用户答案（可选，为空时使用错题记录中的答案）",
+        "type": "string"
+      },
+      "correct_answer": {
+        "description": "正确答案（可选，为空时使用错题记录中的答案）",
+        "type": "string"
+      }
+    },
+    "required": ["question_id"],
+    "type": "object"
+  }
+}
