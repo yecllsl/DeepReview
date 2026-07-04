@@ -18,7 +18,7 @@ description: Use when 用户想生成复习计划、查看复习推荐、了解�
 ## Workflow
 
 ### 1. 获取到期错题
-调用 `deep-review-mcp/recommend_review`，获取已到复习日期的错题列表。
+调用 `recommend_review`，获取已到复习日期的错题列表。
 
 ### 2. 展示概览
 展示到期错题数量、薄弱知识点排名（Top 10）。

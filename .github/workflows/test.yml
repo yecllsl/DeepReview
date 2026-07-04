@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   test:
@@ -40,7 +40,7 @@ jobs:
     - name: Run tests
       run: |
         cd deep-review-mcp
-        uv run pytest tests/ -v
+        uv run pytest tests/ -v --cov=src --cov-report=xml
 
     - name: Upload coverage
       if: matrix.python-version == '3.12'

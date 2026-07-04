@@ -242,4 +242,4 @@ question_id: wq_20260615_001
 
 - 📖 查看 [完整部署指南](DEPLOY.md)
 - 📚 查看 [项目 README](README.md)
-- 🐛 报告问题: [GitHub Issues](https://github.com/your-username/deep-review/issues)
+- 🐛 报告问题: [GitHub Issues](https://github.com/yecllsl/deep-review/issues)

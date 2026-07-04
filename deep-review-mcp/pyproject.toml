@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "K12错题收集与智能分析MCP Server"
 requires-python = ">=3.12"
 dependencies = [
-    "fastmcp>=0.1.0",
+    "fastmcp>=3.0.0",
     "pydantic>=2.0.0",
     "paddleocr>=2.7.0",
     "paddlepaddle>=2.5.0",
@@ -14,6 +14,7 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.0.0",
 ]
 
 [project.scripts]

@@ -24,7 +24,7 @@ K12错题诊断专家，负责对已录入的错题进行深度原因分析，�
 询问用户答案和正确答案（如果错题记录中未包含）。
 
 ### 3. 原因分析
-调用 `deep-review-mcp/analyze_error`，用 `analyze_prompt` 调用AI进行深度分析：
+调用 `analyze_error`，用 `analyze_prompt` 调用AI进行深度分析：
 - 根本原因（具体到知识点层面）
 - 原因类别（知识漏洞/粗心失误/方法错误/审题失误）
 - 详细诊断（还原错误思维过程）
@@ -36,7 +36,7 @@ K12错题诊断专家，负责对已录入的错题进行深度原因分析，�
 - 详细诊断
 
 ### 5. 生成改进
-调用 `deep-review-mcp/generate_improvement`，用 `improvement_prompt` 调用AI生成改进方案：
+调用 `generate_improvement`，用 `improvement_prompt` 调用AI生成改进方案：
 - 具体学习动作（做什么+怎么做+建议时长+验证方式）
 - 同类题推荐方向（至少3个）
 - 学习资源推荐
@@ -45,7 +45,7 @@ K12错题诊断专家，负责对已录入的错题进行深度原因分析，�
 将改进方案展示给用户，请用户确认或修改。
 
 ### 7. 更新记录
-调用 `deep-review-mcp/update_wrong_question`，将分析结果和改进方案写入错题记录，计算 next_review_date（1天后）。
+调用 `update_wrong_question`，将分析结果和改进方案写入错题记录，计算 next_review_date（1天后）。
 
 ## Quick Reference
 

@@ -45,7 +45,7 @@ Rules 约束层 (分类/分析/安全/交互规则)
 #### 1. 克隆项目
 
 ```bash
-git clone https://github.com/your-username/deep-review.git
+git clone https://github.com/yecllsl/deep-review.git
 cd deep-review
 ```
 

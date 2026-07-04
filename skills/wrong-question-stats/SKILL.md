@@ -25,7 +25,7 @@ description: Use when 用户想查看错题统计、查看错题分布、了解�
 - `date`：按日期分组
 
 ### 2. 查询统计
-调用 `deep-review-mcp/get_statistics`，传入 `group_by` 参数。
+调用 `get_statistics`，传入 `group_by` 参数。
 
 ### 3. 格式化输出
 将统计结果以Markdown表格形式展示：
@@ -34,7 +34,7 @@ description: Use when 用户想查看错题统计、查看错题分布、了解�
 - 占比（可选）
 
 ### 4. 导出（可选）
-如果用户要求导出，调用 `deep-review-mcp/export_data`，支持：
+如果用户要求导出，调用 `export_data`，支持：
 - JSON格式
 - Markdown格式
 

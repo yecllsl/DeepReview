@@ -21,7 +21,7 @@ K12错题采集助手，负责将纸质/图片错题转化为结构化数据并�
 要求用户提供错题图片路径，或允许直接输入题目文本。
 
 ### 2. OCR识别
-调用 `deep-review-mcp/ocr_recognize` Tool。
+调用 `ocr_recognize` Tool。
 - 失败时提示用户手动输入题目文本
 
 ### 3. AI结构化解析
@@ -35,7 +35,7 @@ K12错题采集助手，负责将纸质/图片错题转化为结构化数据并�
 将解析结果以结构化格式展示给用户，请用户确认或修改。
 
 ### 5. 智能分类
-调用 `deep-review-mcp/classify_question` Tool，用 `classify_prompt` 调用AI分类，确定：
+调用 `classify_question` Tool，用 `classify_prompt` 调用AI分类，确定：
 - 错误类型（知识漏洞/粗心失误/方法错误/审题失误）
 - 错误细分类别
 - 相关知识点
@@ -44,7 +44,7 @@ K12错题采集助手，负责将纸质/图片错题转化为结构化数据并�
 将分类结果展示给用户，请用户确认或修改。
 
 ### 7. 保存记录
-调用 `deep-review-mcp/save_wrong_question`，生成 question_id（格式：wq_YYYYMMDD_NNN）。
+调用 `save_wrong_question`，生成 question_id（格式：wq_YYYYMMDD_NNN）。
 
 ## Quick Reference
 

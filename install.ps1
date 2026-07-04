@@ -67,12 +67,12 @@ $configContent = @"
 }
 "@
 
-$mcpConfigDir = "$projectRoot\.trae\mcp-servers\deep-review-mcp
+$mcpConfigDir = "$projectRoot\.trae\mcp-servers\deep-review-mcp"
 if (!(Test-Path $mcpConfigDir)) {
     New-Item -ItemType Directory -Path $mcpConfigDir -Force | Out-Null
     New-Item -ItemType Directory -Path "$mcpConfigDir\tools" -Force | Out-Null
 }
-Set-Content -Path "$mcpConfigDir\SERVER_METADATA.json -Value $configContent -Encoding UTF8
+Set-Content -Path "$mcpConfigDir\SERVER_METADATA.json" -Value $configContent -Encoding UTF8
 Write-Host "  ✓ MCP Server 配置已生成" -ForegroundColor Green
 
 # 同步 Skills 和 Rules

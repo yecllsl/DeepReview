@@ -6,7 +6,7 @@
 
 ```powershell
 # 1. 克隆项目
-git clone https://github.com/your-username/deep-review.git
+git clone https://github.com/yecllsl/deep-review.git
 cd deep-review
 
 # 2. 运行安装脚本
@@ -21,7 +21,7 @@ cd deep-review
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-username/deep-review.git
+git clone https://github.com/yecllsl/deep-review.git
 cd deep-review
 
 # 2. 添加执行权限并运行安装脚本
@@ -255,5 +255,5 @@ rm -rf 您的项目/.trae/rules/*
 
 ## 技术支持
 
-- 提交 Issue: https://github.com/your-username/deep-review/issues
-- 查看文档: https://github.com/your-username/deep-review#readme
+- 提交 Issue: https://github.com/yecllsl/deep-review/issues
+- 查看文档: https://github.com/yecllsl/deep-review#readme
