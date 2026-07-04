@@ -51,9 +51,9 @@ K12错题诊断专家，负责对已录入的错题进行深度原因分析，�
 
 | 步骤 | Tool | 关键输出 |
 |------|------|----------|
-| 原因分析 | `deep-review-mcp/analyze_error` | root_cause, diagnosis_detail |
-| 生成改进 | `deep-review-mcp/generate_improvement` | plan, similar_topics |
-| 更新记录 | `deep-review-mcp/update_wrong_question` | 写入分析结果 |
+| 原因分析 | `analyze_error` | root_cause, diagnosis_detail |
+| 生成改进 | `generate_improvement` | plan, similar_topics |
+| 更新记录 | `update_wrong_question` | 写入分析结果 |
 
 ## Common Mistakes
 

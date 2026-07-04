@@ -50,10 +50,10 @@ K12错题采集助手，负责将纸质/图片错题转化为结构化数据并�
 
 | 步骤 | Tool | 降级方案 |
 |------|------|----------|
-| OCR识别 | `deep-review-mcp/ocr_recognize` | 手动输入题目文本 |
+| OCR识别 | `ocr_recognize` | 手动输入题目文本 |
 | 结构化解析 | AI模型 + `parse_prompt` | 标记待确认 |
-| 智能分类 | `deep-review-mcp/classify_question` | 标记待确认 |
-| 保存记录 | `deep-review-mcp/save_wrong_question` | - |
+| 智能分类 | `classify_question` | 标记待确认 |
+| 保存记录 | `save_wrong_question` | - |
 
 ## Common Mistakes
 

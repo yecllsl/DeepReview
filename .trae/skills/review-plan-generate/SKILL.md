@@ -40,7 +40,7 @@ description: Use when 用户想生成复习计划、查看复习推荐、了解�
 
 | 步骤 | Tool | 关键输出 |
 |------|------|----------|
-| 获取到期错题 | `deep-review-mcp/recommend_review` | review_plan, priority_topics, schedule |
+| 获取到期错题 | `recommend_review` | review_plan, priority_topics, schedule |
 
 ## 遗忘曲线间隔
 
