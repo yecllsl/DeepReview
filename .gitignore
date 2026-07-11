@@ -44,9 +44,6 @@ deep-review-mcp/data/review_plans/*.json
 deep-review-mcp/data/exports/*.json
 deep-review-mcp/data/exports/*.md
 
-# Trae
-.trae/
-
 # Logs
 *.log
 
