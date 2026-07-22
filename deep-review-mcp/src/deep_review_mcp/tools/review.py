@@ -8,12 +8,11 @@
 from datetime import datetime, timezone, timedelta
 from collections import Counter
 from deep_review_mcp.tools.crud import get_storage
+from deep_review_mcp.storage import REVIEW_INTERVALS, _calculate_next_review_interval
 from deep_review_mcp.models import WrongQuestion
 
-# 艾宾浩斯遗忘曲线复习间隔（天）：第1次复习后1天，第2次3天，第3次7天，第4次14天，第5次30天
-REVIEW_INTERVALS = [1, 3, 7, 14, 30]
-
-
+# 艾宾浩斯遗忘曲线复习间隔已移至 storage.py 避免循环导入
+# 此处保留 _calculate_next_review_date 作为兼容别名
 def _calculate_next_review_date(review_count: int) -> int:
     """根据复习次数返回下次复习间隔天数（艾宾浩斯遗忘曲线）
 
@@ -23,7 +22,7 @@ def _calculate_next_review_date(review_count: int) -> int:
     Returns:
         下次复习的间隔天数
     """
-    return REVIEW_INTERVALS[review_count] if review_count < len(REVIEW_INTERVALS) else 30
+    return _calculate_next_review_interval(review_count)
 
 
 def _get_overdue_questions(storage) -> list[WrongQuestion]:
