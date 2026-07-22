@@ -162,6 +162,38 @@ def test_update_question_not_found(temp_storage):
     assert result is None
 
 
+def test_update_question_with_null_structured(temp_storage):
+    """编辑 structured=null 的错题时应自动填充默认值并保存成功"""
+    # 创建一个 structured=null 的错题
+    from deep_review_mcp.models import WrongQuestion as WQ
+    wq = WQ(
+        question_id="wq_null_test",
+        created_at=datetime.now(timezone.utc),
+        raw_text="无分类测试题",
+        structured=None,
+        classification=None,
+    )
+    temp_storage.save_wrong_question(wq)
+
+    # 编辑学科和难度（structured 为 null 的情况）
+    result = services.update_question("wq_null_test", {
+        "subject": "物理",
+        "difficulty": "困难",
+        "error_type": "方法错误",
+    })
+    assert result is not None
+    assert result.structured is not None
+    assert result.structured.subject == "物理"
+    assert result.structured.difficulty == "困难"
+    # 默认值应被填充
+    assert result.structured.grade_level == "高中"
+    assert result.structured.question_type == "其他"
+    # classification 也应有默认值
+    assert result.classification is not None
+    assert result.classification.error_type == "方法错误"
+    assert result.classification.error_category == "待分类"
+
+
 # ──────────────────────────────────────────
 # Filtered questions 测试
 # ──────────────────────────────────────────

@@ -232,8 +232,13 @@ def update_question(question_id: str, data: dict) -> Optional[WrongQuestion]:
     """编辑保存错题
 
     将扁平的表单数据转换为嵌套的 patch 结构，调用 storage.patch_wrong_question。
+    当原始数据的嵌套字段为 null 时，先填入默认值模板确保 Pydantic 必填字段不缺失。
     """
     storage = _get_storage()
+    existing = storage.load_wrong_question(question_id)
+    if existing is None:
+        return None
+
     patch: dict = {}
 
     # 顶层字段
@@ -242,7 +247,16 @@ def update_question(question_id: str, data: dict) -> Optional[WrongQuestion]:
             patch[field] = data[field]
 
     # structured 嵌套字段
+    # 如果原始 structured 为 null，先填入默认值模板，避免 Pydantic 校验缺少必填字段
     structured_patch: dict = {}
+    if existing.structured is None:
+        structured_patch = {
+            "subject": "数学",
+            "grade_level": "高中",
+            "knowledge_points": [],
+            "difficulty": "中等",
+            "question_type": "其他",
+        }
     for field in ["subject", "grade_level", "knowledge_points", "difficulty", "question_type"]:
         if field in data and data[field] is not None:
             structured_patch[field] = data[field]
@@ -251,6 +265,11 @@ def update_question(question_id: str, data: dict) -> Optional[WrongQuestion]:
 
     # classification 嵌套字段
     classification_patch: dict = {}
+    if existing.classification is None:
+        classification_patch = {
+            "error_type": "知识漏洞",
+            "error_category": "待分类",
+        }
     for field in ["error_type", "error_category"]:
         if field in data and data[field] is not None:
             classification_patch[field] = data[field]
@@ -259,6 +278,12 @@ def update_question(question_id: str, data: dict) -> Optional[WrongQuestion]:
 
     # analysis 嵌套字段
     analysis_patch: dict = {}
+    if existing.analysis is None:
+        analysis_patch = {
+            "root_cause": "待分析",
+            "cause_category": "待分析",
+            "diagnosis_detail": "",
+        }
     for field in ["root_cause", "cause_category", "diagnosis_detail"]:
         if field in data and data[field] is not None:
             analysis_patch[field] = data[field]
@@ -267,6 +292,11 @@ def update_question(question_id: str, data: dict) -> Optional[WrongQuestion]:
 
     # improvement 嵌套字段
     improvement_patch: dict = {}
+    if existing.improvement is None:
+        improvement_patch = {
+            "plan": "",
+            "similar_topics": [],
+        }
     for field in ["plan", "similar_topics", "study_resources", "next_review_date"]:
         if field in data and data[field] is not None:
             improvement_patch[field] = data[field]
