@@ -1,0 +1,179 @@
+{# partials/stats.html — 统计图表页片段 #}
+<div>
+    {% if stats.total == 0 %}
+    <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <div class="empty-text">还没有错题数据可以统计</div>
+        <div class="empty-hint">录入错题后即可查看统计图表</div>
+    </div>
+    {% else %}
+    <!-- 维度切换器 -->
+    <div class="dimension-switcher" x-data="{ dim: 'subject' }">
+        <button :class="{ active: dim === 'subject' }" @click="dim = 'subject'"
+                hx-get="/api/stats?group_by=subject" hx-target="#dim-chart-data" hx-swap="innerHTML">按学科</button>
+        <button :class="{ active: dim === 'error_type' }" @click="dim = 'error_type'"
+                hx-get="/api/stats?group_by=error_type" hx-target="#dim-chart-data" hx-swap="innerHTML">按错误类型</button>
+        <button :class="{ active: dim === 'knowledge_point' }" @click="dim = 'knowledge_point'"
+                hx-get="/api/stats?group_by=knowledge_point" hx-target="#dim-chart-data" hx-swap="innerHTML">按知识点</button>
+        <button :class="{ active: dim === 'date' }" @click="dim = 'date'"
+                hx-get="/api/stats?group_by=date" hx-target="#dim-chart-data" hx-swap="innerHTML">按日期</button>
+    </div>
+
+    <!-- 图表矩阵 -->
+    <div class="chart-grid">
+        <!-- 主图：维度分布 -->
+        <div class="chart-container">
+            <div class="chart-title">分布统计</div>
+            <div class="chart-body" data-echart="renderMainBar"
+                 data-chart-url="/api/stats/multi-dim"></div>
+        </div>
+
+        <!-- 错误类型雷达 -->
+        <div class="chart-container">
+            <div class="chart-title">错误类型雷达</div>
+            <div class="chart-body" data-echart="renderErrorRadar"
+                 data-chart-url="/api/stats/multi-dim"></div>
+        </div>
+
+        <!-- 难度分布堆叠 -->
+        <div class="chart-container">
+            <div class="chart-title">学科难度分布</div>
+            <div class="chart-body" data-echart="renderDifficultyStack"
+                 data-chart-url="/api/stats/multi-dim"></div>
+        </div>
+
+        <!-- 时间趋势 -->
+        <div class="chart-container">
+            <div class="chart-title">30天错题趋势</div>
+            <div class="chart-body" data-echart="renderTrendArea"
+                 data-chart-url="/api/stats/multi-dim"></div>
+        </div>
+    </div>
+
+    <!-- 知识点热力图 -->
+    <div class="chart-container" style="margin-bottom: 24px;">
+        <div class="chart-title">知识点错误密度热力图</div>
+        <div class="chart-body tall" data-echart="renderKnowledgeHeatmap"
+             data-chart-url="/api/stats/multi-dim"></div>
+    </div>
+
+    <!-- 隐藏的数据容器（维度切换时更新） -->
+    <div id="dim-chart-data" style="display: none;"></div>
+
+    <script>
+        // ─────────── 统计图表渲染函数 ───────────
+
+        // 主图：学科分布柱状图
+        function renderMainBar(container, data) {
+            const chart = echarts.init(container);
+            const subjDist = {};
+            data.knowledge_heatmap.forEach(item => {
+                subjDist[item.subject] = (subjDist[item.subject] || 0) + item.count;
+            });
+            const names = Object.keys(subjDist);
+            const values = Object.values(subjDist);
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: names, axisLabel: { rotate: 30 } },
+                yAxis: { type: 'value', minInterval: 1 },
+                series: [{ type: 'bar', data: values, itemStyle: { color: '#4f46e5' } }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // 错误类型雷达图
+        function renderErrorRadar(container, data) {
+            const chart = echarts.init(container);
+            const radar = data.error_type_radar;
+            chart.setOption({
+                tooltip: {},
+                radar: {
+                    indicator: radar.map(r => ({ name: r.name, max: Math.max(...radar.map(x => x.value)) + 1 || 10 })),
+                    shape: 'polygon'
+                },
+                series: [{
+                    type: 'radar',
+                    data: [{ value: radar.map(r => r.value), name: '错误类型' }],
+                    areaStyle: { opacity: 0.2 }
+                }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // 难度分布堆叠柱状图
+        function renderDifficultyStack(container, data) {
+            const chart = echarts.init(container);
+            const dist = data.difficulty_distribution;
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { bottom: 0, data: ['基础', '中等', '困难'] },
+                grid: { left: '8%', right: '5%', top: '10%', bottom: '20%' },
+                xAxis: { type: 'category', data: dist.map(d => d.subject) },
+                yAxis: { type: 'value', minInterval: 1 },
+                series: [
+                    { name: '基础', type: 'bar', stack: 'total', data: dist.map(d => d.basic) },
+                    { name: '中等', type: 'bar', stack: 'total', data: dist.map(d => d.medium) },
+                    { name: '困难', type: 'bar', stack: 'total', data: dist.map(d => d.hard) }
+                ]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // 时间趋势面积图
+        function renderTrendArea(container, data) {
+            const chart = echarts.init(container);
+            const trend = data.trend_data;
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '5%', right: '5%', top: '10%', bottom: '15%' },
+                xAxis: { type: 'category', data: trend.map(t => t.date), axisLabel: { rotate: 45 } },
+                yAxis: { type: 'value', minInterval: 1 },
+                series: [{
+                    type: 'line',
+                    data: trend.map(t => t.count),
+                    smooth: true,
+                    areaStyle: { opacity: 0.3 },
+                    itemStyle: { color: '#4f46e5' }
+                }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // 知识点热力图
+        function renderKnowledgeHeatmap(container, data) {
+            const chart = echarts.init(container);
+            const heat = data.knowledge_heatmap;
+            if (heat.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-text">暂无知识点数据</div></div>';
+                return;
+            }
+            // 提取学科和知识点
+            const subjects = [...new Set(heat.map(h => h.subject))];
+            const kps = [...new Set(heat.map(h => h.knowledge_point))];
+            const maxCount = Math.max(...heat.map(h => h.count));
+            // 构建热力图数据 [x_index, y_index, value]
+            const heatData = heat.map(h => [
+                subjects.indexOf(h.subject),
+                kps.indexOf(h.knowledge_point),
+                h.count
+            ]);
+            chart.setOption({
+                tooltip: { position: 'top' },
+                grid: { left: '15%', right: '10%', top: '5%', bottom: '20%' },
+                xAxis: { type: 'category', data: subjects, splitArea: { show: true } },
+                yAxis: { type: 'category', data: kps, splitArea: { show: true } },
+                visualMap: {
+                    min: 0, max: maxCount,
+                    calculable: true, orient: 'horizontal', left: 'center', bottom: 0
+                },
+                series: [{
+                    type: 'heatmap', data: heatData,
+                    label: { show: true },
+                    emphasis: { itemStyle: { shadowBlur: 10 } }
+                }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+    </script>
+    {% endif %}
+</div>

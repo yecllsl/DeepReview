@@ -1,0 +1,79 @@
+{# partials/question_list.html — 错题列表片段（含筛选+左右分栏） #}
+<div class="split-layout" x-data="{ selectedId: null }">
+    <!-- 左侧：筛选 + 列表 -->
+    <div>
+        <!-- 筛选栏 -->
+        <div class="filter-bar"
+             hx-get="/partials/questions" hx-target="#content" hx-swap="innerHTML"
+             hx-trigger="change">
+            <select name="subject">
+                <option value="">全部学科</option>
+                {% for s in subjects %}
+                <option value="{{ s }}" {{ 'selected' if s == current_subject else '' }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <select name="error_type">
+                <option value="">全部类型</option>
+                {% for et in error_types %}
+                <option value="{{ et }}" {{ 'selected' if et == current_error_type else '' }}>{{ et }}</option>
+                {% endfor %}
+            </select>
+            <select name="knowledge_point">
+                <option value="">全部知识点</option>
+                {% for kp in knowledge_points %}
+                <option value="{{ kp }}" {{ 'selected' if kp == current_knowledge_point else '' }}>{{ kp }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" name="date_start" value="{{ current_date_start }}" placeholder="开始日期">
+            <input type="date" name="date_end" value="{{ current_date_end }}" placeholder="结束日期">
+            <input type="text" name="search" value="{{ current_search }}" placeholder="搜索题目..." 
+                   hx-trigger="keyup changed delay:500ms" 
+                   hx-get="/partials/questions" hx-target="#content" hx-swap="innerHTML"
+                   hx-include="previous .filter-bar select, previous .filter-bar input[type=date]">
+        </div>
+
+        <!-- 列表标题 -->
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+            共 {{ total }} 道错题
+        </div>
+
+        <!-- 错题卡片列表 -->
+        {% if questions %}
+        <div class="question-list">
+            {% for q in questions %}
+            {% set subj = q.structured.subject if q.structured else '未分类' %}
+            {% set et = q.classification.error_type if q.classification else '未分类' %}
+            <div class="question-card"
+                 hx-get="/partials/questions/{{ q.question_id }}"
+                 hx-target="#detail-panel" hx-swap="innerHTML"
+                 @click="selectedId = '{{ q.question_id }}'"
+                 :class="{ 'active': selectedId === '{{ q.question_id }}' }">
+                <div class="subject-tag subject-{{ subj }}"></div>
+                <div class="card-body">
+                    <div class="card-summary">{{ truncate(q.raw_text, 60) }}</div>
+                    <div class="card-meta">
+                        <span class="tag subject-{{ subj }}">{{ subj }}</span>
+                        <span class="tag tag-error-{{ et }}">{{ et }}</span>
+                        <span>{{ q.created_at[:10] if q.created_at else '' }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-text">没有匹配的错题</div>
+            <div class="empty-hint">尝试调整筛选条件</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 右侧：详情区 -->
+    <div id="detail-panel" class="card">
+        <div class="empty-state">
+            <div class="empty-icon">👈</div>
+            <div class="empty-text">选择一道错题查看详情</div>
+        </div>
+    </div>
+</div>

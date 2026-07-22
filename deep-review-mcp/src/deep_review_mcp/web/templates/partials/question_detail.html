@@ -1,0 +1,139 @@
+{# partials/question_detail.html — 单题详情片段（只读） #}
+<div>
+    <!-- 顶部操作栏 -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 16px; font-weight: 600;">错题详情</h3>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary btn-sm"
+                    hx-get="/partials/questions/{{ wq.question_id }}/edit"
+                    hx-target="#detail-panel" hx-swap="innerHTML">
+                ✏️ 编辑
+            </button>
+            <button class="btn btn-secondary btn-sm"
+                    hx-get="/partials/questions"
+                    hx-target="#content" hx-swap="innerHTML">
+                ← 返回列表
+            </button>
+        </div>
+    </div>
+
+    <!-- 题目ID -->
+    <div class="detail-section">
+        <div class="section-label">题目编号</div>
+        <div class="section-content">{{ wq.question_id }}</div>
+    </div>
+
+    <!-- 创建时间 -->
+    <div class="detail-section">
+        <div class="section-label">录入时间</div>
+        <div class="section-content">{{ wq.created_at.strftime('%Y-%m-%d %H:%M') if wq.created_at else '未知' }}</div>
+    </div>
+
+    <!-- 原题文本 -->
+    <div class="detail-section">
+        <div class="section-label">原题内容</div>
+        <div class="section-content" style="white-space: pre-wrap; background: var(--bg); padding: 12px; border-radius: 6px;">{{ wq.raw_text }}</div>
+    </div>
+
+    {% if wq.image_path %}
+    <!-- 原题图片 -->
+    <div class="detail-section">
+        <div class="section-label">原题图片</div>
+        <div class="section-content">
+            <img src="{{ wq.image_path }}" alt="原题图片" style="max-width: 100%; border-radius: 6px;">
+        </div>
+    </div>
+    {% endif %}
+
+    {% if wq.structured %}
+    <!-- 结构化信息 -->
+    <div class="detail-section">
+        <div class="section-label">学科信息</div>
+        <div class="section-content">
+            <span class="tag subject-{{ wq.structured.subject }}">{{ wq.structured.subject }}</span>
+            <span class="tag">{{ wq.structured.difficulty }}</span>
+            <span class="tag">{{ wq.structured.question_type }}</span>
+            {% for kp in wq.structured.knowledge_points %}
+            <span class="tag">{{ kp }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if wq.classification %}
+    <!-- 错误分类 -->
+    <div class="detail-section">
+        <div class="section-label">错误分类</div>
+        <div class="section-content">
+            <span class="tag tag-error-{{ wq.classification.error_type }}">{{ wq.classification.error_type }}</span>
+            <span style="margin-left: 8px; color: var(--text-muted);">{{ wq.classification.error_category }}</span>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if wq.analysis %}
+    <!-- 根因分析 -->
+    <div class="detail-section">
+        <div class="section-label">根本原因</div>
+        <div class="section-content" style="white-space: pre-wrap;">{{ wq.analysis.root_cause }}</div>
+    </div>
+    <div class="detail-section">
+        <div class="section-label">详细诊断</div>
+        <div class="section-content" style="white-space: pre-wrap; background: var(--bg); padding: 12px; border-radius: 6px;">{{ wq.analysis.diagnosis_detail }}</div>
+    </div>
+    {% endif %}
+
+    {% if wq.improvement %}
+    <!-- 改进方案 -->
+    <div class="detail-section">
+        <div class="section-label">改进方案</div>
+        <div class="section-content" style="white-space: pre-wrap; background: var(--bg); padding: 12px; border-radius: 6px;">{{ wq.improvement.plan }}</div>
+    </div>
+
+    {% if wq.improvement.similar_topics %}
+    <!-- 同类题推荐 -->
+    <div class="detail-section">
+        <div class="section-label">同类题方向</div>
+        <div class="section-content">
+            {% for topic in wq.improvement.similar_topics %}
+            <span class="tag" style="margin-right: 4px;">{{ topic }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if wq.improvement.study_resources %}
+    <!-- 学习资源 -->
+    <div class="detail-section">
+        <div class="section-label">学习资源</div>
+        <div class="section-content">
+            <ul style="margin-left: 20px;">
+                {% for res in wq.improvement.study_resources %}
+                <li>{{ res }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 复习信息 -->
+    <div class="detail-section">
+        <div class="section-label">复习状态</div>
+        <div class="section-content">
+            已复习 {{ wq.improvement.review_count }} 次 ·
+            下次复习：{{ wq.improvement.next_review_date or '未安排' }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if wq.user_answer or wq.correct_answer %}
+    <!-- 答案 -->
+    <div class="detail-section">
+        <div class="section-label">答案对比</div>
+        <div class="section-content">
+            {% if wq.user_answer %}<div>我的答案：{{ wq.user_answer }}</div>{% endif %}
+            {% if wq.correct_answer %}<div style="color: var(--success);">正确答案：{{ wq.correct_answer }}</div>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

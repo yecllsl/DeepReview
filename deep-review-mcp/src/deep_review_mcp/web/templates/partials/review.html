@@ -1,0 +1,103 @@
+{# partials/review.html — 复习追踪页片段 #}
+<div>
+    <!-- 今日待复习 -->
+    <div class="chart-container" style="margin-bottom: 24px;">
+        <div class="chart-title">今日待复习 ({{ upcoming | length }})</div>
+        {% if upcoming %}
+        <div class="review-list">
+            {% for item in upcoming %}
+            <div class="review-item {{ 'overdue' if item.is_overdue else '' }}">
+                <div class="review-info"
+                     hx-get="/partials/questions/{{ item.question_id }}"
+                     hx-target="#content" hx-swap="innerHTML"
+                     style="cursor: pointer; flex: 1;">
+                    <div class="review-title">{{ item.raw_text }}</div>
+                    <div class="review-meta">
+                        <span class="tag subject-{{ item.subject }}">{{ item.subject }}</span>
+                        <span class="tag tag-error-{{ item.error_type }}">{{ item.error_type }}</span>
+                        {% if item.is_overdue %}⚠ 逾期 {{ item.next_review_date }}{% else %}今日到期{% endif %}
+                        · 已复习 {{ item.review_count }} 次
+                    </div>
+                </div>
+                <button class="btn btn-success btn-sm"
+                        hx-post="/api/review/{{ item.question_id }}/done"
+                        hx-target="#content" hx-swap="innerHTML"
+                        onclick="showToast('已标记复习', 'success')">
+                    ✓ 完成
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🎉</div>
+            <div class="empty-text">今天没有需要复习的错题</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="chart-grid">
+        <!-- 复习日历 -->
+        <div class="chart-container">
+            <div class="chart-title">{{ current_month }} 复习日历</div>
+            <div class="review-calendar">
+                {% for day in calendar_days %}
+                <div class="calendar-day {{ 'has-review' if day.count > 0 else '' }} {{ 'today' if day.is_today else '' }}"
+                     title="{{ day.date }}: {{ day.count }} 道待复习">
+                    {{ day.day }}
+                    {% if day.count > 0 %}<sup>{{ day.count }}</sup>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 遗忘曲线 -->
+        <div class="chart-container">
+            <div class="chart-title">艾宾浩斯遗忘曲线</div>
+            <div class="chart-body" id="forgetting-chart"></div>
+        </div>
+    </div>
+
+    <!-- 学科复习完成率 -->
+    <div class="chart-container" style="margin-bottom: 24px;">
+        <div class="chart-title">各学科复习完成率</div>
+        {% for sp in subject_progress %}
+        <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span class="tag subject-{{ sp.subject }}">{{ sp.subject }}</span>
+                <span style="font-size: 13px; color: var(--text-muted);">
+                    {{ sp.reviewed }}/{{ sp.total }} ({{ sp.rate }}%)
+                </span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ sp.rate }}%"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // 渲染遗忘曲线
+        (function() {
+            const container = document.getElementById('forgetting-chart');
+            if (!container) return;
+            const chart = echarts.init(container);
+            const curve = {{ forgetting_curve | tojson }};
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '10%', right: '5%', top: '10%', bottom: '15%' },
+                xAxis: { type: 'category', data: curve.map(c => '第' + (c.review + 1) + '次'), name: '复习次数' },
+                yAxis: { type: 'value', min: 0, max: 100, name: '保留率(%)' },
+                series: [{
+                    type: 'line',
+                    data: curve.map(c => c.retention),
+                    smooth: true,
+                    areaStyle: { opacity: 0.2 },
+                    itemStyle: { color: '#4f46e5' },
+                    label: { show: true, formatter: '{c}%' }
+                }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        })();
+    </script>
+</div>

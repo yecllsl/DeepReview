@@ -1,0 +1,147 @@
+{# partials/question_edit.html — 单题编辑表单片段 #}
+<div x-data="{ 
+    subject: '{{ wq.structured.subject if wq.structured else '' }}',
+    get knowledgePoints() {
+        // 根据学科动态更新知识点选项（通过 Alpine + HTMX）
+        return {{ knowledge_point_options | tojson }}
+    }
+}">
+    <!-- 顶部操作栏 -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 16px; font-weight: 600;">编辑错题</h3>
+        <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-primary btn-sm"
+                    hx-put="/api/questions/{{ wq.question_id }}"
+                    hx-target="#detail-panel" hx-swap="innerHTML"
+                    hx-include="closest form"
+                    onclick="showToast('保存中...', 'success')">
+                💾 保存
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm"
+                    hx-get="/partials/questions/{{ wq.question_id }}"
+                    hx-target="#detail-panel" hx-swap="innerHTML">
+                ✖ 取消
+            </button>
+        </div>
+    </div>
+
+    <form id="edit-form">
+        <!-- 原题内容 -->
+        <div class="form-group">
+            <label>原题内容</label>
+            <textarea name="raw_text">{{ wq.raw_text }}</textarea>
+        </div>
+
+        <!-- 结构化信息 -->
+        <div class="form-group">
+            <label>学科</label>
+            <select name="subject" x-model="subject"
+                    hx-get="/partials/questions/{{ wq.question_id }}/edit"
+                    hx-target="#detail-panel" hx-swap="innerHTML"
+                    hx-include="closest form"
+                    hx-trigger="change">
+                {% for s in subjects %}
+                <option value="{{ s }}" {{ 'selected' if wq.structured and wq.structured.subject == s else '' }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>难度</label>
+            <select name="difficulty">
+                {% for d in difficulty_levels %}
+                <option value="{{ d }}" {{ 'selected' if wq.structured and wq.structured.difficulty == d else '' }}>{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>题型</label>
+            <input type="text" name="question_type" 
+                   value="{{ wq.structured.question_type if wq.structured else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label>知识点（逗号分隔）</label>
+            <input type="text" name="knowledge_points"
+                   value="{{ wq.structured.knowledge_points | join(', ') if wq.structured and wq.structured.knowledge_points else '' }}"
+                   placeholder="可用知识点：{{ knowledge_point_options | join('、') }}">
+        </div>
+
+        <div class="form-group">
+            <label>年级段</label>
+            <input type="text" name="grade_level"
+                   value="{{ wq.structured.grade_level if wq.structured else '' }}">
+        </div>
+
+        <!-- 错误分类 -->
+        <div class="form-group">
+            <label>错误类型</label>
+            <select name="error_type">
+                {% for et in error_types %}
+                <option value="{{ et }}" {{ 'selected' if wq.classification and wq.classification.error_type == et else '' }}>{{ et }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>错误细分类别</label>
+            <input type="text" name="error_category"
+                   value="{{ wq.classification.error_category if wq.classification else '' }}">
+        </div>
+
+        <!-- 根因分析 -->
+        <div class="form-group">
+            <label>根本原因</label>
+            <textarea name="root_cause">{{ wq.analysis.root_cause if wq.analysis else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>原因类别</label>
+            <input type="text" name="cause_category"
+                   value="{{ wq.analysis.cause_category if wq.analysis else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label>详细诊断</label>
+            <textarea name="diagnosis_detail" style="min-height: 120px;">{{ wq.analysis.diagnosis_detail if wq.analysis else '' }}</textarea>
+        </div>
+
+        <!-- 改进方案 -->
+        <div class="form-group">
+            <label>改进方案</label>
+            <textarea name="plan" style="min-height: 100px;">{{ wq.improvement.plan if wq.improvement else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>同类题方向（逗号分隔）</label>
+            <input type="text" name="similar_topics"
+                   value="{{ wq.improvement.similar_topics | join(', ') if wq.improvement and wq.improvement.similar_topics else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label>学习资源（逗号分隔）</label>
+            <input type="text" name="study_resources"
+                   value="{{ wq.improvement.study_resources | join(', ') if wq.improvement and wq.improvement.study_resources else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label>下次复习日期</label>
+            <input type="date" name="next_review_date"
+                   value="{{ wq.improvement.next_review_date if wq.improvement else '' }}">
+        </div>
+
+        <!-- 答案 -->
+        <div class="form-group">
+            <label>我的答案</label>
+            <input type="text" name="user_answer"
+                   value="{{ wq.user_answer or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label>正确答案</label>
+            <input type="text" name="correct_answer"
+                   value="{{ wq.correct_answer or '' }}">
+        </div>
+    </form>
+</div>
