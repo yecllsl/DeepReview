@@ -3,13 +3,15 @@
 
 提供列表筛选、详情展示、编辑表单和保存功能。
 """
+from urllib.parse import parse_qs, urlparse
+
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from deep_review_mcp.web.app import templates
 from deep_review_mcp.web import services
-from deep_review_mcp.knowledge_map import SUBJECTS, ERROR_TYPES, DIFFICULTY_LEVELS, get_knowledge_points
+from deep_review_mcp.knowledge_map import SUBJECTS, ERROR_TYPES, DIFFICULTY_LEVELS, KNOWLEDGE_MAP, get_knowledge_points
 
 router = APIRouter()
 
@@ -109,13 +111,20 @@ async def question_edit_partial(request: Request, question_id: str):
             "error_types": ERROR_TYPES,
             "difficulty_levels": DIFFICULTY_LEVELS,
             "knowledge_point_options": kp_options,
+            "knowledge_map": KNOWLEDGE_MAP,
         },
     )
 
 
 @router.put("/api/questions/{question_id}")
 async def update_question_api(question_id: str, request: Request):
-    """编辑保存错题，写回 JSON"""
+    """编辑保存错题，写回 JSON
+
+    返回内容包含两部分：
+    1. 主响应：更新后的错题详情片段，替换 #detail-panel
+    2. OOB 片段：左侧错题卡片列表，替换 #question-list-container
+    这样保存后左右两侧都会自动刷新，无需手动刷新页面。
+    """
     # 接收表单数据
     form = await request.form()
     data: dict = {}
@@ -131,9 +140,37 @@ async def update_question_api(question_id: str, request: Request):
     if updated is None:
         raise HTTPException(status_code=404, detail="错题不存在")
 
-    # 返回更新后的详情片段 HTML（HTMX 局部替换）
-    return templates.TemplateResponse(
-        request,
-        "partials/question_detail.html",
-        {"wq": updated, "truncate": _truncate},
+    # 根据当前 URL 的筛选条件重新查询列表，保持左侧列表与筛选状态一致
+    current_url = request.headers.get("hx-current-url", "")
+    query = parse_qs(urlparse(current_url).query)
+    filters: dict = {}
+    if query.get("subject", [""])[0]:
+        filters["subject"] = query["subject"][0]
+    if query.get("error_type", [""])[0]:
+        filters["error_type"] = query["error_type"][0]
+    if query.get("knowledge_point", [""])[0]:
+        filters["knowledge_point"] = query["knowledge_point"][0]
+    date_start = query.get("date_start", [""])[0]
+    date_end = query.get("date_end", [""])[0]
+    if date_start or date_end:
+        filters["date_range"] = {"start": date_start, "end": date_end}
+
+    result = services.get_filtered_questions(filters)
+    questions = result["questions"]
+    search = query.get("search", [""])[0]
+    if search:
+        questions = [q for q in questions if search.lower() in (q.get("raw_text") or "").lower()]
+
+    # 渲染详情片段
+    detail_html = templates.get_template("partials/question_detail.html").render(
+        request=request, wq=updated, truncate=_truncate
+    )
+
+    # 渲染左侧列表片段（OOB 交换）
+    cards_html = templates.get_template("partials/question_cards.html").render(
+        request=request, questions=questions, total=len(questions), truncate=_truncate
+    )
+
+    return HTMLResponse(
+        content=detail_html + f'<div id="question-list-container" hx-swap-oob="true">{cards_html}</div>'
     )

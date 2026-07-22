@@ -211,8 +211,9 @@ async def test_question_edit_and_save(page: Page, server_url: str):
     await page.click('button[data-tab="questions"]')
     await page.wait_for_selector(".question-list", timeout=10000)
 
-    # 点击第一张卡片
+    # 点击第一张卡片，并记录保存前列表中的学科标签
     cards = await page.query_selector_all(".question-card")
+    first_card_subject_before = await cards[0].text_content()
     await cards[0].click()
     await page.wait_for_selector("#detail-panel .detail-section", timeout=10000)
 
@@ -227,12 +228,29 @@ async def test_question_edit_and_save(page: Page, server_url: str):
         if textarea:
             await textarea.fill("E2E修改后的题目内容")
 
+        # 修改分类字段
+        await page.locator('#edit-form select[name="subject"]').select_option('物理')
+        await page.locator('#edit-form select[name="difficulty"]').select_option('困难')
+        await page.locator('#edit-form select[name="error_type"]').select_option('方法错误')
+
         # 点击保存
         save_btn = await page.query_selector('button:has-text("保存")')
         if save_btn:
             await save_btn.click()
             # 等待返回详情
             await page.wait_for_selector(".detail-section", timeout=10000)
+
+            # 验证分类字段已保存
+            detail_text = await page.text_content("#detail-panel")
+            assert "物理" in detail_text
+            assert "困难" in detail_text
+            assert "方法错误" in detail_text
+
+            # 验证左侧列表也自动刷新（第一张卡片的学科标签应变为物理）
+            first_card_after = await page.query_selector(".question-card")
+            first_card_subject_after = await first_card_after.text_content()
+            assert "物理" in first_card_subject_after
+            assert first_card_subject_before != first_card_subject_after
 
 
 @pytest.mark.asyncio

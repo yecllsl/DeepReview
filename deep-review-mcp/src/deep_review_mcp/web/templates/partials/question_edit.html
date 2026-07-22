@@ -1,31 +1,31 @@
 {# partials/question_edit.html — 单题编辑表单片段 #}
-<div x-data="{ 
-    subject: '{{ wq.structured.subject if wq.structured else '' }}',
+<div x-data='{
+    subject: "{{ wq.structured.subject if wq.structured else '' }}",
+    knowledgeMap: {{ knowledge_map | tojson }},
     get knowledgePoints() {
-        // 根据学科动态更新知识点选项（通过 Alpine + HTMX）
-        return {{ knowledge_point_options | tojson }}
+        return this.knowledgeMap[this.subject] || []
     }
-}">
-    <!-- 顶部操作栏 -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 16px; font-weight: 600;">编辑错题</h3>
-        <div style="display: flex; gap: 8px;">
-            <button type="button" class="btn btn-primary btn-sm"
-                    hx-put="/api/questions/{{ wq.question_id }}"
-                    hx-target="#detail-panel" hx-swap="innerHTML"
-                    hx-include="closest form"
-                    onclick="showToast('保存中...', 'success')">
-                💾 保存
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm"
-                    hx-get="/partials/questions/{{ wq.question_id }}"
-                    hx-target="#detail-panel" hx-swap="innerHTML">
-                ✖ 取消
-            </button>
+}'>
+    <form id="edit-form"
+          hx-put="/api/questions/{{ wq.question_id }}"
+          hx-target="#detail-panel"
+          hx-swap="innerHTML">
+        <!-- 顶部操作栏 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 600;">编辑错题</h3>
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="btn btn-primary btn-sm"
+                        onclick="showToast('保存中...', 'success')">
+                    💾 保存
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm"
+                        hx-get="/partials/questions/{{ wq.question_id }}"
+                        hx-target="#detail-panel" hx-swap="innerHTML">
+                    ✖ 取消
+                </button>
+            </div>
         </div>
-    </div>
 
-    <form id="edit-form">
         <!-- 原题内容 -->
         <div class="form-group">
             <label>原题内容</label>
@@ -35,11 +35,7 @@
         <!-- 结构化信息 -->
         <div class="form-group">
             <label>学科</label>
-            <select name="subject" x-model="subject"
-                    hx-get="/partials/questions/{{ wq.question_id }}/edit"
-                    hx-target="#detail-panel" hx-swap="innerHTML"
-                    hx-include="closest form"
-                    hx-trigger="change">
+            <select name="subject" x-model="subject" @change="subject = $event.target.value">
                 {% for s in subjects %}
                 <option value="{{ s }}" {{ 'selected' if wq.structured and wq.structured.subject == s else '' }}>{{ s }}</option>
                 {% endfor %}
@@ -57,7 +53,7 @@
 
         <div class="form-group">
             <label>题型</label>
-            <input type="text" name="question_type" 
+            <input type="text" name="question_type"
                    value="{{ wq.structured.question_type if wq.structured else '' }}">
         </div>
 
@@ -65,7 +61,7 @@
             <label>知识点（逗号分隔）</label>
             <input type="text" name="knowledge_points"
                    value="{{ wq.structured.knowledge_points | join(', ') if wq.structured and wq.structured.knowledge_points else '' }}"
-                   placeholder="可用知识点：{{ knowledge_point_options | join('、') }}">
+                   :placeholder="'可用知识点：' + knowledgePoints.join('、')">
         </div>
 
         <div class="form-group">
@@ -142,6 +138,19 @@
             <label>正确答案</label>
             <input type="text" name="correct_answer"
                    value="{{ wq.correct_answer or '' }}">
+        </div>
+
+        <!-- 底部操作栏 -->
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+            <button type="submit" class="btn btn-primary btn-sm"
+                    onclick="showToast('保存中...', 'success')">
+                💾 保存
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm"
+                    hx-get="/partials/questions/{{ wq.question_id }}"
+                    hx-target="#detail-panel" hx-swap="innerHTML">
+                ✖ 取消
+            </button>
         </div>
     </form>
 </div>

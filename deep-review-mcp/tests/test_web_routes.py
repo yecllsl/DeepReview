@@ -142,12 +142,19 @@ async def test_question_edit_partial(client):
 
 @pytest.mark.asyncio
 async def test_update_question_api(client):
-    """PUT 保存应更新数据"""
+    """PUT 保存应更新数据，并返回详情 + OOB 左侧列表片段"""
     resp = await client.put(
         "/api/questions/wq_test_000",
-        data={"raw_text": "修改后的题目"},
+        data={"raw_text": "修改后的题目", "subject": "物理", "error_type": "方法错误"},
+        headers={"HX-Current-URL": "http://test/partials/questions"},
     )
     assert resp.status_code == 200
+    text = resp.text
+    # 主响应应包含更新后的详情
+    assert "修改后的题目" in text
+    # OOB 片段应刷新左侧列表容器
+    assert 'id="question-list-container" hx-swap-oob="true"' in text
+    assert "question-card" in text
 
 @pytest.mark.asyncio
 async def test_update_question_not_found(client):
