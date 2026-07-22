@@ -34,6 +34,15 @@ def create_app() -> FastAPI:
     # 挂载静态文件（JS库、CSS）
     app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
+    # 根路由：返回单页外壳
+    from fastapi import Request
+    from fastapi.responses import HTMLResponse
+
+    @app.get("/", response_class=HTMLResponse)
+    async def index(request: Request):
+        """返回单页外壳 base.html"""
+        return templates.TemplateResponse("base.html", {"request": request})
+
     # 注册路由模块
     from deep_review_mcp.web.routes import dashboard, questions, stats, review
 
