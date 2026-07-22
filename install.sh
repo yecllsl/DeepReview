@@ -71,29 +71,22 @@ EOF
 
 echo "  ✓ MCP Server 配置已生成"
 
-# 同步 Skills 和 Rules
-echo "[5/5] 同步 Skills 和 Rules..."
+# 检查 Skills 和 Rules 配置
+echo "[5/5] 检查 Skills 和 Rules 配置..."
 
-# 从项目根目录的 skills/ 和 rules/ 同步到 .trae/
 TRAE_SKILLS_DIR="$PROJECT_ROOT/.trae/skills"
 TRAE_RULES_DIR="$PROJECT_ROOT/.trae/rules"
-SOURCE_SKILLS_DIR="$PROJECT_ROOT/skills"
-SOURCE_RULES_DIR="$PROJECT_ROOT/rules"
 
-if [ -d "$SOURCE_SKILLS_DIR" ]; then
-    mkdir -p "$TRAE_SKILLS_DIR"
-    cp -r "$SOURCE_SKILLS_DIR"/* "$TRAE_SKILLS_DIR/"
-    echo "  ✓ Skills 已同步"
+if [ -d "$TRAE_SKILLS_DIR" ]; then
+    echo "  ✓ Skills 配置已就绪 ($TRAE_SKILLS_DIR)"
 else
-    echo "  ⚠  未找到 skills/ 目录，请检查项目结构"
+    echo "  ⚠  未找到 .trae/skills/ 目录，请检查项目结构"
 fi
 
-if [ -d "$SOURCE_RULES_DIR" ]; then
-    mkdir -p "$TRAE_RULES_DIR"
-    cp -r "$SOURCE_RULES_DIR"/* "$TRAE_RULES_DIR/"
-    echo "  ✓ Rules 已同步"
+if [ -d "$TRAE_RULES_DIR" ]; then
+    echo "  ✓ Rules 配置已就绪 ($TRAE_RULES_DIR)"
 else
-    echo "  ⚠  未找到 rules/ 目录，请检查项目结构"
+    echo "  ⚠  未找到 .trae/rules/ 目录，请检查项目结构"
 fi
 
 echo ""
@@ -114,7 +107,7 @@ echo "   - 命令: uv"
 echo "   - 参数: run deep-review-mcp"
 echo "   - 工作目录: $PROJECT_ROOT/deep-review-mcp"
 echo ""
-echo "5. Skills 和 Rules 已自动同步到 .trae/ 目录"
+echo "5. Skills 和 Rules 配置已就绪"
 echo ""
 echo "使用示例："
 echo "   /capture  - 采集新错题"
@@ -124,8 +117,7 @@ echo "   /stats   - 查看错题统计"
 echo ""
 echo ""
 echo "项目结构说明："
-echo "  skills/           - Skills 源文件（编辑这里）"
-echo "  rules/            - Rules 源文件（编辑这里）"
-echo "  .trae/skills/   - Trae 运行时配置（自动同步）"
-echo "  .trae/rules/    - Trae 运行时配置（自动同步）"
+echo "  .trae/skills/   - Skills 源文件（编辑这里）"
+echo "  .trae/rules/    - Rules 源文件（编辑这里）"
+echo "  deep-review-mcp/ - MCP Server 代码"
 echo ""

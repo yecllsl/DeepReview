@@ -75,33 +75,22 @@ if (!(Test-Path $mcpConfigDir)) {
 Set-Content -Path "$mcpConfigDir\SERVER_METADATA.json" -Value $configContent -Encoding UTF8
 Write-Host "  ✓ MCP Server 配置已生成" -ForegroundColor Green
 
-# 同步 Skills 和 Rules
-Write-Host "[5/5] 同步 Skills 和 Rules..." -ForegroundColor Yellow
+# 检查 Skills 和 Rules 配置
+Write-Host "[5/5] 检查 Skills 和 Rules 配置..." -ForegroundColor Yellow
 
-# 从项目根目录的 skills/ 和 rules/ 同步到 .trae/
 $traeSkillsDir = "$projectRoot\.trae\skills"
 $traeRulesDir = "$projectRoot\.trae\rules"
-$sourceSkillsDir = "$projectRoot\skills"
-$sourceRulesDir = "$projectRoot\rules"
 
-if (Test-Path $sourceSkillsDir) {
-    if (!(Test-Path $traeSkillsDir)) {
-        New-Item -ItemType Directory -Path $traeSkillsDir -Force | Out-Null
-    }
-    Copy-Item -Path "$sourceSkillsDir\*" -Destination $traeSkillsDir -Recurse -Force
-    Write-Host "  ✓ Skills 已同步" -ForegroundColor Green
+if (Test-Path $traeSkillsDir) {
+    Write-Host "  ✓ Skills 配置已就绪（$traeSkillsDir）" -ForegroundColor Green
 } else {
-    Write-Host "  ⚠  未找到 skills/ 目录，请检查项目结构" -ForegroundColor Yellow
+    Write-Host "  ⚠  未找到 .trae/skills/ 目录，请检查项目结构" -ForegroundColor Yellow
 }
 
-if (Test-Path $sourceRulesDir) {
-    if (!(Test-Path $traeRulesDir)) {
-        New-Item -ItemType Directory -Path $traeRulesDir -Force | Out-Null
-    }
-    Copy-Item -Path "$sourceRulesDir\*" -Destination $traeRulesDir -Recurse -Force
-    Write-Host "  ✓ Rules 已同步" -ForegroundColor Green
+if (Test-Path $traeRulesDir) {
+    Write-Host "  ✓ Rules 配置已就绪（$traeRulesDir）" -ForegroundColor Green
 } else {
-    Write-Host "  ⚠  未找到 rules/ 目录，请检查项目结构" -ForegroundColor Yellow
+    Write-Host "  ⚠  未找到 .trae/rules/ 目录，请检查项目结构" -ForegroundColor Yellow
 }
 
 Write-Host ""
@@ -122,7 +111,7 @@ Write-Host "   - 命令: uv" -ForegroundColor White
 Write-Host "   - 参数: run deep-review-mcp" -ForegroundColor White
 Write-Host "   - 工作目录: $projectRoot\deep-review-mcp" -ForegroundColor White
 Write-Host ""
-Write-Host "5. Skills 和 Rules 已自动同步到 .trae/ 目录" -ForegroundColor White
+Write-Host "5. Skills 和 Rules 配置已就绪" -ForegroundColor White
 Write-Host ""
 Write-Host "使用示例：" -ForegroundColor Yellow
 Write-Host '   /capture  - 采集新错题' -ForegroundColor White
@@ -132,8 +121,7 @@ Write-Host '   /stats   - 查看错题统计' -ForegroundColor White
 Write-Host ""
 Write-Host ""
 Write-Host "项目结构说明：" -ForegroundColor Yellow
-Write-Host "  skills/           - Skills 源文件（编辑这里）" -ForegroundColor White
-Write-Host "  rules/            - Rules 源文件（编辑这里）" -ForegroundColor White
-Write-Host "  .trae/skills/   - Trae 运行时配置（自动同步）" -ForegroundColor White
-Write-Host "  .trae/rules/    - Trae 运行时配置（自动同步）" -ForegroundColor White
+Write-Host "  .trae/skills/   - Skills 源文件（编辑这里）" -ForegroundColor White
+Write-Host "  .trae/rules/    - Rules 源文件（编辑这里）" -ForegroundColor White
+Write-Host "  deep-review-mcp/ - MCP Server 代码" -ForegroundColor White
 Write-Host ""

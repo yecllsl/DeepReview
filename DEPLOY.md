@@ -74,13 +74,13 @@ Server ready.
 
 ## Skills 和 Rules 配置
 
-### 复制配置文件
+Skills 和 Rules 配置位于 `.trae/` 目录下，是 Trae Work 实际读取的配置源，修改后重启 Trae Work 即可生效。
 
-将以下目录复制到您的 Trae 项目目录：
+### 配置目录结构
 
 ```
-.trae/skills/     → 您的项目/.trae/skills/
-.trae/rules/      → 您的项目/.trae/rules/
+.trae/skills/     → 5 个 Skill 流程定义
+.trae/rules/      → 4 个 Rules 约束定义
 ```
 
 ### Skills 说明
@@ -91,6 +91,7 @@ Server ready.
 | wrong-question-analyze | `/analyze` | 错题分析流程编排 |
 | review-plan-generate | `/review` | 复习计划生成 |
 | wrong-question-stats | `/stats` | 错题统计查询 |
+| wrong-question-batch-capture | 批量采集 | 多道错题连续采集 |
 
 ### Rules 说明
 
@@ -141,7 +142,7 @@ uv pip install -e .
 ### Q4: Skills/Commands 不生效
 
 **检查项：**
-1. skills 和 rules 文件是否复制到正确位置
+1. `.trae/skills/` 和 `.trae/rules/` 目录是否存在
 2. 文件名和格式是否正确
 3. Trae 是否重启
 
@@ -181,25 +182,27 @@ deep-review/
 │   ├── pyproject.toml          # Python 项目配置
 │   └── uv.lock                 # 依赖锁定文件
 │
-├── skills/                      # Skills 源文件 (Trae Work 专用配置)
-│   ├── wrong-question-capture/SKILL.md
-│   ├── wrong-question-analyze/SKILL.md
-│   ├── review-plan-generate/SKILL.md
-│   └── wrong-question-stats/SKILL.md
+├── docs/                        # 设计文档与实施计划
+│   └── superpowers/
+│       ├── specs/               # 设计文档
+│       └── plans/               # 实施计划
 │
-├── rules/                       # Rules 源文件 (Trae Work 专用配置)
-│   ├── classification-rules.md
-│   ├── analysis-rules.md
-│   ├── data-safety-rules.md
-│   └── interaction-rules.md
-│
-├── .trae/                       # Trae 运行时配置 (由 install 脚本自动生成)
+├── .trae/                       # Trae 配置与 Skills/Rules 源文件
 │   ├── mcp-servers/
 │   │   └── deep-review-mcp/
 │   │       ├── SERVER_METADATA.json
 │   │       └── tools/          # 工具元数据
-│   ├── skills/                 # ← 从根目录 skills/ 同步
-│   └── rules/                  # ← 从根目录 rules/ 同步
+│   ├── skills/                 # Skills 源文件（单一真相源）
+│   │   ├── wrong-question-capture/
+│   │   ├── wrong-question-analyze/
+│   │   ├── review-plan-generate/
+│   │   ├── wrong-question-stats/
+│   │   └── wrong-question-batch-capture/
+│   └── rules/                  # Rules 源文件（单一真相源）
+│       ├── classification-rules.md
+│       ├── analysis-rules.md
+│       ├── data-safety-rules.md
+│       └── interaction-rules.md
 │
 ├── README.md                    # 项目说明
 ├── DEPLOY.md                    # 本部署指南
@@ -209,20 +212,20 @@ deep-review/
 
 ## 架构设计原则
 
-### 为什么把 skills/ 和 rules/ 移到项目根目录？
+### 为什么 Skills/Rules 配置放在 `.trae/` 下？
 
 | 设计决策 | 原因 |
 |---------|------|
 | **服务层独立** | `deep-review-mcp/` 是纯 Python MCP Server，通用，可独立发布到 PyPI |
-| **配置层可见** | `skills/`, `rules/` 在根目录，用户一眼就能看到并编辑 |
-| **运行时分离** | `.trae/` 是 Trae Work IDE 的运行时目录，由安装脚本自动同步生成 |
+| **配置单一真相源** | Skills/Rules 配置直接在 `.trae/` 下编辑，Trae Work 直接读取，无需同步步骤 |
+| **结构清晰** | 项目根目录只保留核心代码和文档，Trae 专有配置集中在 `.trae/` 下 |
 
 ### 编辑哪个文件？
 
 | 要修改的内容 | 编辑位置 | 说明 |
 |------------|---------|------|
-| Skills 流程 | `skills/` | 修改后重新运行 install 脚本同步到 `.trae/skills/` |
-| Rules 约束 | `rules/` | 修改后重新运行 install 脚本同步到 `.trae/rules/` |
+| Skills 流程 | `.trae/skills/` | 修改后重启 Trae Work 生效 |
+| Rules 约束 | `.trae/rules/` | 修改后重启 Trae Work 生效 |
 | MCP Tools 功能 | `deep-review-mcp/src/` | 修改后重新运行 `uv pip install -e .` |
 | MCP 配置 | `.trae/mcp-servers/` | 安装脚本自动生成，一般无需手动编辑 |
 
