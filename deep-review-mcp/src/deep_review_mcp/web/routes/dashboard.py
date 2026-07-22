@@ -18,8 +18,9 @@ async def dashboard_partial(request: Request):
     summary = services.get_dashboard_summary()
     upcoming = services.get_upcoming_reviews()
     return templates.TemplateResponse(
+        request,
         "partials/dashboard.html",
-        {"request": request, "summary": summary, "upcoming": upcoming},
+        {"summary": summary, "upcoming": upcoming},
     )
 
 

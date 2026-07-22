@@ -17,8 +17,9 @@ async def stats_partial(request: Request):
     """返回统计图表页片段"""
     multi_dim = services.get_multi_dim_stats()
     return templates.TemplateResponse(
+        request,
         "partials/stats.html",
-        {"request": request, "stats": multi_dim},
+        {"stats": multi_dim},
     )
 
 

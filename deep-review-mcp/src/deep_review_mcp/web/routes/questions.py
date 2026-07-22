@@ -57,9 +57,9 @@ async def question_list_partial(
             all_knowledge_points.update(q["structured"]["knowledge_points"])
 
     return templates.TemplateResponse(
+        request,
         "partials/question_list.html",
         {
-            "request": request,
             "questions": questions,
             "total": len(questions),
             "subjects": SUBJECTS,
@@ -83,8 +83,9 @@ async def question_detail_partial(request: Request, question_id: str):
     if wq is None:
         raise HTTPException(status_code=404, detail="错题不存在")
     return templates.TemplateResponse(
+        request,
         "partials/question_detail.html",
-        {"request": request, "wq": wq, "truncate": _truncate},
+        {"wq": wq, "truncate": _truncate},
     )
 
 
@@ -100,9 +101,9 @@ async def question_edit_partial(request: Request, question_id: str):
     kp_options = get_knowledge_points(current_subject) if current_subject else []
 
     return templates.TemplateResponse(
+        request,
         "partials/question_edit.html",
         {
-            "request": request,
             "wq": wq,
             "subjects": SUBJECTS,
             "error_types": ERROR_TYPES,
@@ -132,6 +133,7 @@ async def update_question_api(question_id: str, request: Request):
 
     # 返回更新后的详情片段 HTML（HTMX 局部替换）
     return templates.TemplateResponse(
+        request,
         "partials/question_detail.html",
-        {"request": request, "wq": updated, "truncate": _truncate},
+        {"wq": updated, "truncate": _truncate},
     )

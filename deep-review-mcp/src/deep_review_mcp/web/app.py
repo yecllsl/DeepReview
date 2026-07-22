@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request):
         """返回单页外壳 base.html"""
-        return templates.TemplateResponse("base.html", {"request": request})
+        return templates.TemplateResponse(request, "base.html", {})
 
     # 注册路由模块
     from deep_review_mcp.web.routes import dashboard, questions, stats, review

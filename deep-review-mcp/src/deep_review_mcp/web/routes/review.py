@@ -79,9 +79,9 @@ async def review_partial(request: Request):
         forgetting_curve.append({"review": i, "interval": interval, "retention": retention})
 
     return templates.TemplateResponse(
+        request,
         "partials/review.html",
         {
-            "request": request,
             "upcoming": upcoming,
             "calendar_days": calendar_days,
             "current_month": today.strftime("%Y年%m月"),
