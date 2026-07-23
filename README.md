@@ -32,10 +32,12 @@ Rules 约束层 (分类/分析/安全/交互规则)
 ## 技术栈
 
 - **MCP Server**: Python 3.12+ / FastMCP
-- **Web 可视化**: FastAPI + HTMX + Alpine.js + ECharts
-- **OCR 引擎**: PaddleOCR (本地部署，无需API Key)
-- **数据存储**: JSON 文件 (本地存储，数据安全)
-- **包管理**: uv (现代高速Python包管理器)
+- **Web 可视化**: FastAPI + HTMX（OOB 局部刷新）+ Alpine.js（轻量交互）+ ECharts（图表）
+- **OCR 引擎（可选）**: PaddleOCR（本地部署，无需 API Key；不安装也能用基础功能）
+- **数据存储**: JSON 文件（本地存储，原子写入）
+- **包管理**: uv（现代高速 Python 包管理器）
+- **测试**: pytest + pytest-asyncio + pytest-cov + Playwright（E2E）
+- **CI/CD**: GitHub Actions（Tests + Release）
 
 ## 快速安装
 
@@ -97,6 +99,29 @@ uv run deep-review-web
 
 浏览器访问 http://127.0.0.1:8001 即可使用可视化界面。
 
+### 可选：安装 OCR 引擎
+
+OCR 引擎（PaddleOCR + PaddlePaddle，约 1.5 GB）用于图片错题识别，**非必需**。仅当使用 `/capture` 拍照录入时才需要安装：
+
+```bash
+cd deep-review-mcp
+uv sync --extra ocr
+```
+
+未安装时调用 OCR 会得到友好提示，不影响其他功能。
+
+## 下载与发布
+
+每次发版会在 GitHub Release 页面提供三种压缩包，按需选择：
+
+| 格式 | 适用平台 | 特点 |
+|------|---------|------|
+| `DeepReview-vX.Y.Z.zip` | Windows | 与 PowerShell `Compress-Archive` 兼容，最通用 |
+| `DeepReview-vX.Y.Z.tar.zst` | 现代 Linux/macOS | 体积最小、速度最快（**推荐**） |
+| `DeepReview-vX.Y.Z.tar.gz` | 所有 Unix | 兼容性最好，老旧系统 fallback |
+
+访问 https://github.com/yecllsl/DeepReview/releases 下载最新版本。
+
 ## 使用方法
 
 ### 命令模式
@@ -131,13 +156,13 @@ uv run deep-review-web
 
 ```
 deep-review/
-├── deep-review-mcp/           # 纯 MCP Server (通用服务层)
+├── deep-review-mcp/                       # 纯 MCP Server (通用服务层)
 │   ├── src/deep_review_mcp/
-│   │   ├── server.py          # FastMCP 服务入口
-│   │   ├── models.py          # Pydantic 数据模型
-│   │   ├── storage.py         # JSON 存储引擎（支持原子写、部分更新）
-│   │   ├── knowledge_map.py   # K12 知识点映射
-│   │   ├── tools/             # 11 个 MCP Tools
+│   │   ├── server.py                      # FastMCP 服务入口
+│   │   ├── models.py                      # Pydantic 数据模型
+│   │   ├── storage.py                     # JSON 存储引擎（支持原子写、部分更新）
+│   │   ├── knowledge_map.py               # K12 知识点映射
+│   │   ├── tools/                         # 11 个 MCP Tools
 │   │   │   ├── ocr_recognize.py
 │   │   │   ├── classify.py
 │   │   │   ├── analyze.py
@@ -146,41 +171,62 @@ deep-review/
 │   │   │   ├── statistics.py
 │   │   │   ├── export.py
 │   │   │   └── crud.py
-│   │   ├── prompts/           # AI Prompt 模板
+│   │   ├── prompts/                       # AI Prompt 模板
 │   │   │   ├── structure_parse.py
 │   │   │   ├── classify_prompt.py
 │   │   │   ├── analyze_prompt.py
 │   │   │   └── improvement_prompt.py
-│   │   └── web/               # Web 可视化模块
-│   │       ├── app.py         # FastAPI 应用工厂 + 入口
-│   │       ├── services.py    # Web 服务层（编排 storage/statistics/review）
-│   │       ├── schemas.py     # Web 请求/响应模型
-│   │       ├── routes/        # 路由模块（dashboard/questions/stats/review）
-│   │       ├── templates/     # Jinja2 模板（base.html + partials）
-│   │       └── static/        # 静态资源（HTMX/Alpine/ECharts 本地化）
-│   ├── data/                   # 运行时数据
-│   │   └── wrong_questions/    # 错题 JSON 文件
-│   └── pyproject.toml          # Python 项目配置
+│   │   └── web/                           # Web 可视化模块（薄编排层）
+│   │       ├── app.py                     # FastAPI 应用工厂 + 入口
+│   │       ├── services.py                # Web 服务层（编排 storage/statistics/review）
+│   │       ├── schemas.py                 # Web 请求/响应模型
+│   │       ├── routes/                    # 路由模块（dashboard/questions/stats/review）
+│   │       ├── templates/                 # Jinja2 模板（base.html + partials）
+│   │       │   ├── base.html
+│   │       │   ├── errors.html
+│   │       │   └── partials/              # HTMX 片段模板（含 OOB swap）
+│   │       └── static/                    # 静态资源（HTMX/Alpine/ECharts 本地化）
+│   ├── tests/                             # 测试套件
+│   │   ├── test_models.py                 # Pydantic 模型
+│   │   ├── test_storage.py                # 存储层（含 patch 工具）
+│   │   ├── test_storage_patch.py          # 部分更新逻辑
+│   │   ├── test_tools_*.py                # 11 个 Tools 的单元测试
+│   │   ├── test_web_routes.py             # Web 路由测试
+│   │   ├── test_web_services.py           # Web 服务层测试
+│   │   └── test_e2e_visualization.py      # Playwright E2E（8 用例）
+│   ├── data/                              # 运行时数据（被 .gitignore）
+│   ├── pyproject.toml                     # Python 项目配置
+│   └── uv.lock                            # 依赖锁定文件
 │
-├── .trae/                       # Trae 配置与 Skills/Rules 源文件
-│   ├── mcp.json                 # 项目级 MCP 配置（自动路径适配）
-│   ├── skills/                  # Skills 源文件
-│   │   ├── wrong-question-capture/
-│   │   ├── wrong-question-analyze/
-│   │   ├── review-plan-generate/
-│   │   ├── wrong-question-stats/
-│   │   └── wrong-question-batch-capture/
-│   └── rules/                   # Rules 源文件
+├── .trae/                                  # Trae 配置与 Skills/Rules 源文件
+│   ├── mcp.json                            # 项目级 MCP 配置（自动路径适配）
+│   ├── hooks.json
+│   ├── skills/                             # Skills 源文件
+│   │   ├── wrong-question-capture/         # /capture
+│   │   ├── wrong-question-analyze/         # /analyze
+│   │   ├── review-plan-generate/           # /review
+│   │   ├── wrong-question-stats/           # /stats
+│   │   └── wrong-question-batch-capture/   # 批量采集
+│   └── rules/                              # Rules 源文件
 │       ├── classification-rules.md
 │       ├── analysis-rules.md
 │       ├── data-safety-rules.md
 │       └── interaction-rules.md
 │
-├── scripts/                     # 开发者工具
-│   └── build-release.ps1        # 发布包构建脚本
-├── install.ps1                  # Windows 安装脚本
-├── install.sh                   # Linux/macOS 安装脚本
-└── README.md
+├── .github/
+│   └── workflows/
+│       ├── test.yml                        # CI：单元测试 + E2E（3.12/3.13）
+│       └── release.yml                     # Release：push tag → 自动打包 + 上传
+│
+├── scripts/                                # 开发者工具
+│   ├── build-release.ps1                   # Windows 发布包构建（PowerShell）
+│   └── build-release.sh                    # Linux/macOS 发布包构建（bash，与 .ps1 逻辑对齐）
+├── install.ps1                             # Windows 安装脚本（可选装 OCR）
+├── install.sh                              # Linux/macOS 安装脚本（可选装 OCR）
+├── QUICKSTART.md                           # 5 分钟快速上手
+├── DEPLOY.md                               # 详细部署指南
+├── README.md                               # 本文件
+└── LICENSE                                 # MIT
 ```
 
 ## 架构设计说明
@@ -257,3 +303,40 @@ MIT License
 ## Contributing
 
 欢迎提交 Issue 和 Pull Request！
+
+## 测试与开发
+
+### 本地运行测试
+
+```bash
+cd deep-review-mcp
+
+# 仅单元/集成测试（默认不装 paddleocr/浏览器，最快）
+uv sync --extra dev
+uv run pytest tests/ -m "not e2e"
+
+# E2E 测试（需先装 Playwright 浏览器）
+uv run playwright install chromium
+uv run pytest tests/test_e2e_visualization.py -m e2e
+```
+
+测试覆盖：72 个单元/集成用例 + 8 个 E2E 用例，矩阵 Python 3.12 / 3.13。
+
+### 本地构建发布包
+
+```powershell
+# Windows
+pwsh .\scripts\build-release.ps1 -Version 0.2.0
+```
+
+```bash
+# Linux / macOS
+bash scripts/build-release.sh 0.2.0
+```
+
+产物：`dist/DeepReview-v0.2.0.{zip,tar.zst,tar.gz}`。
+
+### CI/CD
+
+- **PR / push** → [`.github/workflows/test.yml`](.github/workflows/test.yml) 跑单元 + E2E
+- **push tag `v*.*.*`** → [`.github/workflows/release.yml`](.github/workflows/release.yml) 自动构建并发布 GitHub Release（附 `generate_release_notes` 自动 changelog）

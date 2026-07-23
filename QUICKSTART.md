@@ -2,28 +2,64 @@
 
 ## 3 步开始使用
 
-### 第 1 步：安装依赖
+### 第 1 步：下载并解压
+
+从 [GitHub Releases](https://github.com/yecllsl/DeepReview/releases) 下载最新版本，按需选择格式：
+
+- **Windows**：`DeepReview-vX.Y.Z.zip`（用资源管理器/7-Zip 解压）
+- **现代 Linux/macOS**：`DeepReview-vX.Y.Z.tar.zst`（`tar --zstd -xf` 或 `zstd -d` + `tar -xf`）
+- **兼容老旧系统**：`DeepReview-vX.Y.Z.tar.gz`（`tar -xzf`）
+
+解压到任意目录（如 `D:\DeepReview\` 或 `~/DeepReview/`）。
+
+### 第 2 步：安装依赖
 
 ```powershell
 # Windows: 右键 install.ps1 → "使用 PowerShell 运行"
 .\install.ps1
+```
 
+```bash
 # Linux/macOS:
 chmod +x install.sh && ./install.sh
 ```
 
-> ⏱️ 首次安装需要下载 PaddleOCR 模型，可能需要 2-5 分钟。
+> ⏱️ 首次安装会询问是否安装 OCR 引擎（PaddleOCR + PaddlePaddle 约 1.5GB）。**仅当需要 `/capture` 拍照录入错题时才需要**。文本录入、统计、复习等功能无需 OCR。
+> 
+> 跳过 OCR 后若需要补装：`cd deep-review-mcp && uv sync --extra ocr`
 
-### 第 2 步：在 Trae 中配置
+### 第 3 步：在 Trae 中配置
 
 1. 用 Trae IDE 打开项目文件夹
 2. 进入 **设置 → MCP**
 3. 打开 **"启用项目级 MCP"** 开关
 4. 重启 Trae
 
-### 第 3 步：开始使用
+### 第 4 步：开始使用
 
 输入 `/capture`、`/analyze`、`/review` 或 `/stats` 即可！
+
+---
+
+## 可选：Web 可视化界面
+
+如果喜欢图形化界面，可启动本地 Web 服务：
+
+```powershell
+cd deep-review-mcp
+uv run deep-review-web
+```
+
+浏览器访问 http://127.0.0.1:8001 即可使用四大页面：
+
+| 页面 | 功能 |
+|------|------|
+| 概览 Dashboard | 错题总数、待复习、本周新增、学科/错误类型分布、30天趋势 |
+| 错题列表 | 筛选查看、编辑保存（HTMX 局部刷新，OOB 自动更新） |
+| 统计图表 | 知识点热力图、难度分布、错误类型雷达、时间趋势 |
+| 复习追踪 | 待复习清单、复习日历、遗忘曲线、学科复习进度 |
+
+> 💡 Web 服务仅绑定 `127.0.0.1`，所有数据本地存储，JS 库本地化（HTMX / Alpine.js / ECharts），**无任何外部请求**。
 
 ---
 
@@ -109,15 +145,6 @@ chmod +x install.sh && ./install.sh
    - 知识点薄弱度排名
    - 时间趋势
 3. 可以导出为 JSON 或 Markdown
-
-## 可选：Web 可视化界面
-
-```powershell
-cd deep-review-mcp
-uv run deep-review-web
-```
-
-浏览器访问 http://127.0.0.1:8001，提供概览 Dashboard、错题列表与详情、统计图表、复习追踪四大页面。
 
 ## 常用示例
 
