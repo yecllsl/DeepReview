@@ -669,8 +669,6 @@ dependencies = [
     { name = "fastapi" },
     { name = "fastmcp" },
     { name = "jinja2" },
-    { name = "paddleocr" },
-    { name = "paddlepaddle" },
     { name = "pydantic" },
     { name = "python-multipart" },
     { name = "uvicorn" },
@@ -684,6 +682,10 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
 ]
+ocr = [
+    { name = "paddleocr" },
+    { name = "paddlepaddle" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -691,8 +693,8 @@ requires-dist = [
     { name = "fastmcp", specifier = ">=3.0.0" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
     { name = "jinja2", specifier = ">=3.1" },
-    { name = "paddleocr", specifier = ">=2.7.0" },
-    { name = "paddlepaddle", specifier = ">=2.5.0" },
+    { name = "paddleocr", marker = "extra == 'ocr'", specifier = ">=2.7.0" },
+    { name = "paddlepaddle", marker = "extra == 'ocr'", specifier = ">=2.5.0" },
     { name = "playwright", marker = "extra == 'dev'", specifier = ">=1.40" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
@@ -701,7 +703,7 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.9" },
     { name = "uvicorn", specifier = ">=0.30" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["ocr", "dev"]
 
 [[package]]
 name = "dnspython"

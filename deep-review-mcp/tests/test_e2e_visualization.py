@@ -136,6 +136,13 @@ async def page(server_url):
 # E2E 测试用例
 # ──────────────────────────────────────────
 
+# 标记整个模块为 e2e 测试。CI 中：
+#   - 默认单元/集成任务通过 `-m "not e2e"` 跳过这些用例
+#   - E2E 任务通过 `-m e2e` 仅运行这些用例
+#   - 本地可通过 `uv run pytest -m e2e` 手动触发
+pytestmark = pytest.mark.e2e
+
+
 @pytest.mark.asyncio
 async def test_page_loads(page: Page, server_url: str):
     """页面应正确加载"""

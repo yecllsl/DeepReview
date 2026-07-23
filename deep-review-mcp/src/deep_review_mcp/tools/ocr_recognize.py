@@ -17,10 +17,19 @@ def _get_ocr_engine():
 
     首次调用时初始化PaddleOCR引擎，后续调用直接复用。
     使用use_angle_cls=True支持旋转文字识别，lang="ch"支持中文。
+
+    PaddleOCR 为可选依赖（见 pyproject.toml [ocr] extra），
+    未安装时抛出 ImportError 并附带安装指引，由上层 ocr_recognize 转为友好降级响应。
     """
     global _ocr_engine
     if _ocr_engine is None:
-        from paddleocr import PaddleOCR
+        try:
+            from paddleocr import PaddleOCR  # noqa: WPS433 (懒加载)
+        except ImportError as exc:
+            raise ImportError(
+                "未安装 PaddleOCR。请运行 `uv sync --extra ocr` "
+                "或 `uv pip install paddleocr paddlepaddle` 后重试。"
+            ) from exc
         _ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", show_log=False)
     return _ocr_engine
 

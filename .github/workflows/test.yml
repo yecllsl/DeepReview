@@ -7,9 +7,16 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
+  # ──────────────────────────────────────────
+  # 单元 + 集成测试
+  # 不安装 PaddleOCR / Playwright 浏览器，跑得最快
+  # ──────────────────────────────────────────
+  unit-tests:
+    name: Unit & Integration (${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.12", "3.13"]
 
@@ -28,22 +35,90 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/uv
-        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+        key: ${{ runner.os }}-uv-${{ hashFiles('deep-review-mcp/uv.lock') }}
         restore-keys: |
           ${{ runner.os }}-uv-
+
+    - name: Install dependencies (no OCR, no browser)
+      # 仅安装 dev 依赖；paddleocr/paddlepaddle 已在 pyproject.toml 拆到 optional[ocr]
+      # 单元测试 OCR 用例通过 mock 验证，不会真正调用 paddle
+      run: |
+        cd deep-review-mcp
+        uv sync --extra dev
+
+    - name: Run unit & integration tests
+      run: |
+        cd deep-review-mcp
+        uv run pytest tests/ -v --cov=src --cov-report=xml -m "not e2e"
+
+    - name: Upload coverage
+      if: matrix.python-version == '3.12' && always()
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./deep-review-mcp/coverage.xml
+        fail_ci_if_error: false
+
+  # ──────────────────────────────────────────
+  # E2E 测试 (Playwright + 真实浏览器)
+  # 仅在 push 到 master/develop 时跑，避免 PR 上耗时过长
+  # ──────────────────────────────────────────
+  e2e-tests:
+    name: E2E (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # 只在 push 时跑 E2E（PR 上不跑，可选），节省 CI 资源
+    if: github.event_name == 'push'
+    needs: unit-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+
+    - name: Cache uv
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-e2e-${{ hashFiles('deep-review-mcp/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-e2e-
 
     - name: Install dependencies
       run: |
         cd deep-review-mcp
-        uv sync --all-extras
+        uv sync --extra dev
 
-    - name: Run tests
+    - name: Install Playwright system deps
+      # Ubuntu 上 Playwright 浏览器需要若干系统库 (libnss3, libxss1 等)
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+        libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+        libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+        libgbm1 libpango-1.0-0 libcairo2 libasound2t64 libatspi2.0-0
+
+    - name: Install Playwright Chromium
       run: |
         cd deep-review-mcp
-        uv run pytest tests/ -v --cov=src --cov-report=xml
+        uv run playwright install chromium
 
-    - name: Upload coverage
-      if: matrix.python-version == '3.12'
-      uses: codecov/codecov-action@v4
+    - name: Run E2E tests
+      run: |
+        cd deep-review-mcp
+        uv run pytest tests/test_e2e_visualization.py -v -m e2e
+
+    - name: Upload Playwright traces on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
       with:
-        files: ./deep-review-mcp/coverage.xml
+        name: playwright-traces-${{ matrix.python-version }}
+        path: deep-review-mcp/test-results/
+        if-no-files-found: ignore

@@ -243,11 +243,12 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 2. 确认已重启 Trae
 3. 如果 `${workspaceFolder}` 变量不被支持，运行 `.\install.ps1 -FixPath` 自动修复路径
 
-### Q: PaddleOCR 安装失败
+### Q: OCR / PaddleOCR 安装失败
 
 - 确认 Python 版本 >= 3.12
 - 确认网络畅通（需下载模型文件）
-- 手动安装：`cd deep-review-mcp && uv sync`
+- OCR 为**可选依赖**，默认 `uv sync` 不会安装。需要时执行：`cd deep-review-mcp && uv sync --extra ocr`
+- 若仅使用文本录入、统计、复习等基础功能，**无需安装 OCR**
 
 ## License
 
