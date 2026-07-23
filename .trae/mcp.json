@@ -2,8 +2,12 @@
   "mcpServers": {
     "deep-review-mcp": {
       "command": "uv",
-      "args": ["run", "deep-review-mcp"],
-      "cwd": "d:\\yecll\\Documents\\LocalCode\\DeepReview\\deep-review-mcp"
+      "args": [
+        "run",
+        "--directory",
+        "${workspaceFolder}/deep-review-mcp",
+        "deep-review-mcp"
+      ]
     }
   }
 }

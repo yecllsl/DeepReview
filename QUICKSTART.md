@@ -1,5 +1,32 @@
 # DeepReview 快速入门
 
+## 3 步开始使用
+
+### 第 1 步：安装依赖
+
+```powershell
+# Windows: 右键 install.ps1 → "使用 PowerShell 运行"
+.\install.ps1
+
+# Linux/macOS:
+chmod +x install.sh && ./install.sh
+```
+
+> ⏱️ 首次安装需要下载 PaddleOCR 模型，可能需要 2-5 分钟。
+
+### 第 2 步：在 Trae 中配置
+
+1. 用 Trae IDE 打开项目文件夹
+2. 进入 **设置 → MCP**
+3. 打开 **"启用项目级 MCP"** 开关
+4. 重启 Trae
+
+### 第 3 步：开始使用
+
+输入 `/capture`、`/analyze`、`/review` 或 `/stats` 即可！
+
+---
+
 ## 5 分钟快速体验
 
 ### 1. 采集第一道错题
@@ -82,6 +109,15 @@
    - 知识点薄弱度排名
    - 时间趋势
 3. 可以导出为 JSON 或 Markdown
+
+## 可选：Web 可视化界面
+
+```powershell
+cd deep-review-mcp
+uv run deep-review-web
+```
+
+浏览器访问 http://127.0.0.1:8001，提供概览 Dashboard、错题列表与详情、统计图表、复习追踪四大页面。
 
 ## 常用示例
 
@@ -238,8 +274,17 @@ question_id: wq_20260615_001
 ```
 导出全部错题为 Markdown 格式
 
+## 故障排查
+
+| 问题 | 解决方案 |
+|------|---------|
+| 安装脚本报错 "uv 未安装" | 安装 uv：`irm https://astral.sh/uv/install.ps1 \| iex` |
+| MCP Server 不生效 | 确认启用项目级 MCP → 重启 Trae |
+| 路径变量不替换 | 运行 `.\install.ps1 -FixPath` 修复路径 |
+| PaddleOCR 安装失败 | 确认 Python >= 3.12 + 网络畅通 → `cd deep-review-mcp && uv sync` |
+| Skills 不生效 | 重启 Trae → 检查 .trae/skills/ 目录 |
+
 ## 下一步
 
 - 📖 查看 [完整部署指南](DEPLOY.md)
 - 📚 查看 [项目 README](README.md)
-- 🐛 报告问题: [GitHub Issues](https://github.com/yecllsl/deep-review/issues)

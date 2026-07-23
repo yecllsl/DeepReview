@@ -1,6 +1,6 @@
 # DeepReview - K12错题收集与智能分析Agent
 
-基于 Trae Work 平台的 K12 错题收集与智能分析解决方案，帮助学生通过拍照快速录入错题，AI 自动完成分类、原因分析、改进方案生成和复习推荐。提供本地 Web 可视化界面，直观展示错题分布、趋势和薄弱点。
+基于 Trae IDE CN 平台的 K12 错题收集与智能分析解决方案，帮助学生通过拍照快速录入错题，AI 自动完成分类、原因分析、改进方案生成和复习推荐。提供本地 Web 可视化界面，直观展示错题分布、趋势和薄弱点。
 
 ## 核心功能
 
@@ -37,46 +37,58 @@ Rules 约束层 (分类/分析/安全/交互规则)
 - **数据存储**: JSON 文件 (本地存储，数据安全)
 - **包管理**: uv (现代高速Python包管理器)
 
-## 安装
+## 快速安装
 
 ### 前置要求
 
 - Python 3.12+
-- uv 包管理器
-- Trae Work IDE
+- [uv 包管理器](https://docs.astral.sh/uv/)（Windows: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`）
+- Trae IDE CN
 
 ### 安装步骤
 
-#### 1. 克隆项目
+#### 1. 下载并解压
 
-```bash
-git clone https://github.com/yecllsl/deep-review.git
-cd deep-review
-```
+下载 `DeepReview-v0.1.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
 
-#### 2. 安装依赖
+#### 2. 运行安装脚本
 
+**Windows:**
 ```powershell
-cd deep-review-mcp
-uv venv
-uv pip install -e .
+# 右键 install.ps1 → "使用 PowerShell 运行"
+# 或在 PowerShell 中：
+.\install.ps1
 ```
 
-#### 3. 配置 Trae Work
+**Linux / macOS:**
+```bash
+chmod +x install.sh
+./install.sh
+```
 
-1. 打开 Trae Work
-2. 进入 **设置 → MCP配置**
-3. 点击 **添加MCP服务器**
-4. 填写配置：
+安装脚本会自动检查环境、创建虚拟环境并安装所有依赖。
 
-| 字段 | 值 |
-|------|-----|
-| 服务器名称 | `deep-review-mcp` |
-| 命令 | `uv` |
-| 参数 | `run deep-review-mcp` |
-| 工作目录 | `你的项目路径\deep-review-mcp` |
+> ⏱️ 首次安装需要下载 PaddleOCR 模型，可能需要 2-5 分钟。
 
-#### 4. 启动 Web 可视化界面（可选）
+#### 3. 在 Trae IDE 中配置
+
+1. 用 Trae IDE 打开解压后的文件夹
+2. 进入 **设置 → MCP**
+3. 打开 **"启用项目级 MCP"** 开关
+4. 重启 Trae
+
+> 💡 项目级 MCP 配置已内置于 `.trae/mcp.json`，使用 `${workspaceFolder}` 变量自动适配路径，无需手动填写。
+
+#### 4. 开始使用
+
+```
+/capture  - 采集新错题
+/analyze  - 分析错题原因
+/review   - 生成复习计划
+/stats    - 查看错题统计
+```
+
+### 可选：启动 Web 可视化界面
 
 ```powershell
 cd deep-review-mcp
@@ -148,17 +160,10 @@ deep-review/
 │   │       └── static/        # 静态资源（HTMX/Alpine/ECharts 本地化）
 │   ├── data/                   # 运行时数据
 │   │   └── wrong_questions/    # 错题 JSON 文件
-│   ├── tests/                  # 测试套件（单元/集成/E2E）
 │   └── pyproject.toml          # Python 项目配置
 │
-├── docs/                        # 设计文档与实施计划
-│   └── superpowers/
-│       ├── specs/               # 设计文档
-│       └── plans/               # 实施计划
-│
 ├── .trae/                       # Trae 配置与 Skills/Rules 源文件
-│   ├── mcp-servers/
-│   │   └── deep-review-mcp/
+│   ├── mcp.json                 # 项目级 MCP 配置（自动路径适配）
 │   ├── skills/                  # Skills 源文件
 │   │   ├── wrong-question-capture/
 │   │   ├── wrong-question-analyze/
@@ -171,6 +176,8 @@ deep-review/
 │       ├── data-safety-rules.md
 │       └── interaction-rules.md
 │
+├── scripts/                     # 开发者工具
+│   └── build-release.ps1        # 发布包构建脚本
 ├── install.ps1                  # Windows 安装脚本
 ├── install.sh                   # Linux/macOS 安装脚本
 └── README.md
@@ -217,6 +224,30 @@ Web 可视化模块位于 `deep-review-mcp/src/deep_review_mcp/web/`，提供本
 - ✅ 不收集任何个人身份信息
 - ✅ 图片文件存储在项目目录下
 - ✅ Web 可视化仅绑定 127.0.0.1，JS 库本地化，无外部请求
+
+## 常见问题
+
+### Q: 安装脚本报错 "uv 未安装"
+
+```powershell
+# 安装 uv (Windows)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# 安装 uv (Linux/macOS)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### Q: MCP Server 不生效
+
+1. 确认已在 Trae 中打开 **"启用项目级 MCP"** 开关
+2. 确认已重启 Trae
+3. 如果 `${workspaceFolder}` 变量不被支持，运行 `.\install.ps1 -FixPath` 自动修复路径
+
+### Q: PaddleOCR 安装失败
+
+- 确认 Python 版本 >= 3.12
+- 确认网络畅通（需下载模型文件）
+- 手动安装：`cd deep-review-mcp && uv sync`
 
 ## License
 

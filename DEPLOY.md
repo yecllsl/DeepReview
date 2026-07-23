@@ -5,56 +5,94 @@
 ### Windows 用户
 
 ```powershell
-# 1. 克隆项目
-git clone https://github.com/yecllsl/deep-review.git
-cd deep-review
+# 1. 解压 DeepReview-v0.1.0.zip 到任意目录（如 D:\DeepReview\）
 
 # 2. 运行安装脚本
 .\install.ps1
 
-# 3. 在 Trae Work 中配置 MCP
-# 设置 → MCP配置 → 添加MCP服务器 → 从文件导入
-# 选择: .trae/mcp-servers/deep-review-mcp/SERVER_METADATA.json
+# 3. 用 Trae IDE 打开文件夹
+# 4. 设置 → MCP → 启用项目级 MCP
+# 5. 重启 Trae
 ```
 
 ### Linux / macOS 用户
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/yecllsl/deep-review.git
-cd deep-review
+# 1. 解压 DeepReview-v0.1.0.zip 到任意目录
 
-# 2. 添加执行权限并运行安装脚本
+# 2. 运行安装脚本
 chmod +x install.sh
 ./install.sh
 
-# 3. 在 Trae Work 中配置 MCP
-# 设置 → MCP配置 → 添加MCP服务器 → 从文件导入
-# 选择: .trae/mcp-servers/deep-review-mcp/SERVER_METADATA.json
+# 3. 用 Trae IDE 打开文件夹
+# 4. 设置 → MCP → 启用项目级 MCP
+# 5. 重启 Trae
 ```
 
-## Trae Work 配置详解
+## 环境要求
 
-### 方法一：从文件导入 (推荐)
+| 依赖 | 最低版本 | 安装方式 |
+|------|---------|---------|
+| Python | 3.12+ | https://www.python.org/downloads/ |
+| uv | 最新版 | Windows: `irm https://astral.sh/uv/install.ps1 \| iex` |
+| | | Linux/macOS: `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| Trae IDE CN | 最新版 | https://trae.com.cn |
 
-1. 打开 Trae Work IDE
-2. 进入 **设置** (齿轮图标)
-3. 找到 **MCP配置** 选项
-4. 点击 **添加MCP服务器**
-5. 选择 **从文件导入**
-6. 选择 `SERVER_METADATA.json` 文件
+## Trae IDE 配置详解
 
-### 方法二：手动配置
+### 项目级 MCP（推荐）
 
-如果导入失败，可以手动填写：
+项目级 MCP 配置已内置于 `.trae/mcp.json`，使用 `${workspaceFolder}` 变量自动适配路径，无需手动填写。
+
+**启用步骤：**
+
+1. 打开 Trae IDE
+2. 进入 **设置** (齿轮图标) → **MCP**
+3. 打开 **"启用项目级 MCP"** 开关
+4. 在弹窗中确认信任
+5. 重启 Trae
+
+**mcp.json 配置内容：**
+
+```json
+{
+  "mcpServers": {
+    "deep-review-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${workspaceFolder}/deep-review-mcp",
+        "deep-review-mcp"
+      ]
+    }
+  }
+}
+```
+
+`${workspaceFolder}` 会在 MCP Server 启动时自动替换为项目根目录路径，因此解压到任意位置都能正常工作。
+
+### 手动配置（回退方案）
+
+如果你的 Trae 版本不支持 `${workspaceFolder}` 变量，可以运行安装脚本的路径修复功能：
+
+```powershell
+# Windows
+.\install.ps1 -FixPath
+
+# Linux/macOS
+./install.sh --fix-path
+```
+
+这会自动将 mcp.json 中的变量替换为实际路径。
+
+也可以手动在 Trae 中添加 MCP 服务器：
 
 | 字段 | 值 |
 |------|-----|
 | 服务器名称 | `deep-review-mcp` |
 | 命令 | `uv` |
-| 参数 | `run deep-review-mcp` |
-| 工作目录 | `项目路径\deep-review-mcp` |
-| 传输方式 | `stdio` |
+| 参数 | `run --directory 你的项目路径/deep-review-mcp deep-review-mcp` |
 
 ### 验证配置
 
@@ -65,23 +103,11 @@ cd deep-review-mcp
 uv run deep-review-mcp
 ```
 
-如果看到类似输出，说明配置成功：
-```
-Starting DeepReview MCP Server...
-Tools registered: 11
-Server ready.
-```
+如果 MCP Server 正常启动，说明配置成功。
 
 ## Skills 和 Rules 配置
 
-Skills 和 Rules 配置位于 `.trae/` 目录下，是 Trae Work 实际读取的配置源，修改后重启 Trae Work 即可生效。
-
-### 配置目录结构
-
-```
-.trae/skills/     → 5 个 Skill 流程定义
-.trae/rules/      → 4 个 Rules 约束定义
-```
+Skills 和 Rules 配置位于 `.trae/` 目录下，Trae 会自动读取，修改后重启 Trae 即可生效。
 
 ### Skills 说明
 
@@ -102,6 +128,24 @@ Skills 和 Rules 配置位于 `.trae/` 目录下，是 Trae Work 实际读取的
 | data-safety-rules | 全局 | 数据安全与隐私保护 |
 | interaction-rules | 全局 | 交互行为规范 |
 
+## Web 可视化界面
+
+### 启动
+
+```powershell
+cd deep-review-mcp
+uv run deep-review-web
+```
+
+浏览器访问 http://127.0.0.1:8001
+
+### 四大页面
+
+1. **概览 Dashboard**：错题总数、今日待复习、本周新增、学科分布、错误类型分布、30天趋势
+2. **错题列表与详情**：筛选查看、编辑保存（支持 HTMX 局部更新）
+3. **统计图表**：知识点热力图、难度分布、错误类型雷达、时间趋势
+4. **复习追踪**：待复习清单、复习日历、遗忘曲线、学科复习进度
+
 ## 常见问题
 
 ### Q1: 安装脚本报错 "uv 未安装"
@@ -119,25 +163,25 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 **检查项：**
 1. Python 版本是否 >= 3.12
-2. 依赖是否安装成功
-3. 工作目录是否正确
+2. 依赖是否安装成功（运行 `cd deep-review-mcp && uv sync`）
+3. mcp.json 中的路径是否正确
 
 **解决方案：**
 ```powershell
 cd deep-review-mcp
-uv pip install -e .
+uv sync
 ```
 
 ### Q3: Trae 无法识别 MCP Server
 
 **检查项：**
-1. SERVER_METADATA.json 是否在正确位置
-2. 工作目录路径是否包含中文字符（可能导致问题）
-3. uv 命令是否在系统 PATH 中
+1. 是否已启用项目级 MCP
+2. `.trae/mcp.json` 文件是否存在
+3. 是否已重启 Trae
 
 **解决方案：**
-- 尝试方法二：手动配置
-- 确保工作目录使用英文路径
+- 运行 `.\install.ps1 -FixPath` 修复路径
+- 或手动在 Trae 中添加 MCP 服务器
 
 ### Q4: Skills/Commands 不生效
 
@@ -147,8 +191,18 @@ uv pip install -e .
 3. Trae 是否重启
 
 **解决方案：**
-- 重启 Trae Work IDE
+- 重启 Trae IDE
 - 检查 .trae 目录结构是否完整
+
+### Q5: PaddleOCR 安装失败
+
+**检查项：**
+1. Python 版本是否 >= 3.12
+2. 网络是否畅通（需下载模型文件）
+
+**解决方案：**
+- 确保网络畅通后重新运行 `uv sync`
+- OCR 有降级方案：可手动输入题目内容
 
 ## 项目结构说明
 
@@ -161,102 +215,19 @@ deep-review/
 │   │   ├── storage.py         # JSON 文件存储
 │   │   ├── knowledge_map.py   # K12 知识点映射
 │   │   ├── tools/             # MCP Tools 实现 (11 个)
-│   │   │   ├── ocr_recognize.py
-│   │   │   ├── classify.py
-│   │   │   ├── analyze.py
-│   │   │   ├── improvement.py
-│   │   │   ├── review.py
-│   │   │   ├── statistics.py
-│   │   │   ├── export.py
-│   │   │   └── crud.py
-│   │   └── prompts/           # AI Prompt 模板
-│   │       ├── structure_parse.py
-│   │       ├── classify_prompt.py
-│   │       ├── analyze_prompt.py
-│   │       └── improvement_prompt.py
+│   │   └── web/               # Web 可视化模块
 │   ├── data/                   # 数据存储目录 (运行时)
-│   │   ├── wrong_questions/   # 错题 JSON 文件
-│   │   ├── analysis_reports/  # 分析报告
-│   │   └── review_plans/      # 复习计划
-│   ├── tests/                  # 单元测试
 │   ├── pyproject.toml          # Python 项目配置
 │   └── uv.lock                 # 依赖锁定文件
 │
-├── docs/                        # 设计文档与实施计划
-│   └── superpowers/
-│       ├── specs/               # 设计文档
-│       └── plans/               # 实施计划
-│
 ├── .trae/                       # Trae 配置与 Skills/Rules 源文件
-│   ├── mcp-servers/
-│   │   └── deep-review-mcp/
-│   │       ├── SERVER_METADATA.json
-│   │       └── tools/          # 工具元数据
-│   ├── skills/                 # Skills 源文件（单一真相源）
-│   │   ├── wrong-question-capture/
-│   │   ├── wrong-question-analyze/
-│   │   ├── review-plan-generate/
-│   │   ├── wrong-question-stats/
-│   │   └── wrong-question-batch-capture/
-│   └── rules/                  # Rules 源文件（单一真相源）
-│       ├── classification-rules.md
-│       ├── analysis-rules.md
-│       ├── data-safety-rules.md
-│       └── interaction-rules.md
+│   ├── mcp.json                 # 项目级 MCP 配置
+│   ├── skills/                  # Skills 源文件
+│   └── rules/                   # Rules 源文件
 │
-├── README.md                    # 项目说明
-├── DEPLOY.md                    # 本部署指南
+├── scripts/                     # 开发者工具
+│   └── build-release.ps1        # 发布包构建脚本
 ├── install.ps1                  # Windows 安装脚本
-└── install.sh                   # Linux/macOS 安装脚本
+├── install.sh                   # Linux/macOS 安装脚本
+└── README.md
 ```
-
-## 架构设计原则
-
-### 为什么 Skills/Rules 配置放在 `.trae/` 下？
-
-| 设计决策 | 原因 |
-|---------|------|
-| **服务层独立** | `deep-review-mcp/` 是纯 Python MCP Server，通用，可独立发布到 PyPI |
-| **配置单一真相源** | Skills/Rules 配置直接在 `.trae/` 下编辑，Trae Work 直接读取，无需同步步骤 |
-| **结构清晰** | 项目根目录只保留核心代码和文档，Trae 专有配置集中在 `.trae/` 下 |
-
-### 编辑哪个文件？
-
-| 要修改的内容 | 编辑位置 | 说明 |
-|------------|---------|------|
-| Skills 流程 | `.trae/skills/` | 修改后重启 Trae Work 生效 |
-| Rules 约束 | `.trae/rules/` | 修改后重启 Trae Work 生效 |
-| MCP Tools 功能 | `deep-review-mcp/src/` | 修改后重新运行 `uv pip install -e .` |
-| MCP 配置 | `.trae/mcp-servers/` | 安装脚本自动生成，一般无需手动编辑 |
-
-## 更新项目
-
-```powershell
-# 拉取最新代码
-git pull origin main
-
-# 重新安装依赖
-cd deep-review-mcp
-uv pip install -e .
-
-# 重启 Trae Work
-```
-
-## 卸载
-
-```powershell
-# 删除项目目录
-rm -rf deep-review
-
-# 从 Trae 中移除 MCP Server
-# 设置 → MCP配置 → 删除 deep-review-mcp
-
-# 删除 Skills 和 Rules (如果不再需要)
-rm -rf 您的项目/.trae/skills/*
-rm -rf 您的项目/.trae/rules/*
-```
-
-## 技术支持
-
-- 提交 Issue: https://github.com/yecllsl/deep-review/issues
-- 查看文档: https://github.com/yecllsl/deep-review#readme
