@@ -28,7 +28,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="DeepReview 可视化",
         description="K12错题数据本地可视化应用",
-        version="0.1.0",
+        version="0.2.0",
     )
 
     # 挂载静态文件（JS库、CSS）
