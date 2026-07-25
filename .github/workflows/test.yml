@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   # ──────────────────────────────────────────
@@ -60,7 +60,7 @@ jobs:
 
   # ──────────────────────────────────────────
   # E2E 测试 (Playwright + 真实浏览器)
-  # 仅在 push 到 master/develop 时跑，避免 PR 上耗时过长
+  # 仅在 push 到 main/develop 时跑，避免 PR 上耗时过长
   # ──────────────────────────────────────────
   e2e-tests:
     name: E2E (${{ matrix.python-version }})
