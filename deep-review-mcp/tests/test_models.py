@@ -3,7 +3,7 @@ import pytest
 from datetime import datetime, timezone
 from deep_review_mcp.models import (
     StructuredQuestion, Classification, Analysis, Improvement,
-    WrongQuestion, ReviewPlan, ReviewScheduleItem,
+    WrongQuestion,
 )
 
 
@@ -51,24 +51,3 @@ def test_wrong_question_full():
     )
     assert wq.structured.subject == "数学"
     assert wq.classification.error_type == "知识漏洞"
-
-
-def test_review_schedule_item():
-    item = ReviewScheduleItem(
-        date="2026-06-17", question_ids=["wq_001", "wq_002"],
-        subject="数学", estimated_minutes=30,
-    )
-    assert item.estimated_minutes == 30
-
-
-def test_review_plan():
-    plan = ReviewPlan(
-        plan_id="rp_20260615_001",
-        created_at=datetime.now(timezone.utc),
-        priority_topics=["一元二次方程", "因式分解"],
-        schedule=[ReviewScheduleItem(
-            date="2026-06-17", question_ids=["wq_001"],
-            subject="数学", estimated_minutes=20,
-        )],
-    )
-    assert len(plan.schedule) == 1

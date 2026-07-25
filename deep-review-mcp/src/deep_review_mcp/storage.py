@@ -6,28 +6,15 @@
 """
 import json
 import os
-from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional
 
-from deep_review_mcp.models import WrongQuestion, ReviewPlan
+from deep_review_mcp.models import WrongQuestion
 
 # DEPRECATED: 复习调度已改用 FSRS v6（见 tools/fsrs_scheduler.py）。
 # 此列表仅保留用于 review.html 遗忘曲线 UI 展示，不再参与实际调度计算。
 # 定义在此处避免 storage ↔ review 循环导入
 REVIEW_INTERVALS = [1, 3, 7, 14, 30]
-
-
-def _calculate_next_review_interval(review_count: int) -> int:
-    """根据复习次数返回下次复习间隔天数（艾宾浩斯遗忘曲线）
-
-    Args:
-        review_count: 已复习次数
-
-    Returns:
-        下次复习的间隔天数
-    """
-    return REVIEW_INTERVALS[review_count] if review_count < len(REVIEW_INTERVALS) else 30
 
 
 class Storage:
@@ -37,7 +24,6 @@ class Storage:
         base_dir/
         ├── wrong_questions/    # 错题JSON文件
         ├── analysis_reports/  # 分析报告
-        ├── review_plans/      # 复习计划JSON文件
         ├── review_logs.jsonl  # FSRS ReviewLog 日志（按 question_id 索引，每条一行）
         └── fsrs_params.json   # FSRS 个性化参数持久化（UI 触发优化后保存）
     """
@@ -46,7 +32,6 @@ class Storage:
         self.base_dir = base_dir
         self.questions_dir = base_dir / "wrong_questions"
         self.reports_dir = base_dir / "analysis_reports"
-        self.plans_dir = base_dir / "review_plans"
         # FSRS ReviewLog 日志文件：所有错题的复习记录都追加到同一文件
         # jsonl 格式（每行一个 JSON），按 question_id 索引查询
         # 数据源用于未来 Optimizer 计算个性化 21 参数（积累 1000+ 记录后启用）
@@ -55,7 +40,7 @@ class Storage:
         # 启动时 fsrs_scheduler.load_persisted_parameters 自动加载
         self.fsrs_params_file = base_dir / "fsrs_params.json"
         # 确保所有子目录存在（review_logs.jsonl 和 fsrs_params.json 是文件，无需 mkdir）
-        for d in [self.questions_dir, self.reports_dir, self.plans_dir]:
+        for d in [self.questions_dir, self.reports_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
     # ──────────────────────────────────────────
@@ -190,8 +175,6 @@ class Storage:
             rating: 1-4 评分（冗余字段，便于直接查询统计）
             reviewed_at: ISO 时间戳（冗余字段，便于按时间排序）
         """
-        import json as _json
-
         # 组装一条日志记录：review_log 作为嵌套字符串保留原始 FSRS 数据
         record = {
             "question_id": question_id,
@@ -200,7 +183,7 @@ class Storage:
             "review_log": review_log_json,
         }
         # ensure_ascii=False 保留中文（若有），separators 紧凑输出
-        line = _json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+        line = json.dumps(record, ensure_ascii=False, separators=(",", ":"))
 
         # 追加模式：文件不存在时自动创建，存在时在末尾追加
         # 单条 write + 换行，单进程下原子性足够
@@ -219,17 +202,16 @@ class Storage:
         """
         if not self.review_logs_file.exists():
             return []
-        import json as _json
 
         records = []
         for line in self.review_logs_file.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
             try:
-                rec = _json.loads(line)
+                rec = json.loads(line)
                 if rec.get("question_id") == question_id:
                     records.append(rec)
-            except _json.JSONDecodeError:
+            except json.JSONDecodeError:
                 # 跳过损坏行（部分写入等异常情况），不中断查询
                 continue
         # 按时间升序排列
@@ -245,15 +227,14 @@ class Storage:
         """
         if not self.review_logs_file.exists():
             return []
-        import json as _json
 
         records = []
         for line in self.review_logs_file.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
             try:
-                records.append(_json.loads(line))
-            except _json.JSONDecodeError:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
                 # 跳过损坏行，保证 Optimizer 数据获取不被中断
                 continue
         return records
@@ -314,26 +295,6 @@ class Storage:
             if dr.get("end") and created > dr["end"]:
                 return False
         return True
-
-    # ──────────────────────────────────────────
-    # 复习计划 CRUD
-    # ──────────────────────────────────────────
-
-    def save_review_plan(self, plan: ReviewPlan) -> dict:
-        """保存复习计划到JSON文件"""
-        fp = self.plans_dir / f"{plan.plan_id}.json"
-        fp.write_text(
-            plan.model_dump_json(indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-        return {"plan_id": plan.plan_id, "saved_path": str(fp)}
-
-    def load_review_plan(self, plan_id: str) -> Optional[ReviewPlan]:
-        """根据ID加载复习计划，不存在则返回None"""
-        fp = self.plans_dir / f"{plan_id}.json"
-        if not fp.exists():
-            return None
-        return ReviewPlan.model_validate(json.loads(fp.read_text(encoding="utf-8")))
 
     # ──────────────────────────────────────────
     # 统计辅助

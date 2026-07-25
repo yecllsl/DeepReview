@@ -5,27 +5,6 @@ from deep_review_mcp.knowledge_map import SUBJECTS, ERROR_TYPES, DIFFICULTY_LEVE
 from deep_review_mcp.prompts.classify_prompt import CLASSIFY_PROMPT
 
 
-def _validate_classification(subject: str, error_type: str, difficulty: str) -> dict:
-    """校验分类结果是否合法
-
-    Args:
-        subject: 学科名称
-        error_type: 错误类型
-        difficulty: 难度等级
-
-    Returns:
-        包含 valid 布尔值和 errors 字典的校验结果
-    """
-    errors = {}
-    if subject not in SUBJECTS:
-        errors["subject"] = f"学科必须是{SUBJECTS}之一"
-    if error_type not in ERROR_TYPES:
-        errors["error_type"] = f"错误类型必须是{ERROR_TYPES}之一"
-    if difficulty not in DIFFICULTY_LEVELS:
-        errors["difficulty"] = f"难度必须是{DIFFICULTY_LEVELS}之一"
-    return {"valid": len(errors) == 0, "errors": errors}
-
-
 def classify_question(question_text: str, subject: str = "") -> dict:
     """对错题进行智能分类，返回分类提示词和可用分类选项
 

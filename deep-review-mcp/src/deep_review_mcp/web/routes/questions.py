@@ -7,7 +7,6 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 
 from deep_review_mcp.web.app import templates
 from deep_review_mcp.web import services

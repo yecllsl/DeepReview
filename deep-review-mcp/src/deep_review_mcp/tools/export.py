@@ -6,15 +6,15 @@
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from deep_review_mcp.tools.crud import get_storage
-
-# 默认数据目录：项目根目录下的 data/ 文件夹
-_DEFAULT_DATA_DIR = Path(__file__).parent.parent.parent.parent / "data"
 
 
 def _json_default(obj):
-    """JSON序列化自定义处理：datetime转为ISO格式字符串"""
+    """JSON序列化自定义处理：datetime转为ISO格式字符串
+
+    query_wrong_questions 返回 model_dump() 后的 dict，
+    其中 created_at 仍为 datetime 对象，json.dumps 需要此 handler 序列化。
+    """
     if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
@@ -33,7 +33,8 @@ def export_data(format: str = "json", filters: dict = None) -> dict:
     storage = get_storage()
     questions = storage.query_wrong_questions(filters=filters or {})["questions"]
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    export_dir = _DEFAULT_DATA_DIR / "exports"
+    # 复用 storage.base_dir 避免重复定义数据目录
+    export_dir = storage.base_dir / "exports"
     export_dir.mkdir(parents=True, exist_ok=True)
 
     if format == "markdown":

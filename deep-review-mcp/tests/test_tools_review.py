@@ -1,7 +1,7 @@
 # tests/test_tools_review.py
 import pytest
 from datetime import datetime, timezone, timedelta
-from deep_review_mcp.tools.review import recommend_review, _calculate_next_review_date, _get_overdue_questions
+from deep_review_mcp.tools.review import recommend_review, _get_overdue_questions
 from deep_review_mcp.storage import Storage
 from deep_review_mcp.models import WrongQuestion, StructuredQuestion, Improvement
 
@@ -20,14 +20,6 @@ def storage_with_overdue(tmp_path):
                 review_count=cnt, next_review_date=nr),
         ))
     return s
-
-
-def test_intervals():
-    assert _calculate_next_review_date(0) == 1
-    assert _calculate_next_review_date(1) == 3
-    assert _calculate_next_review_date(2) == 7
-    assert _calculate_next_review_date(3) == 14
-    assert _calculate_next_review_date(4) == 30
 
 
 def test_overdue(storage_with_overdue):

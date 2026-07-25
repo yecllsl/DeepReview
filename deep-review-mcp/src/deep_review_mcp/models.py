@@ -1,8 +1,7 @@
 # src/deep_review_mcp/models.py
 """数据模型定义 - K12错题收集与智能分析系统的核心数据结构
 
-包含: StructuredQuestion, Classification, Analysis, Improvement,
-      WrongQuestion, ReviewScheduleItem, ReviewPlan, QueryFilters, StatisticsResult
+包含: StructuredQuestion, Classification, Analysis, Improvement, WrongQuestion
 """
 from __future__ import annotations
 
@@ -67,34 +66,3 @@ class WrongQuestion(BaseModel):
     improvement: Optional[Improvement] = Field(default=None)
     user_answer: Optional[str] = Field(default=None)
     correct_answer: Optional[str] = Field(default=None)
-
-
-class ReviewScheduleItem(BaseModel):
-    """复习计划条目"""
-    date: str = Field(description="复习日期")
-    question_ids: list[str] = Field(description="错题ID列表")
-    subject: str = Field(description="学科")
-    estimated_minutes: int = Field(description="预计时长(分钟)")
-
-
-class ReviewPlan(BaseModel):
-    """复习计划"""
-    plan_id: str = Field(description="计划ID")
-    created_at: datetime = Field(description="创建时间")
-    priority_topics: list[str] = Field(description="优先复习知识点")
-    schedule: list[ReviewScheduleItem] = Field(description="每日安排")
-
-
-class QueryFilters(BaseModel):
-    """查询过滤条件"""
-    subject: Optional[str] = Field(default=None)
-    knowledge_point: Optional[str] = Field(default=None)
-    error_type: Optional[str] = Field(default=None)
-    date_range: Optional[dict[str, str]] = Field(default=None)
-
-
-class StatisticsResult(BaseModel):
-    """统计结果"""
-    group_by: str
-    items: list[dict]
-    total: int

@@ -32,14 +32,3 @@ KNOWLEDGE_MAP: dict[str, list[str]] = {
 
 def get_knowledge_points(subject: str) -> list[str]:
     return KNOWLEDGE_MAP.get(subject, [])
-
-
-def find_closest_knowledge_point(subject: str, text: str) -> str | None:
-    for point in get_knowledge_points(subject):
-        if point in text.lower() or text.lower() in point:
-            return point
-    return None
-
-
-def validate_subject(subject: str) -> bool:
-    return subject in SUBJECTS
