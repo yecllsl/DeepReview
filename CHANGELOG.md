@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-07-25
+
+### Changed
+
+- **死代码清理**（基于 ponytail-audit 全仓库扫描，13 项接受 / 1 项拒绝并修正原评审误判）
+  - 删除未使用的 `ReviewPlan`、`ReviewScheduleItem`、`QueryFilters`、`StatisticsResult` 模型
+  - 删除 `Storage.save_review_plan` / `load_review_plan` 方法（FSRS 已替代旧复习计划系统）
+  - 删除 `_calculate_next_review_interval` / `_calculate_next_review_date` 兼容别名（仅测试覆盖，业务无调用）；保留 `REVIEW_INTERVALS` 常量供遗忘曲线 UI 展示
+  - 删除 `_validate_classification`（仅测试覆盖，`classify_question` 业务函数不调用）
+  - 删除 `find_closest_knowledge_point` / `validate_subject`（无任何引用）
+  - 删除整个 `web/schemas.py`（`QuestionUpdateRequest` / `ReviewDoneResponse` 均无路由引用）
+  - 删除 `web/templates/errors.html`（无路由引用）
+- **简化重复代码**
+  - `export.py` 复用 `storage.base_dir`，删除重复的 `_DEFAULT_DATA_DIR` 定义
+  - `storage.py` 方法内 3 处 `import json as _json` 改用顶部已导入的 `json`
+  - 删除 `storage.py` 未使用的 `datetime` / `timezone` / `timedelta` 导入
+  - 删除 `web/routes/questions.py` 未使用的 `Jinja2Templates` 导入
+- **修正版本号不一致**：`__init__.py` 的 `__version__` 从 0.1.0 更新为 0.2.1
+
+### Fixed
+
+- 补充 `_json_default` 的 docstring 说明：明确 `model_dump()` 返回的 dict 中 `created_at` 仍为 datetime 对象，`json.dumps` 需要此 handler 序列化（原 ponytail-audit 误判为死代码，复核后拒绝删除）
+
+### Testing
+
+- 143 项测试全部通过（0.2.0 基线 149 项 − 6 项被删死测试 = 143 项，完全吻合）
+- MCP 工具注册验证：11 个 tool 全部可导入
+- Web 路由响应验证：10 个关键路由 TestClient 实测全部 2xx
+- FSRS 端到端工作流验证：4 档评分 + ReviewLog 持久化 + 查询
+- 数据安全规则检查：127.0.0.1 绑定、本地 PaddleOCR、本地存储、无 PII 字段
+
 ## [0.2.0] - 2026-07-25
 
 ### Added
