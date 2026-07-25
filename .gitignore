@@ -55,3 +55,6 @@ htmlcov/
 # Temporary
 *.tmp
 *.bak
+
+# 项目文档
+docs/

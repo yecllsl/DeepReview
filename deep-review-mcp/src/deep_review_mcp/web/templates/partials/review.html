@@ -19,12 +19,41 @@
                         · 已复习 {{ item.review_count }} 次
                     </div>
                 </div>
-                <button class="btn btn-success btn-sm"
-                        hx-post="/api/review/{{ item.question_id }}/done"
-                        hx-target="#content" hx-swap="innerHTML"
-                        onclick="showToast('已标记复习', 'success')">
-                    ✓ 完成
-                </button>
+                <div class="review-rating-buttons" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    {# FSRS 4 档评分：颜色由红→蓝表示掌握度递增，hx-vals 传递 rating 到后端 #}
+                    <button class="btn btn-sm" style="background:#dc2626;color:#fff;padding:4px 10px;"
+                            hx-post="/api/review/{{ item.question_id }}/done"
+                            hx-vals='{"rating": "1"}'
+                            hx-target="#content" hx-swap="innerHTML"
+                            onclick="showToast('已记录：忘记 · 将尽快复习', 'warning')"
+                            title="完全想不起来，FSRS 会重置稳定性">
+                        忘记
+                    </button>
+                    <button class="btn btn-sm" style="background:#f59e0b;color:#fff;padding:4px 10px;"
+                            hx-post="/api/review/{{ item.question_id }}/done"
+                            hx-vals='{"rating": "2"}'
+                            hx-target="#content" hx-swap="innerHTML"
+                            onclick="showToast('已记录：吃力', 'info')"
+                            title="想起得很艰难，间隔增长变慢">
+                        吃力
+                    </button>
+                    <button class="btn btn-sm" style="background:#16a34a;color:#fff;padding:4px 10px;"
+                            hx-post="/api/review/{{ item.question_id }}/done"
+                            hx-vals='{"rating": "3"}'
+                            hx-target="#content" hx-swap="innerHTML"
+                            onclick="showToast('已记录：顺利', 'success')"
+                            title="顺利想起，按 FSRS 标准间隔增长">
+                        顺利
+                    </button>
+                    <button class="btn btn-sm" style="background:#2563eb;color:#fff;padding:4px 10px;"
+                            hx-post="/api/review/{{ item.question_id }}/done"
+                            hx-vals='{"rating": "4"}'
+                            hx-target="#content" hx-swap="innerHTML"
+                            onclick="showToast('已记录：秒懂', 'success')"
+                            title="轻松秒懂，间隔加速增长">
+                        秒懂
+                    </button>
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -76,6 +105,53 @@
         {% endfor %}
     </div>
 
+    <!-- FSRS 参数优化面板（UI 主动触发个性化参数计算） -->
+    <div class="chart-container" style="margin-bottom: 24px;">
+        <div class="chart-title">FSRS 参数优化</div>
+
+        {# 当前调度器状态展示 #}
+        <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 14px; color: var(--text-muted);">当前调度器</span>
+                <span class="tag {{ 'subject-数学' if fsrs_status.current_scheduler.is_default else 'subject-英语' }}">
+                    {{ '默认 21 参数' if fsrs_status.current_scheduler.is_default else '个性化参数' }}
+                </span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 14px; color: var(--text-muted);">目标保持率</span>
+                <span style="font-size: 14px;">{{ fsrs_status.current_scheduler.desired_retention }}</span>
+            </div>
+            <div style="margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 13px; color: var(--text-muted);">复习记录积累（建议 1000+ 后优化）</span>
+                    <span style="font-size: 13px; color: var(--text-muted);">
+                        {{ fsrs_status.review_log_count }}/1000
+                    </span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (fsrs_status.progress * 100) | round(1) }}%"></div>
+                </div>
+            </div>
+            {% if fsrs_status.has_persisted_params %}
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                ℹ️ 已检测到持久化参数文件，启动时自动加载
+            </div>
+            {% endif %}
+        </div>
+
+        {# 操作按钮 #}
+        <div style="margin-bottom: 16px;">
+            <button id="fsrs-optimize-btn" class="btn btn-sm"
+                    style="background:#7c3aed;color:#fff;padding:6px 16px;"
+                    onclick="runFsrsOptimization()">
+                🔬 分析参数
+            </button>
+        </div>
+
+        {# 结果展示区（动态渲染） #}
+        <div id="fsrs-result-area"></div>
+    </div>
+
     <script>
         // 渲染遗忘曲线
         (function() {
@@ -99,5 +175,125 @@
             });
             window.addEventListener('resize', () => chart.resize());
         })();
+
+        // ── FSRS 参数优化交互 ──
+        // 触发参数优化计算（不应用，仅展示结果）
+        async function runFsrsOptimization() {
+            const btn = document.getElementById('fsrs-optimize-btn');
+            const area = document.getElementById('fsrs-result-area');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ 分析中...（可能需要 2-5 秒）';
+            area.innerHTML = '';
+
+            try {
+                const resp = await fetch('/api/fsrs/optimize', { method: 'POST' });
+                const data = await resp.json();
+                renderOptimizationResult(data);
+            } catch (e) {
+                area.innerHTML = `<div style="color:#dc2626;font-size:13px;">❌ 请求失败: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔬 分析参数';
+            }
+        }
+
+        // 渲染优化结果（成功/失败/警告）
+        function renderOptimizationResult(data) {
+            const area = document.getElementById('fsrs-result-area');
+
+            if (!data.success) {
+                area.innerHTML = `
+                    <div style="padding:12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px;">
+                        <div style="color:#dc2626;font-size:13px;font-weight:600;">❌ 分析失败</div>
+                        <div style="color:#dc2626;font-size:12px;margin-top:4px;">${data.error || '未知错误'}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 警告区块（数据量不足等）
+            const warningHtml = data.warning ? `
+                <div style="padding:8px;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:4px;margin-bottom:8px;">
+                    <span style="color:#b45309;font-size:12px;">⚠️ ${data.warning}</span>
+                </div>
+            ` : '';
+
+            // 参数转 JSON 字符串供 apply 按钮传参
+            const paramsJson = JSON.stringify(data.parameters);
+
+            area.innerHTML = `
+                ${warningHtml}
+                <div style="padding:12px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:4px;">
+                    <div style="color:#16a34a;font-size:13px;font-weight:600;margin-bottom:8px;">✅ 分析成功</div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">
+                        参与记录: ${data.review_log_count} 条
+                    </div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">
+                        优化后目标保持率: <strong>${data.desired_retention}</strong>
+                    </div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">
+                        参数数量: ${data.parameters.length} 个
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm"
+                                style="background:#16a34a;color:#fff;padding:4px 12px;"
+                                onclick='applyFsrsParameters(${paramsJson}, ${data.desired_retention})'>
+                            ✅ 应用参数
+                        </button>
+                        <button class="btn btn-sm"
+                                style="background:#6b7280;color:#fff;padding:4px 12px;"
+                                onclick="cancelFsrsOptimization()">
+                            取消
+                        </button>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+                        ℹ️ 应用后仅影响未来的复习调度，已存在的错题不重算
+                    </div>
+                </div>
+            `;
+        }
+
+        // 应用优化参数（用户确认后调用）
+        async function applyFsrsParameters(parameters, desiredRetention) {
+            if (!confirm('确认应用优化后的参数？\n\n这将替换当前调度器，仅影响未来的复习调度。')) {
+                return;
+            }
+
+            const area = document.getElementById('fsrs-result-area');
+            area.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">⏳ 应用中...</div>';
+
+            try {
+                const resp = await fetch('/api/fsrs/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parameters: parameters, desired_retention: desiredRetention }),
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showToast('✅ 参数已应用，下次启动自动加载', 'success');
+                    area.innerHTML = `
+                        <div style="padding:12px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:4px;">
+                            <div style="color:#16a34a;font-size:13px;font-weight:600;">✅ 参数应用成功</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
+                                新参数已生效，并持久化到本地。下次启动自动加载。
+                            </div>
+                        </div>
+                    `;
+                    // 刷新页面状态（更新当前调度器显示）
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error(data.error || '应用失败');
+                }
+            } catch (e) {
+                area.innerHTML = `<div style="color:#dc2626;font-size:13px;">❌ 应用失败: ${e.message}</div>`;
+            }
+        }
+
+        // 取消优化结果展示
+        function cancelFsrsOptimization() {
+            document.getElementById('fsrs-result-area').innerHTML = '';
+        }
     </script>
 </div>

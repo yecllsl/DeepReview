@@ -48,8 +48,11 @@ class Improvement(BaseModel):
     plan: str = Field(description="具体学习动作")
     similar_topics: list[str] = Field(description="同类题推荐方向")
     study_resources: list[str] = Field(default_factory=list, description="学习资源推荐")
-    review_count: int = Field(default=0, description="已复习次数")
-    next_review_date: Optional[str] = Field(default=None, description="下次复习日期")
+    review_count: int = Field(default=0, description="已复习次数（兼容字段，由 FSRS 调度驱动）")
+    next_review_date: Optional[str] = Field(default=None, description="下次复习日期（兼容字段，由 FSRS due 回填）")
+    # FSRS v6 Card 序列化状态（JSON 字符串），存放 due/stability/difficulty/state/step/last_review
+    # 为 None 表示尚未启用 FSRS 调度，首次 mark_reviewed 时自动初始化
+    fsrs_state: Optional[str] = Field(default=None, description="FSRS Card 序列化状态(JSON)")
 
 
 class WrongQuestion(BaseModel):

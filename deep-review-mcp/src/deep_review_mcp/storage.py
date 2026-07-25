@@ -12,7 +12,8 @@ from typing import Optional
 
 from deep_review_mcp.models import WrongQuestion, ReviewPlan
 
-# 艾宾浩斯遗忘曲线复习间隔（天）：第1次复习后1天，第2次3天，第3次7天，第4次14天，第5次30天
+# DEPRECATED: 复习调度已改用 FSRS v6（见 tools/fsrs_scheduler.py）。
+# 此列表仅保留用于 review.html 遗忘曲线 UI 展示，不再参与实际调度计算。
 # 定义在此处避免 storage ↔ review 循环导入
 REVIEW_INTERVALS = [1, 3, 7, 14, 30]
 
@@ -36,7 +37,9 @@ class Storage:
         base_dir/
         ├── wrong_questions/    # 错题JSON文件
         ├── analysis_reports/  # 分析报告
-        └── review_plans/      # 复习计划JSON文件
+        ├── review_plans/      # 复习计划JSON文件
+        ├── review_logs.jsonl  # FSRS ReviewLog 日志（按 question_id 索引，每条一行）
+        └── fsrs_params.json   # FSRS 个性化参数持久化（UI 触发优化后保存）
     """
 
     def __init__(self, base_dir: Path):
@@ -44,7 +47,14 @@ class Storage:
         self.questions_dir = base_dir / "wrong_questions"
         self.reports_dir = base_dir / "analysis_reports"
         self.plans_dir = base_dir / "review_plans"
-        # 确保所有子目录存在
+        # FSRS ReviewLog 日志文件：所有错题的复习记录都追加到同一文件
+        # jsonl 格式（每行一个 JSON），按 question_id 索引查询
+        # 数据源用于未来 Optimizer 计算个性化 21 参数（积累 1000+ 记录后启用）
+        self.review_logs_file = base_dir / "review_logs.jsonl"
+        # FSRS 个性化参数持久化文件：UI 触发优化并应用后保存
+        # 启动时 fsrs_scheduler.load_persisted_parameters 自动加载
+        self.fsrs_params_file = base_dir / "fsrs_params.json"
+        # 确保所有子目录存在（review_logs.jsonl 和 fsrs_params.json 是文件，无需 mkdir）
         for d in [self.questions_dir, self.reports_dir, self.plans_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
@@ -103,16 +113,22 @@ class Storage:
         self.save_wrong_question(updated)
         return updated
 
-    def mark_reviewed(self, question_id: str) -> Optional[WrongQuestion]:
-        """标记错题为已复习
+    def mark_reviewed(self, question_id: str, rating: int = 3) -> Optional[WrongQuestion]:
+        """标记错题为已复习，基于 FSRS 更新调度状态
 
-        递增 review_count，并根据艾宾浩斯遗忘曲线重算 next_review_date。
+        使用 FSRS v6 DSR 记忆模型替代固定艾宾浩斯查表：
+        根据用户评分（Again/Hard/Good/Easy）动态计算下次复习间隔，
+        并更新 Card 的 stability/difficulty/state。
+
+        同时将本次复习的 ReviewLog 追加到 review_logs.jsonl，
+        作为未来 Optimizer 计算个性化参数的数据源（积累 1000+ 后启用）。
 
         Args:
             question_id: 错题ID
+            rating: 1=Again 2=Hard 3=Good 4=Easy（默认 Good，向后兼容）
 
         Returns:
-            更新后的 WrongQuestion，若 ID 不存在返回 None
+            更新后的 WrongQuestion，若 ID 不存在或无 improvement 返回 None
         """
         existing = self.load_wrong_question(question_id)
         if existing is None:
@@ -122,16 +138,125 @@ class Storage:
         if existing.improvement is None:
             return None
 
-        new_count = existing.improvement.review_count + 1
-        interval_days = _calculate_next_review_interval(new_count - 1)
-        next_date = (datetime.now(timezone.utc) + timedelta(days=interval_days)).strftime("%Y-%m-%d")
+        # 局部导入避免 storage ↔ tools 循环依赖
+        from deep_review_mcp.tools.fsrs_scheduler import schedule_review
 
-        return self.patch_wrong_question(question_id, {
+        # 调用 FSRS 调度：老数据无 fsrs_state 时自动初始化新卡
+        result = schedule_review(existing.improvement.fsrs_state, rating)
+
+        updated = self.patch_wrong_question(question_id, {
             "improvement": {
-                "review_count": new_count,
-                "next_review_date": next_date,
+                "review_count": existing.improvement.review_count + 1,  # 兼容字段
+                "next_review_date": result["next_review_date"],         # 由 FSRS due 回填
+                "fsrs_state": result["fsrs_state"],                     # FSRS Card 真实状态
             }
         })
+
+        # 错题状态更新成功后，追加 ReviewLog 到日志文件
+        # 失败不回滚错题状态（错题调度已正确，日志缺失仅影响未来优化器精度）
+        if updated is not None:
+            try:
+                self.append_review_log(
+                    question_id=question_id,
+                    review_log_json=result["review_log"],
+                    rating=rating,
+                    reviewed_at=result["reviewed_at"],
+                )
+            except OSError as e:
+                # 文件写入失败：打印警告但不抛出，保证主流程可用
+                print(f"[storage] 追加 review_log 失败（不影响调度）: {e}")
+
+        return updated
+
+    # ──────────────────────────────────────────
+    # FSRS ReviewLog 日志（jsonl 追加写入）
+    # ──────────────────────────────────────────
+
+    def append_review_log(
+        self,
+        question_id: str,
+        review_log_json: str,
+        rating: int,
+        reviewed_at: str,
+    ) -> None:
+        """追加一条复习记录到 review_logs.jsonl
+
+        jsonl 格式：每行一个 JSON 对象，包含 question_id/rating/reviewed_at/review_log。
+        追加模式写入，单条 write 在单进程下原子，本地单用户场景足够安全。
+
+        Args:
+            question_id: 错题ID（主索引）
+            review_log_json: FSRS ReviewLog 的 JSON 字符串（来自 schedule_review）
+            rating: 1-4 评分（冗余字段，便于直接查询统计）
+            reviewed_at: ISO 时间戳（冗余字段，便于按时间排序）
+        """
+        import json as _json
+
+        # 组装一条日志记录：review_log 作为嵌套字符串保留原始 FSRS 数据
+        record = {
+            "question_id": question_id,
+            "rating": rating,
+            "reviewed_at": reviewed_at,
+            "review_log": review_log_json,
+        }
+        # ensure_ascii=False 保留中文（若有），separators 紧凑输出
+        line = _json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+
+        # 追加模式：文件不存在时自动创建，存在时在末尾追加
+        # 单条 write + 换行，单进程下原子性足够
+        with open(self.review_logs_file, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+
+    def list_review_logs(self, question_id: str) -> list[dict]:
+        """查询某错题的所有复习记录（按时间升序）
+
+        Args:
+            question_id: 错题ID
+
+        Returns:
+            复习记录列表，每条含 question_id/rating/reviewed_at/review_log；
+            文件不存在时返回空列表。
+        """
+        if not self.review_logs_file.exists():
+            return []
+        import json as _json
+
+        records = []
+        for line in self.review_logs_file.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rec = _json.loads(line)
+                if rec.get("question_id") == question_id:
+                    records.append(rec)
+            except _json.JSONDecodeError:
+                # 跳过损坏行（部分写入等异常情况），不中断查询
+                continue
+        # 按时间升序排列
+        records.sort(key=lambda x: x.get("reviewed_at", ""))
+        return records
+
+    def list_all_review_logs(self) -> list[dict]:
+        """查询全部复习记录（供 Optimizer 计算个性化参数用）
+
+        Returns:
+            全部复习记录列表，每条含 question_id/rating/reviewed_at/review_log；
+            文件不存在时返回空列表。
+        """
+        if not self.review_logs_file.exists():
+            return []
+        import json as _json
+
+        records = []
+        for line in self.review_logs_file.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                records.append(_json.loads(line))
+            except _json.JSONDecodeError:
+                # 跳过损坏行，保证 Optimizer 数据获取不被中断
+                continue
+        return records
 
     def delete_wrong_question(self, question_id: str) -> bool:
         """删除错题文件，返回是否删除成功"""

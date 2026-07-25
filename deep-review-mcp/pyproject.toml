@@ -10,6 +10,9 @@ dependencies = [
     "uvicorn>=0.30",
     "jinja2>=3.1",
     "python-multipart>=0.0.9",
+    # FSRS v6 间隔重复调度算法 — 替代固定艾宾浩斯查表，支持 4 档评分与 DSR 记忆模型
+    # [optimizer] 拉入 Optimizer 用于 UI 触发的个性化 21 参数计算（依赖 numpy/torch）
+    "fsrs[optimizer]>=6.0.0",
 ]
 
 [project.optional-dependencies]

@@ -208,13 +208,15 @@ def get_upcoming_reviews() -> list[dict]:
 # 标记复习
 # ──────────────────────────────────────────
 
-def mark_question_reviewed(question_id: str) -> Optional[dict]:
-    """标记错题为已复习
+def mark_question_reviewed(question_id: str, rating: int = 3) -> Optional[dict]:
+    """标记错题为已复习，基于 FSRS 调度
 
-    递增 review_count，重算 next_review_date。
+    Args:
+        question_id: 错题ID
+        rating: 1=Again 2=Hard 3=Good 4=Easy（默认 Good，向后兼容）
     """
     storage = _get_storage()
-    updated = storage.mark_reviewed(question_id)
+    updated = storage.mark_reviewed(question_id, rating)
     if updated is None or updated.improvement is None:
         return None
     return {
@@ -325,3 +327,77 @@ def get_filtered_questions(filters: dict) -> dict:
 def get_question_detail(question_id: str) -> Optional[WrongQuestion]:
     """获取单题详情"""
     return _get_storage().load_wrong_question(question_id)
+
+
+# ──────────────────────────────────────────
+# FSRS 参数优化（UI 主动触发）
+# ──────────────────────────────────────────
+
+def get_fsrs_optimization_status() -> dict:
+    """获取 FSRS 参数优化的当前状态（供 UI 展示）
+
+    返回：
+        - current_scheduler: 当前调度器信息（默认/个性化、目标保持率等）
+        - review_log_count: 已积累的 ReviewLog 数量
+        - progress: 进度比例（count/1000），用于 UI 进度条
+        - has_persisted_params: 是否有已持久化的优化参数
+    """
+    # 局部导入避免 services ↔ tools 循环依赖
+    from deep_review_mcp.tools.fsrs_scheduler import get_current_scheduler_info
+
+    storage = _get_storage()
+    all_logs = storage.list_all_review_logs()
+    scheduler_info = get_current_scheduler_info()
+
+    # 检查是否有持久化参数文件
+    has_persisted = storage.fsrs_params_file.exists()
+
+    return {
+        "current_scheduler": scheduler_info,
+        "review_log_count": len(all_logs),
+        "progress": round(len(all_logs) / 1000, 4),  # 0-1，UI 进度条用
+        "has_persisted_params": has_persisted,
+    }
+
+
+def run_fsrs_optimization() -> dict:
+    """触发 FSRS 参数优化计算（不应用，仅返回结果供 UI 展示）
+
+    Returns:
+        optimize_parameters 的返回结果，含 success/parameters/desired_retention/warning/error
+    """
+    from deep_review_mcp.tools.fsrs_scheduler import optimize_parameters
+
+    storage = _get_storage()
+    all_logs = storage.list_all_review_logs()
+    # 提取 review_log JSON 字符串列表
+    review_log_jsons = [log["review_log"] for log in all_logs]
+    return optimize_parameters(review_log_jsons)
+
+
+def apply_fsrs_parameters(parameters, desired_retention: float) -> dict:
+    """应用优化后的 FSRS 参数到全局调度器并持久化
+
+    UI 用户点击「应用参数」确认后调用。
+
+    Args:
+        parameters: 21 个参数的列表
+        desired_retention: 目标保持率
+
+    Returns:
+        {"success": bool, "error": str|None}
+    """
+    from deep_review_mcp.tools.fsrs_scheduler import (
+        apply_optimized_parameters,
+        save_persisted_parameters,
+    )
+
+    try:
+        # 1. 替换全局 _scheduler 单例
+        apply_optimized_parameters(parameters, desired_retention)
+        # 2. 持久化到 fsrs_params.json（下次启动自动加载）
+        storage = _get_storage()
+        save_persisted_parameters(storage.fsrs_params_file, parameters, desired_retention)
+        return {"success": True, "error": None}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
