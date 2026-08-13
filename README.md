@@ -1,6 +1,8 @@
 # DeepReview - K12错题收集与智能分析Agent
 
-基于 Trae IDE CN 平台的 K12 错题收集与智能分析解决方案，帮助学生通过拍照快速录入错题，AI 自动完成分类、原因分析、改进方案生成和复习推荐。提供本地 Web 可视化界面，直观展示错题分布、趋势和薄弱点。
+基于 Trae IDE CN / CodeBuddy / opencode / Goose / WorkBuddy / Hermes 多 Agent 运行时（harness）的 K12 错题收集与智能分析解决方案，帮助学生通过拍照快速录入错题，AI 自动完成分类、原因分析、改进方案生成和复习推荐。提供本地 Web 可视化界面，直观展示错题分布、趋势和薄弱点。
+
+> v0.3.0 起支持 **AAIF 规范**：`.agents/` 为配置层唯一真相源，多 harness 配置由 `scripts/sync-agent-configs` 单向同步生成。
 
 ## 核心功能
 
@@ -17,20 +19,24 @@
 ```
 用户交互层
 ├── 对话式交互 (命令/自然语言)
+├── 多运行时: Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes
 └── Web 可视化界面 (本地浏览器 http://127.0.0.1:8001)
     ↓
-Skills 编排层 (流程编排: capture / analyze / review / stats)
+Skills 编排层 (配置定义，由 .agents/skills/ 同步到多平台)
+├── 5 个 Skill: capture / batch-capture / analyze / review / stats
     ↓
-MCP Tools 层 (deep-review-mcp, 11 个 Tools)
-├── Web 可视化子模块 (FastAPI + HTMX + Alpine.js + ECharts)
+服务层 (deep-review-mcp)
+├── MCP Tools: 11 个 Tools
+└── Web 可视化子模块 (FastAPI + HTMX + Alpine.js + ECharts)
     ↓
-Rules 约束层 (分类/分析/安全/交互规则)
+规则层 (.agents/AGENTS.md — AAIF 统一规则源)
     ↓
 数据存储层 (本地JSON文件, 原子写入)
 ```
 
 ## 技术栈
 
+- **配置层**: AAIF 规范（`.agents/` 唯一真相源）+ 多 Agent harness（Trae/CodeBuddy/opencode/Goose + WorkBuddy/Hermes，单向同步）
 - **MCP Server**: Python 3.12+ / FastMCP
 - **Web 可视化**: FastAPI + HTMX（OOB 局部刷新）+ Alpine.js（轻量交互）+ ECharts（图表）
 - **OCR 引擎（可选）**: PaddleOCR（本地部署，无需 API Key；不安装也能用基础功能）
@@ -45,13 +51,13 @@ Rules 约束层 (分类/分析/安全/交互规则)
 
 - Python 3.12+
 - [uv 包管理器](https://docs.astral.sh/uv/)（Windows: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`）
-- Trae IDE CN
+- 任一 Agent 运行时：Trae IDE CN / CodeBuddy / opencode / Goose（WorkBuddy / Hermes 为个人级 harness，无需桌面 IDE）
 
 ### 安装步骤
 
 #### 1. 下载并解压
 
-下载 `DeepReview-v0.1.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
+下载 `DeepReview-v0.3.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
 
 #### 2. 运行安装脚本
 
@@ -72,22 +78,43 @@ chmod +x install.sh
 
 > ⏱️ 首次安装需要下载 PaddleOCR 模型，可能需要 2-5 分钟。
 
-#### 3. 在 Trae IDE 中配置
+#### 3. 配置 Agent 运行时（多 harness）
 
-1. 用 Trae IDE 打开解压后的文件夹
-2. 进入 **设置 → MCP**
-3. 打开 **"启用项目级 MCP"** 开关
-4. 重启 Trae
+安装脚本支持通过 `-AgentRuntime` 指定要配置的运行时：
 
-> 💡 项目级 MCP 配置已内置于 `.trae/mcp.json`，使用 `${workspaceFolder}` 变量自动适配路径，无需手动填写。
+```powershell
+# Windows：一次性配置全部（Trae/CodeBuddy/opencode/Goose + 个人级 WorkBuddy/Hermes）
+.\install.ps1 -AgentRuntime all
+
+# 或只配置单个运行时
+.\install.ps1 -AgentRuntime codebuddy
+.\install.ps1 -AgentRuntime goose
+.\install.ps1 -AgentRuntime workbuddy   # 个人级，写入 ~/.workbuddy
+```
+
+```bash
+# Linux/macOS
+./install.sh --agent-runtime all
+```
+
+四个项目级运行时的配置目录由 `scripts/sync-agent-configs` 从 `.agents/`（AAIF 唯一真相源）单向生成：
+
+| 运行时 | 配置目录 | 说明 |
+|--------|---------|------|
+| Trae IDE CN | `.trae/` | 设置 → MCP → 启用项目级 MCP |
+| CodeBuddy | `.codebuddy/` | 打开项目后信任 deep-review-mcp |
+| opencode | `.opencode/` | 项目目录运行 `opencode` 自动加载 |
+| Goose | `.goose/` | 打开项目自动读取 `config.yaml` |
 
 #### 4. 开始使用
 
 ```
-/capture  - 采集新错题
-/analyze  - 分析错题原因
-/review   - 生成复习计划
-/stats    - 查看错题统计
+/capture        - 采集新错题
+/batch-capture  - 批量采集错题
+/analyze        - 分析错题原因
+/review         - 生成复习计划
+/stats          - 查看错题统计
+/export         - 导出错题数据
 ```
 
 ### 可选：启动 Web 可视化界面
@@ -129,6 +156,7 @@ uv sync --extra ocr
 | 命令 | 功能 |
 |------|------|
 | `/capture` | 采集新错题 (拍照识别) |
+| `/batch-capture` | 批量采集错题（一次录入多道） |
 | `/analyze` | 分析错题原因 |
 | `/review` | 生成复习计划 |
 | `/stats` | 查看错题统计 |
@@ -155,8 +183,27 @@ uv sync --extra ocr
 ## 项目结构
 
 ```
-deep-review/
-├── deep-review-mcp/                       # 纯 MCP Server (通用服务层)
+DeepReview/
+├── .agents/                                # AAIF 唯一真相源（只改这里）
+│   ├── AGENTS.md                           # 统一规则层（4 个 rules 合并 + 架构/安全/开发规范/流程规则）
+│   ├── skills/                             # 5 个技能源文件（frontmatter 含 command:）
+│   │   ├── wrong-question-capture/         # /capture
+│   │   ├── wrong-question-batch-capture/   # /batch-capture
+│   │   ├── wrong-question-analyze/         # /analyze
+│   │   ├── review-plan-generate/           # /review
+│   │   └── wrong-question-stats/           # /stats
+│   ├── runtime/                            # 4 平台运行时配置（generate-platform-configs.py 生成）
+│   │   ├── trae.json / codebuddy.json / opencode.json / goose.json
+│   ├── tools.json                          # AAIF 声明：MCP 工具自省（生成产物，勿手改）
+│   ├── triggers.json                       # AAIF 声明：命令+对话触发器（生成产物）
+│   └── workflows.json                      # AAIF 声明：技能工作流（生成产物）
+├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 .agents/AGENTS.md）
+├── .opencode/                              # [生成] opencode 配置（opencode.json + skills + AGENTS.md）
+├── .codebuddy/                             # [生成] CodeBuddy 配置（memory/ 由运行时写入）
+├── .goose/                                 # [生成] Goose 配置（config.yaml + skills + AGENTS.md）
+├── .workbuddy/                             # 个人级 harness 说明（安装脚本写入 ~/.workbuddy）
+├── .hermes/                                # 个人级 harness 说明（安装脚本写入 ~/.hermes）
+├── deep-review-mcp/                        # 纯 MCP Server (通用服务层)
 │   ├── src/deep_review_mcp/
 │   │   ├── server.py                      # FastMCP 服务入口
 │   │   ├── models.py                      # Pydantic 数据模型
@@ -172,60 +219,22 @@ deep-review/
 │   │   │   ├── export.py
 │   │   │   └── crud.py
 │   │   ├── prompts/                       # AI Prompt 模板
-│   │   │   ├── structure_parse.py
-│   │   │   ├── classify_prompt.py
-│   │   │   ├── analyze_prompt.py
-│   │   │   └── improvement_prompt.py
 │   │   └── web/                           # Web 可视化模块（薄编排层）
-│   │       ├── app.py                     # FastAPI 应用工厂 + 入口
-│   │       ├── services.py                # Web 服务层（编排 storage/statistics/review）
-│   │       ├── schemas.py                 # Web 请求/响应模型
-│   │       ├── routes/                    # 路由模块（dashboard/questions/stats/review）
-│   │       ├── templates/                 # Jinja2 模板（base.html + partials）
-│   │       │   ├── base.html
-│   │       │   ├── errors.html
-│   │       │   └── partials/              # HTMX 片段模板（含 OOB swap）
-│   │       └── static/                    # 静态资源（HTMX/Alpine/ECharts 本地化）
 │   ├── tests/                             # 测试套件
-│   │   ├── test_models.py                 # Pydantic 模型
-│   │   ├── test_storage.py                # 存储层（含 patch 工具）
-│   │   ├── test_storage_patch.py          # 部分更新逻辑
-│   │   ├── test_tools_*.py                # 11 个 Tools 的单元测试
-│   │   ├── test_web_routes.py             # Web 路由测试
-│   │   ├── test_web_services.py           # Web 服务层测试
-│   │   └── test_e2e_visualization.py      # Playwright E2E（8 用例）
 │   ├── data/                              # 运行时数据（被 .gitignore）
-│   ├── pyproject.toml                     # Python 项目配置
+│   ├── pyproject.toml                     # Python 项目配置（version 0.3.0）
 │   └── uv.lock                            # 依赖锁定文件
-│
-├── .trae/                                  # Trae 配置与 Skills/Rules 源文件
-│   ├── mcp.json                            # 项目级 MCP 配置（自动路径适配）
-│   ├── hooks.json
-│   ├── skills/                             # Skills 源文件
-│   │   ├── wrong-question-capture/         # /capture
-│   │   ├── wrong-question-analyze/         # /analyze
-│   │   ├── review-plan-generate/           # /review
-│   │   ├── wrong-question-stats/           # /stats
-│   │   └── wrong-question-batch-capture/   # 批量采集
-│   └── rules/                              # Rules 源文件
-│       ├── classification-rules.md
-│       ├── analysis-rules.md
-│       ├── data-safety-rules.md
-│       └── interaction-rules.md
-│
-├── .github/
-│   └── workflows/
-│       ├── test.yml                        # CI：单元测试 + E2E（3.12/3.13）
-│       └── release.yml                     # Release：push tag → 自动打包 + 上传
-│
 ├── scripts/                                # 开发者工具
-│   ├── build-release.ps1                   # Windows 发布包构建（PowerShell）
-│   └── build-release.sh                    # Linux/macOS 发布包构建（bash，与 .ps1 逻辑对齐）
-├── install.ps1                             # Windows 安装脚本（可选装 OCR）
-├── install.sh                              # Linux/macOS 安装脚本（可选装 OCR）
-├── QUICKSTART.md                           # 5 分钟快速上手
-├── DEPLOY.md                               # 详细部署指南
-├── README.md                               # 本文件
+│   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明
+│   ├── generate-platform-configs.py        # 生成 .agents/runtime/ 4 平台 JSON
+│   ├── generate-goose-config.py            # goose.json → .goose/config.yaml
+│   ├── sync-agent-configs.ps1/.sh          # .agents/ 单向同步到 4 平台目录
+│   ├── pre-commit                          # git 钩子：拦截配置同步违规
+│   └── build-release.ps1/.sh               # 发布包构建
+├── AGENTS.md                               # [生成] 根规则文件（Trae 读取约定）
+├── install.ps1 / install.sh                # 安装脚本（-AgentRuntime/-FixPath，可选装 OCR）
+├── QUICKSTART.md / DEPLOY.md / README.md   # 文档
+├── CHANGELOG.md                            # 变更记录
 └── LICENSE                                 # MIT
 ```
 
@@ -233,20 +242,22 @@ deep-review/
 
 ### 分层分离原则
 
-本项目采用 **"服务层 + 配置层"** 分离架构：
+本项目采用 **"服务层 + 配置层 + 规则层"** 分离架构（对标 AAIF 规范）：
 
 | 层级 | 位置 | 用途 |
 |------|------|------|
 | **服务层** | `deep-review-mcp/` | 纯 Python MCP Server，通用，不绑定任何客户端，可独立发布 |
 | **Web 可视化层** | `deep-review-mcp/src/deep_review_mcp/web/` | 本地 Web 界面，FastAPI + HTMX + Alpine.js + ECharts |
-| **配置层** | `.trae/skills/`, `.trae/rules/` | Trae Work 专用配置，定义流程与约束（单一真相源） |
+| **配置层** | `.agents/`（唯一真相源） | AAIF 标准：AGENTS.md + skills/ + runtime/ + tools/triggers/workflows.json |
+| **生成产物** | `.trae/` `.opencode/` `.codebuddy/` `.goose/` | 由 `scripts/sync-agent-configs` 从 `.agents/` 单向同步生成（禁止直接编辑） |
+| **规则层** | `.agents/AGENTS.md` | 业务规则（采集/分类/分析/复习/交互/数据安全）统一约束 |
 
 ### 为什么要分离？
 
-1. **职责清晰**: 代码归代码，配置归配置
-2. **可复用**: `deep-review-mcp/` 可单独在其他 MCP 客户端（如 Cursor）中使用
-3. **单一真相源**: Skills/Rules 配置直接在 `.trae/` 下编辑，无需同步步骤
-4. **Git 友好**: 项目结构一目了然，`.trae/` 即 Trae 配置根目录
+1. **职责清晰**: 代码归代码，配置归配置，规则归规则
+2. **可复用**: `deep-review-mcp/` 可单独在其他 MCP 客户端中使用
+3. **AAIF 单一真相源**: 配置只在 `.agents/` 下编辑，4 个 harness 目录由同步脚本生成，杜绝配置漂移
+4. **机械防线**: `scripts/pre-commit` 钩子拦截「直接改生成目录而未同步 .agents/」的违规提交（`.codebuddy/memory/**` 例外）
 5. **可视化独立**: Web 模块作为薄编排层，复用现有 storage/statistics/review 逻辑
 
 ### Web 可视化模块
@@ -285,9 +296,9 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### Q: MCP Server 不生效
 
-1. 确认已在 Trae 中打开 **"启用项目级 MCP"** 开关
-2. 确认已重启 Trae
-3. 如果 `${workspaceFolder}` 变量不被支持，运行 `.\install.ps1 -FixPath` 自动修复路径
+1. 确认已在你的运行时中启用项目级 MCP（Trae：设置 → MCP → 启用项目级 MCP；CodeBuddy：打开项目后信任 deep-review-mcp；opencode/Goose：直接打开项目即可）
+2. 确认已重启运行时
+3. 如果 `${workspaceFolder}` 变量不被支持，运行 `.\install.ps1 -FixPath`（或 `./install.sh --fix-path`）自动修复路径
 
 ### Q: OCR / PaddleOCR 安装失败
 
@@ -326,15 +337,15 @@ uv run pytest tests/test_e2e_visualization.py -m e2e
 
 ```powershell
 # Windows
-pwsh .\scripts\build-release.ps1 -Version 0.2.0
+pwsh .\scripts\build-release.ps1 -Version 0.3.0
 ```
 
 ```bash
 # Linux / macOS
-bash scripts/build-release.sh 0.2.0
+bash scripts/build-release.sh 0.3.0
 ```
 
-产物：`dist/DeepReview-v0.2.0.{zip,tar.zst,tar.gz}`。
+产物：`dist/DeepReview-v0.3.0.{zip,tar.zst,tar.gz}`。
 
 ### CI/CD
 

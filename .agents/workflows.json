@@ -1,0 +1,52 @@
+{
+  "schema": "https://agents.aaif.io/schemas/workflows.json",
+  "workflows": [
+    {
+      "skill": "review-plan-generate",
+      "name": "review-plan-generate",
+      "command": "/review",
+      "tools": [
+        "recommend_review"
+      ]
+    },
+    {
+      "skill": "wrong-question-analyze",
+      "name": "wrong-question-analyze",
+      "command": "/analyze",
+      "tools": [
+        "analyze_error",
+        "generate_improvement",
+        "update_wrong_question"
+      ]
+    },
+    {
+      "skill": "wrong-question-batch-capture",
+      "name": "wrong-question-batch-capture",
+      "command": "/batch-capture",
+      "tools": [
+        "ocr_recognize",
+        "classify_question",
+        "save_wrong_question"
+      ]
+    },
+    {
+      "skill": "wrong-question-capture",
+      "name": "wrong-question-capture",
+      "command": "/capture",
+      "tools": [
+        "ocr_recognize",
+        "classify_question",
+        "save_wrong_question"
+      ]
+    },
+    {
+      "skill": "wrong-question-stats",
+      "name": "wrong-question-stats",
+      "command": "/stats",
+      "tools": [
+        "get_statistics",
+        "export_data"
+      ]
+    }
+  ]
+}

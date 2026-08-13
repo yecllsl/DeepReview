@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-13
+
+### Added
+
+- **AAIF 规范支持**：建立 `.agents/` 作为配置层唯一真相源（`AGENTS.md` 规则、`skills/` 技能、`runtime/` 平台运行时配置、`tools.json` / `triggers.json` / `workflows.json` 三个 AAIF 标准声明文件，由脚本自动生成）
+- **多 Agent harness 支持**：Trae / CodeBuddy / opencode / Goose 四个项目级 harness（`scripts/sync-agent-configs` 单向同步生成各自配置目录），WorkBuddy / Hermes 两个个人级 harness（安装脚本写入 `~/.workbuddy`、`~/.hermes`）
+- **脚本工具链**：`generate-aaif-declarations.py`（FastMCP 自省生成 AAIF 声明）、`generate-platform-configs.py`（生成 4 平台 runtime JSON）、`generate-goose-config.py`（goose.json → `.goose/config.yaml`，支持 `--no-resolve-dir` 发布版相对路径）、`sync-agent-configs.ps1/.sh`（单向同步）
+- **pre-commit 钩子**：拦截「直接修改生成目录而未同步 .agents/」的违规提交（`.codebuddy/memory/**` 例外）
+- **安装脚本增强**：`install.ps1` / `install.sh` 新增 `-AgentRuntime`（trae/codebuddy/opencode/goose/all/workbuddy/hermes）与 `-FixPath`（`${workspaceFolder}` → 绝对路径）参数；个人级 harness 采用符号链接、失败降级复制
+- **发布包增强**：打包清单加入 `.agents/`、`.goose/`、`.opencode/`、`.codebuddy/`、`.workbuddy/`、`.hermes/`、`scripts/` 同步工具链与根 `AGENTS.md`（带点前缀目录名）
+
+### Changed
+
+- **配置同步机制**：`.trae/`、`.opencode/`、`.codebuddy/`、`.goose/` 改为 `scripts/sync-agent-configs` 的生成产物，**禁止直接编辑**；唯一真相源为 `.agents/`
+- **4 个既有 rules 合并**进 `.agents/AGENTS.md`（classification / analysis / data-safety / interaction），避免多份规则漂移；`.trae/rules/` 已删除，规则唯一来源即 `.agents/AGENTS.md`
+- **MCP 启动参数**：统一改用 `uv run --no-sync`（复用安装时 `uv sync` 的环境，避免每次启动解析依赖）
+- **版本号统一**：`pyproject.toml` / `__init__.py` / web 入口 / install 脚本 / 文档全部对齐 0.3.0
+
+### 说明
+
+- 服务层（`deep-review-mcp/`）业务代码与 11 个 MCP 工具注册保持不变，向后兼容
+- 配置同步约束由 `scripts/pre-commit` 机械防线保障（详见 `AGENTS.md`「流程规则 > 配置同步」）
+
 ## [0.2.1] - 2026-07-25
 
 ### Changed

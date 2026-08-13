@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="${1:-0.1.0}"
+VERSION="${1:-0.3.0}"
 
 # ──────────────────────────────────────────
 # 路径定义
@@ -56,8 +56,15 @@ log_ok "cleaned"
 # [2/6] 创建目标目录结构
 # ──────────────────────────────────────────
 log_step "[2/6] Create directory structure..."
-mkdir -p "$STAGING_DIR/.trae/rules"
 mkdir -p "$STAGING_DIR/.trae/skills"
+mkdir -p "$STAGING_DIR/.agents/skills"
+mkdir -p "$STAGING_DIR/.agents/runtime"
+mkdir -p "$STAGING_DIR/.opencode/skills"
+mkdir -p "$STAGING_DIR/.codebuddy/skills"
+mkdir -p "$STAGING_DIR/.goose/skills"
+mkdir -p "$STAGING_DIR/.workbuddy"
+mkdir -p "$STAGING_DIR/.hermes"
+mkdir -p "$STAGING_DIR/scripts"
 mkdir -p "$STAGING_DIR/deep-review-mcp/src"
 mkdir -p "$STAGING_DIR/deep-review-mcp/data/wrong_questions"
 mkdir -p "$STAGING_DIR/deep-review-mcp/data/analysis_reports"
@@ -83,6 +90,7 @@ cat > "$STAGING_DIR/.trae/mcp.json" <<'EOF'
       "command": "uv",
       "args": [
         "run",
+        "--no-sync",
         "--directory",
         "${workspaceFolder}/deep-review-mcp",
         "deep-review-mcp"
@@ -91,17 +99,6 @@ cat > "$STAGING_DIR/.trae/mcp.json" <<'EOF'
   }
 }
 EOF
-
-# .trae/rules/ 全部规则文件（用 cd + find 避免 Git Bash 路径混用）
-if [ -d "$PROJECT_ROOT/.trae/rules" ]; then
-    (
-        cd "$PROJECT_ROOT/.trae/rules"
-        find . -maxdepth 1 -type f -print0
-    ) | while IFS= read -r -d '' rel; do
-        rel="${rel#./}"
-        cp "$PROJECT_ROOT/.trae/rules/$rel" "$STAGING_DIR/.trae/rules/$rel"
-    done
-fi
 
 # .trae/skills/ 每个 skill 目录（递归复制，排除 __pycache__）
 # 用 cd + 相对路径的 find，避免 Git Bash 在 Windows 上路径混用导致复制到奇怪的 mnt/d/... 子目录
@@ -124,6 +121,52 @@ if [ -d "$PROJECT_ROOT/.trae/skills" ]; then
     done
 fi
 log_ok ".trae config copied"
+
+# ──────────────────────────────────────────
+# [3.5/6] 复制 AAIF 真相源 + 多 harness 配置（白名单）
+# ──────────────────────────────────────────
+log_step "[3.5/6] Copy AAIF source + multi-harness config..."
+
+# .agents/ 完整复制（AAIF 唯一真相源，发布后 install 脚本依赖它重新同步）
+AGENTS_SRC="$PROJECT_ROOT/.agents"
+AGENTS_DST="$STAGING_DIR/.agents"
+for f in AGENTS.md tools.json triggers.json workflows.json; do
+    [ -f "$AGENTS_SRC/$f" ] && cp "$AGENTS_SRC/$f" "$AGENTS_DST/$f"
+done
+cp -r "$AGENTS_SRC/skills" "$AGENTS_DST/skills"
+cp -r "$AGENTS_SRC/runtime" "$AGENTS_DST/runtime"
+
+# 多 harness 生成目录（skills/AGENTS.md 统一从 .agents/ 复制，保证最新）
+for harness in opencode codebuddy goose; do
+    h_dst="$STAGING_DIR/.$harness"
+    cp -r "$AGENTS_SRC/skills" "$h_dst/skills"
+    cp "$AGENTS_SRC/AGENTS.md" "$h_dst/AGENTS.md"
+done
+
+# .opencode/opencode.json（instructions 指向 .agents/AGENTS.md，cwd 为相对路径）
+cp "$AGENTS_SRC/runtime/opencode.json" "$STAGING_DIR/.opencode/opencode.json"
+# .codebuddy/mcp.json（${workspaceFolder} 变量版）
+cp "$AGENTS_SRC/runtime/codebuddy.json" "$STAGING_DIR/.codebuddy/mcp.json"
+
+# .goose/config.yaml：从 .agents/runtime/goose.json 生成相对路径版（--no-resolve-dir）
+if [ -f "$SCRIPT_DIR/generate-goose-config.py" ]; then
+    if command -v python3 >/dev/null 2>&1; then
+        python3 "$SCRIPT_DIR/generate-goose-config.py" --out-dir "$STAGING_DIR/.goose" --no-resolve-dir >/dev/null
+    else
+        log_err "python3 不可用，无法生成 .goose/config.yaml"
+        exit 1
+    fi
+fi
+
+# 个人级 harness 说明文档
+[ -f "$PROJECT_ROOT/.workbuddy/README.md" ] && cp "$PROJECT_ROOT/.workbuddy/README.md" "$STAGING_DIR/.workbuddy/README.md"
+[ -f "$PROJECT_ROOT/.hermes/README.md" ] && cp "$PROJECT_ROOT/.hermes/README.md" "$STAGING_DIR/.hermes/README.md"
+
+# scripts/（同步与生成工具链，发布后 install 脚本依赖）
+for f in generate-platform-configs.py generate-goose-config.py generate-aaif-declarations.py sync-agent-configs.ps1 sync-agent-configs.sh pre-commit; do
+    [ -f "$PROJECT_ROOT/scripts/$f" ] && cp "$PROJECT_ROOT/scripts/$f" "$STAGING_DIR/scripts/$f"
+done
+log_ok "AAIF source + multi-harness config copied"
 
 # ──────────────────────────────────────────
 # [4/6] 复制 deep-review-mcp 源码（白名单）
@@ -170,7 +213,7 @@ log_ok "source copied"
 # [5/6] 复制顶层文档和安装脚本
 # ──────────────────────────────────────────
 log_step "[5/6] Copy docs and install scripts..."
-for f in install.ps1 install.sh README.md DEPLOY.md QUICKSTART.md LICENSE; do
+for f in install.ps1 install.sh README.md DEPLOY.md QUICKSTART.md LICENSE AGENTS.md; do
     [ -f "$PROJECT_ROOT/$f" ] && cp "$PROJECT_ROOT/$f" "$STAGING_DIR/$f"
 done
 log_ok "docs copied"
@@ -183,8 +226,18 @@ log_step "[6/6] Verify and pack..."
 # 验证关键文件存在
 required=(
     ".trae/mcp.json"
-    ".trae/rules/classification-rules.md"
     ".trae/skills/wrong-question-capture/SKILL.md"
+    ".agents/AGENTS.md"
+    ".agents/tools.json"
+    ".agents/triggers.json"
+    ".agents/workflows.json"
+    ".opencode/opencode.json"
+    ".codebuddy/mcp.json"
+    ".goose/config.yaml"
+    ".workbuddy/README.md"
+    ".hermes/README.md"
+    "scripts/sync-agent-configs.sh"
+    "AGENTS.md"
     "deep-review-mcp/pyproject.toml"
     "deep-review-mcp/uv.lock"
     "deep-review-mcp/.python-version"
@@ -264,5 +317,5 @@ echo ""
 echo "  User steps:"
 echo "  1. Extract DeepReview-v$VERSION.{zip|tar.zst|tar.gz}"
 echo "  2. Run install.ps1 (or install.sh on Linux/macOS)"
-echo "  3. Open folder in Trae, enable project-level MCP"
+echo "  3. Open folder in your runtime (Trae/CodeBuddy/opencode/Goose), enable project-level MCP"
 echo ""

@@ -1,0 +1,17 @@
+{
+  "mcp": {
+    "deep-review-mcp": {
+      "type": "local",
+      "command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "deep-review-mcp"
+      ],
+      "cwd": "deep-review-mcp"
+    }
+  },
+  "instructions": [
+    ".agents/AGENTS.md"
+  ]
+}

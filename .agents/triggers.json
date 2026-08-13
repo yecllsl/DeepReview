@@ -1,0 +1,70 @@
+{
+  "schema": "https://agents.aaif.io/schemas/triggers.json",
+  "triggers": [
+    {
+      "skill": "review-plan-generate",
+      "name": "review-plan-generate",
+      "description": "Use when 用户想生成复习计划、查看复习推荐、了解该复习什么、安排复习进度",
+      "command": "/review",
+      "conversational": [
+        "复习计划",
+        "复习推荐",
+        "该复习什么"
+      ],
+      "when_to_use": "- 用户说\"复习计划\"、\"复习推荐\"、\"该复习什么\"\n- 用户想查看到期需要复习的错题\n- 用户想安排复习进度"
+    },
+    {
+      "skill": "wrong-question-analyze",
+      "name": "wrong-question-analyze",
+      "description": "Use when 用户想分析错题原因、诊断错误根源、生成改进方案、查看错题诊断",
+      "command": "/analyze",
+      "conversational": [
+        "分析错题",
+        "错题分析",
+        "为什么做错",
+        "分析原因"
+      ],
+      "when_to_use": "- 用户说\"分析错题\"、\"错题分析\"、\"为什么做错\"、\"分析原因\"\n- 用户想诊断某道错题的错误根源\n- 用户想生成改进方案或复习建议"
+    },
+    {
+      "skill": "wrong-question-batch-capture",
+      "name": "wrong-question-batch-capture",
+      "description": "Use when 用户想批量录入多道错题、一次采集多道题目、批量拍照识别、连续录入错题",
+      "command": "/batch-capture",
+      "conversational": [
+        "批量录入",
+        "一次录入多道题",
+        "连续录入",
+        "批量采集",
+        "录入今天的作业错题"
+      ],
+      "when_to_use": "- 用户说\"批量录入\"、\"一次录入多道题\"、\"连续录入\"、\"批量采集\"\n- 用户想一次性采集2道及以上错题\n- 用户提供多张图片要求逐一识别\n- 用户说\"录入今天的作业错题\"等包含多题的意图"
+    },
+    {
+      "skill": "wrong-question-capture",
+      "name": "wrong-question-capture",
+      "description": "Use when 用户想录入错题、拍照识别题目、添加错题记录、上传错题图片",
+      "command": "/capture",
+      "conversational": [
+        "录入错题",
+        "拍照录题",
+        "添加错题",
+        "上传错题"
+      ],
+      "when_to_use": "- 用户说\"录入错题\"、\"拍照录题\"、\"添加错题\"、\"上传错题\"\n- 用户提供错题图片路径或要求直接输入题目文本\n- 用户需要将错题保存到本地数据库"
+    },
+    {
+      "skill": "wrong-question-stats",
+      "name": "wrong-question-stats",
+      "description": "Use when 用户想查看错题统计、查看错题分布、了解薄弱点、导出错题数据",
+      "command": "/stats",
+      "conversational": [
+        "错题统计",
+        "查看统计",
+        "错题分布",
+        "薄弱点"
+      ],
+      "when_to_use": "- 用户说\"错题统计\"、\"查看统计\"、\"错题分布\"、\"薄弱点\"\n- 用户想了解错题在各维度的分布情况\n- 用户想导出错题数据"
+    }
+  ]
+}

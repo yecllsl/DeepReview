@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Generate AAIF platform runtime configs into .agents/runtime/.
+
+The generated files are consumed by scripts/sync-agent-configs(.ps1/.sh),
+which distributes them to the .trae / .opencode / .codebuddy / .goose
+platform directories.
+
+Usage:
+    python scripts/generate-platform-configs.py
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RUNTIME_DIR = PROJECT_ROOT / ".agents" / "runtime"
+RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def generate_trae() -> dict:
+    return {
+        "mcpServers": {
+            "deep-review-mcp": {
+                "command": "uv",
+                "args": [
+                    "run",
+                    "--no-sync",
+                    "--directory",
+                    "${workspaceFolder}/deep-review-mcp",
+                    "deep-review-mcp",
+                ],
+            }
+        }
+    }
+
+
+def generate_opencode() -> dict:
+    return {
+        "mcp": {
+            "deep-review-mcp": {
+                "type": "local",
+                "command": ["uv", "run", "--no-sync", "deep-review-mcp"],
+                "cwd": "deep-review-mcp",
+            }
+        },
+        "instructions": [".agents/AGENTS.md"],
+    }
+
+
+def generate_codebuddy() -> dict:
+    return {
+        "mcpServers": {
+            "deep-review-mcp": {
+                "command": "uv",
+                "args": [
+                    "run",
+                    "--no-sync",
+                    "--directory",
+                    "${workspaceFolder}/deep-review-mcp",
+                    "deep-review-mcp",
+                ],
+            }
+        }
+    }
+
+
+def generate_goose() -> dict:
+    # Goose 原生 extension schema（非 mcpServers/mcp）。
+    # --directory 用相对路径 "deep-review-mcp"，由 generate-goose-config.py
+    # 解析为绝对路径写入 .goose/config.yaml，保证 Goose 可在任意工作目录启动。
+    return {
+        "extensions": {
+            "deep-review-mcp": {
+                "name": "deep-review-mcp",
+                "enabled": True,
+                "type": "stdio",
+                "cmd": "uv",
+                "args": [
+                    "run",
+                    "--no-sync",
+                    "--directory",
+                    "deep-review-mcp",
+                    "deep-review-mcp",
+                ],
+                "timeout": 300,
+                "description": "DeepReview K12 错题收集与智能分析 MCP 服务",
+            }
+        }
+    }
+
+
+def main() -> None:
+    (RUNTIME_DIR / "trae.json").write_text(
+        json.dumps(generate_trae(), indent=2) + "\n", encoding="utf-8"
+    )
+    (RUNTIME_DIR / "opencode.json").write_text(
+        json.dumps(generate_opencode(), indent=2) + "\n", encoding="utf-8"
+    )
+    (RUNTIME_DIR / "codebuddy.json").write_text(
+        json.dumps(generate_codebuddy(), indent=2) + "\n", encoding="utf-8"
+    )
+    (RUNTIME_DIR / "goose.json").write_text(
+        json.dumps(generate_goose(), indent=2) + "\n", encoding="utf-8"
+    )
+    print("已生成所有平台配置 (.agents/runtime/)")
+
+
+if __name__ == "__main__":
+    main()

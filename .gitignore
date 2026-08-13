@@ -58,3 +58,6 @@ htmlcov/
 
 # 项目文档
 docs/
+
+# 个人级记忆（由运行时写入，不参与同步、不提交）
+.codebuddy/memory/

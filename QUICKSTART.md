@@ -28,16 +28,32 @@ chmod +x install.sh && ./install.sh
 > 
 > 跳过 OCR 后若需要补装：`cd deep-review-mcp && uv sync --extra ocr`
 
-### 第 3 步：在 Trae 中配置
+### 第 3 步：配置 Agent 运行时
 
-1. 用 Trae IDE 打开项目文件夹
-2. 进入 **设置 → MCP**
-3. 打开 **"启用项目级 MCP"** 开关
-4. 重启 Trae
+安装脚本通过 `-AgentRuntime` 指定要配置的运行时（缺省只装依赖，不配置运行时）：
+
+```powershell
+# Windows：一次配置全部（Trae/CodeBuddy/opencode/Goose + WorkBuddy/Hermes）
+.\install.ps1 -AgentRuntime all
+# 或只配置单个：.\install.ps1 -AgentRuntime codebuddy / goose / opencode / trae / workbuddy / hermes
+```
+
+```bash
+# Linux/macOS
+./install.sh --agent-runtime all
+```
+
+| 运行时 | 使用方式 |
+|--------|---------|
+| Trae IDE CN | 打开项目 → 设置 → MCP → 启用项目级 MCP |
+| CodeBuddy | 打开项目 → 信任 deep-review-mcp |
+| opencode | 项目目录运行 `opencode`，自动加载 AGENTS.md |
+| Goose | 打开项目，自动读取 `.goose/config.yaml` |
+| WorkBuddy / Hermes | 个人级 harness，配置写入 `~/.workbuddy` / `~/.hermes` |
 
 ### 第 4 步：开始使用
 
-输入 `/capture`、`/analyze`、`/review` 或 `/stats` 即可！
+输入 `/capture`、`/batch-capture`、`/analyze`、`/review` 或 `/stats` 即可！
 
 ---
 
@@ -272,8 +288,11 @@ question_id: wq_20260615_001
 
 ### 1. 批量采集
 
+使用 `/batch-capture` 命令一次录入多道错题（同学科批量只确认一次学科，混合学科每题确认；每题确认后才保存，已保存题目不受后续影响）：
+
 ```
-连续执行多次 /capture 可以快速录入多道错题
+/batch-capture
+> 请提供错题图片路径（多张图片或图片文件夹）: C:\Users\...\math_questions/
 ```
 
 ### 2. 按学科筛选复习
@@ -306,10 +325,10 @@ question_id: wq_20260615_001
 | 问题 | 解决方案 |
 |------|---------|
 | 安装脚本报错 "uv 未安装" | 安装 uv：`irm https://astral.sh/uv/install.ps1 \| iex` |
-| MCP Server 不生效 | 确认启用项目级 MCP → 重启 Trae |
-| 路径变量不替换 | 运行 `.\install.ps1 -FixPath` 修复路径 |
+| MCP Server 不生效 | 确认启用项目级 MCP → 重启对应运行时（Trae/CodeBuddy/opencode/Goose） |
+| 路径变量不替换 | 运行 `.\install.ps1 -FixPath`（或 `./install.sh --fix-path`）修复路径 |
 | PaddleOCR 安装失败 | 确认 Python >= 3.12 + 网络畅通 → `cd deep-review-mcp && uv sync` |
-| Skills 不生效 | 重启 Trae → 检查 .trae/skills/ 目录 |
+| Skills 不生效 | 重启运行时 → 检查 `.agents/skills/`（生成目录由 `scripts/sync-agent-configs` 同步） |
 
 ## 下一步
 

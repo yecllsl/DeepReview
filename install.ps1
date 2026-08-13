@@ -5,15 +5,28 @@
 #   1. 右键此文件 → "使用 PowerShell 运行"
 #   2. 或在 PowerShell 中执行: .\install.ps1
 #
+# 可选参数：
+#   -FixPath       将 .agents/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
+#   -AgentRuntime  配置 Agent 运行时 (trae/codebuddy/opencode/goose/all/workbuddy/hermes)
+#                  trae/codebuddy/opencode/goose 为项目级运行时；workbuddy/hermes 为个人级 harness
+#
 # 前置要求：
 #   - Python 3.12+
 #   - uv 包管理器 (https://docs.astral.sh/uv/)
+
+param(
+    [switch]$FixPath,
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("trae", "codebuddy", "opencode", "goose", "all", "workbuddy", "hermes")]
+    [string]$AgentRuntime
+)
 
 $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  DeepReview v0.1.0 安装向导" -ForegroundColor Cyan
+Write-Host " DeepReview v0.3.0 安装向导" -ForegroundColor Cyan
+Write-Host "  (Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -21,9 +34,99 @@ Write-Host ""
 $projectRoot = $PSScriptRoot
 
 # ──────────────────────────────────────────
-# [1/4] 检查 uv 包管理器
+# 个人级 harness 安装辅助函数（WorkBuddy / Hermes 仅支持个人级配置，不走 .agents/ 同步）
 # ──────────────────────────────────────────
-Write-Host "[1/4] 检查 uv 包管理器..." -ForegroundColor Yellow
+function Install-PersonalHarness {
+    param(
+        [string]$HarnessName,    # 目录名，如 "workbuddy"
+        [string]$ExecutableName  # 可执行文件名，如 "workbuddy"
+    )
+
+    Write-Host ""
+    Write-Host "=== 个人级 harness: $HarnessName ===" -ForegroundColor Cyan
+
+    # 1. 检测可执行文件
+    $exe = Get-Command $ExecutableName -ErrorAction SilentlyContinue
+    if ($exe) {
+        Write-Host "  [ok] 检测到 $ExecutableName 可执行文件: $($exe.Source)" -ForegroundColor Green
+    } else {
+        Write-Host "  [warn] 未检测到 $ExecutableName 可执行文件，将仍生成个人级配置；请先安装 $HarnessName 后重启使其生效。" -ForegroundColor Yellow
+    }
+
+    # 2. 解析个人配置目录
+    $isWin = ($IsWindows -or ($env:OS -match "Windows"))
+    if ($isWin) {
+        $homeBase = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
+        $cfgDir = Join-Path $homeBase ".$HarnessName"
+    } else {
+        $cfgDir = Join-Path $env:HOME ".$HarnessName"
+    }
+    New-Item -ItemType Directory -Path $cfgDir -Force | Out-Null
+    Write-Host "  个人配置目录: $cfgDir" -ForegroundColor Cyan
+
+    # 3. 检测 uv（mcp.json 的 command=uv）
+    $uvOk = $false
+    try { uv --version 2>&1 | Out-Null; $uvOk = $true } catch {}
+    if (-not $uvOk) {
+        Write-Host "  [warn] 未检测到 uv，mcp.json 中 command=uv 将不可用，请先安装 uv。" -ForegroundColor Yellow
+    }
+
+    # 4. 写入 mcp.json（绝对路径，无 ${workspaceFolder}）
+    $mcpObj = [ordered]@{
+        mcpServers = [ordered]@{
+            "deep-review-mcp" = [ordered]@{
+                command = "uv"
+                args    = @("run", "--no-sync", "--directory", (Join-Path $projectRoot "deep-review-mcp"), "deep-review-mcp")
+            }
+        }
+    }
+    $mcpJson = $mcpObj | ConvertTo-Json -Depth 10
+    $mcpPath = Join-Path $cfgDir "mcp.json"
+    $mcpJson | Set-Content -Path $mcpPath -Encoding UTF8 -NoNewline
+    Write-Host "  [ok] 已写入 MCP 注册: $mcpPath" -ForegroundColor Green
+
+    # 5. 符号链接 AGENTS.md 与 skills/（失败降级复制）
+    Link-PersonalConfig -Name "AGENTS.md" -Src (Join-Path $projectRoot ".agents\AGENTS.md") -Dst (Join-Path $cfgDir "AGENTS.md")
+    Link-PersonalConfig -Name "skills/"   -Src (Join-Path $projectRoot ".agents\skills")      -Dst (Join-Path $cfgDir "skills")
+}
+
+function Link-PersonalConfig {
+    param(
+        [string]$Name,
+        [string]$Src,
+        [string]$Dst
+    )
+    if (-not (Test-Path $Src)) {
+        Write-Host "  [warn] 源不存在，跳过 $Name : $Src" -ForegroundColor Yellow
+        return
+    }
+    # 移除已有目标（符号链接或真实文件/目录）
+    if (Test-Path $Dst) {
+        try { Remove-Item $Dst -Force -Recurse -ErrorAction Stop } catch { Remove-Item $Dst -Force -Recurse -ErrorAction SilentlyContinue }
+    }
+    $linked = $false
+    try {
+        New-Item -ItemType SymbolicLink -Path $Dst -Target $Src -Force -ErrorAction Stop | Out-Null
+        $linked = $true
+    } catch {
+        $linked = $false
+    }
+    if ($linked) {
+        Write-Host "  [ok] 已建立符号链接: $Dst -> $Src" -ForegroundColor Green
+    } else {
+        if (Test-Path $Src -PSIsContainer) {
+            Copy-Item $Src $Dst -Recurse -Force
+        } else {
+            Copy-Item $Src $Dst -Force
+        }
+        Write-Host "  [warn] 符号链接不可用，已降级复制: $Dst（项目配置更新后需重新运行安装脚本）" -ForegroundColor Yellow
+    }
+}
+
+# ──────────────────────────────────────────
+# [1/5] 检查 uv 包管理器
+# ──────────────────────────────────────────
+Write-Host "[1/5] 检查 uv 包管理器..." -ForegroundColor Yellow
 try {
     $uvVersion = uv --version 2>&1
     Write-Host "  ✓ uv 已安装 ($uvVersion)" -ForegroundColor Green
@@ -38,7 +141,7 @@ try {
 }
 
 # ──────────────────────────────────────────
-# [2/4] 检查 Python 版本
+# [2/5] 检查 Python 版本
 # ──────────────────────────────────────────
 Write-Host "[2/5] 检查 Python 版本 (>=3.12)..." -ForegroundColor Yellow
 $pythonVersion = python --version 2>&1
@@ -115,9 +218,88 @@ if ($installOcr -match "^[Yy]$") {
 }
 
 # ──────────────────────────────────────────
-# [5/5] 验证安装
+# [5/5] Agent Runtime 配置（多 harness）
 # ──────────────────────────────────────────
-Write-Host "[5/5] 验证安装..." -ForegroundColor Yellow
+if ($AgentRuntime) {
+    Write-Host ""
+    Write-Host "=== Agent Runtime 配置 ===" -ForegroundColor Cyan
+
+    $SyncScript = Join-Path $PSScriptRoot "scripts/sync-agent-configs.ps1"
+
+    switch ($AgentRuntime) {
+        "trae" {
+            Write-Host "Trae 配置说明:" -ForegroundColor Yellow
+            Write-Host "  1. 用 Trae 打开项目文件夹"
+            Write-Host "  2. 设置 > MCP > 启用「项目级 MCP」"
+            Write-Host "  3. 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
+        }
+        "codebuddy" {
+            Write-Host "正在同步 CodeBuddy 配置..." -ForegroundColor Yellow
+            if (Test-Path $SyncScript) {
+                & $SyncScript -SkipOpencode
+                Write-Host ""
+                Write-Host "下一步:" -ForegroundColor Yellow
+                Write-Host "  1. 用 CodeBuddy 打开项目文件夹"
+                Write-Host "  2. 在 MCP 配置中信任 deep-review-mcp"
+            } else {
+                Write-Host "  同步脚本不存在: $SyncScript" -ForegroundColor Red
+            }
+        }
+        "opencode" {
+            Write-Host "正在同步 opencode 配置..." -ForegroundColor Yellow
+            if (Test-Path $SyncScript) {
+                & $SyncScript -SkipCodebuddy
+                Write-Host ""
+                Write-Host "下一步:" -ForegroundColor Yellow
+                Write-Host "  1. 在项目目录运行 opencode"
+                Write-Host "  2. AGENTS.md 将自动加载"
+            } else {
+                Write-Host "  同步脚本不存在: $SyncScript" -ForegroundColor Red
+            }
+        }
+        "all" {
+            Write-Host "正在同步所有 Agent Runtime 配置..." -ForegroundColor Yellow
+            if (Test-Path $SyncScript) {
+                & $SyncScript
+                Write-Host ""
+                Write-Host "所有配置已同步。各运行时下一步:" -ForegroundColor Green
+                Write-Host "  Trae: 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
+                Write-Host "  CodeBuddy: 在 MCP 配置中信任 deep-review-mcp"
+                Write-Host "  opencode: 在项目目录运行 opencode"
+                Write-Host "  Goose: 打开项目文件夹，自动读取 .goose/config.yaml"
+                Write-Host "  WorkBuddy: 个人级配置 ~/.workbuddy（或 %USERPROFILE%\.workbuddy）"
+                Write-Host "  Hermes:    个人级配置 ~/.hermes（或 %USERPROFILE%\.hermes）"
+            } else {
+                Write-Host "  同步脚本不存在: $SyncScript" -ForegroundColor Red
+            }
+            Install-PersonalHarness -HarnessName "workbuddy" -ExecutableName "workbuddy"
+            Install-PersonalHarness -HarnessName "hermes" -ExecutableName "hermes"
+        }
+        "goose" {
+            Write-Host "正在同步 Goose 配置..." -ForegroundColor Yellow
+            if (Test-Path $SyncScript) {
+                & $SyncScript
+                Write-Host ""
+                Write-Host "下一步:" -ForegroundColor Yellow
+                Write-Host "  1. 用 Goose 打开项目文件夹"
+                Write-Host "  2. Goose 会自动读取 .goose/config.yaml 加载 deep-review-mcp"
+            } else {
+                Write-Host "  同步脚本不存在: $SyncScript" -ForegroundColor Red
+            }
+        }
+        "workbuddy" {
+            Install-PersonalHarness -HarnessName "workbuddy" -ExecutableName "workbuddy"
+        }
+        "hermes" {
+            Install-PersonalHarness -HarnessName "hermes" -ExecutableName "hermes"
+        }
+    }
+}
+
+# ──────────────────────────────────────────
+# 验证安装
+# ──────────────────────────────────────────
+Write-Host "[验证] 验证安装..." -ForegroundColor Yellow
 
 Push-Location $mcpDir
 try {
@@ -125,7 +307,7 @@ try {
     $testResult = uv run deep-review-mcp --help 2>&1
     # FastMCP 的 --help 可能直接启动 server，所以只要不报错即可
     Write-Host "  ✓ MCP Server 入口点可用" -ForegroundColor Green
-    
+
     # 验证 Web 入口点可用
     $webTest = uv run python -c "from deep_review_mcp.web.app import create_app; print('OK')" 2>&1
     if ($webTest -match "OK") {
@@ -141,35 +323,65 @@ try {
 }
 
 # ──────────────────────────────────────────
-# mcp.json 路径回退方案
+# mcp.json 路径回退方案（多运行时共用，AAIF 真相源 .agents/runtime）
 # ──────────────────────────────────────────
-# 检查 .trae/mcp.json 中的 ${workspaceFolder} 变量是否被 Trae 支持
-# 如果用户 Trae 版本不支持此变量，安装脚本可自动替换为实际路径
-$mcpJsonPath = Join-Path $projectRoot ".trae\mcp.json"
-if (Test-Path $mcpJsonPath) {
-    $mcpContent = Get-Content $mcpJsonPath -Raw
+$runtimeDir = Join-Path $projectRoot ".agents\runtime"
+$traeJson = Join-Path $runtimeDir "trae.json"
+if (Test-Path $traeJson) {
+    $mcpContent = Get-Content $traeJson -Raw
     if ($mcpContent -match '\$\{workspaceFolder\}') {
         Write-Host ""
-        Write-Host "  ℹ 检测到 mcp.json 使用了 \${workspaceFolder} 变量" -ForegroundColor Cyan
-        Write-Host "    Trae IDE CN 会自动替换此变量，无需手动配置" -ForegroundColor Cyan
-        Write-Host "    如果你的 Trae 版本不支持变量替换，请运行：" -ForegroundColor Cyan
+        Write-Host "  ℹ 检测到 runtime 配置使用了 \${workspaceFolder} 变量" -ForegroundColor Cyan
+        Write-Host "    Trae / CodeBuddy 会自动替换此变量，无需手动配置" -ForegroundColor Cyan
+        Write-Host "    如果你的环境不支持变量替换，请运行：" -ForegroundColor Cyan
         Write-Host "    .\install.ps1 -FixPath" -ForegroundColor White
     }
 }
 
-# 处理 -FixPath 参数：将 ${workspaceFolder} 替换为实际路径
-if ($args -contains "-FixPath") {
+if ($FixPath) {
     Write-Host ""
-    Write-Host "  正在修复 mcp.json 路径..." -ForegroundColor Yellow
-    if (Test-Path $mcpJsonPath) {
-        $mcpContent = Get-Content $mcpJsonPath -Raw
-        $escapedRoot = $projectRoot -replace '\\', '/'
-        $fixedContent = $mcpContent -replace '\$\{workspaceFolder\}', $escapedRoot
-        Set-Content -Path $mcpJsonPath -Value $fixedContent -Encoding UTF8
-        Write-Host "  ✓ mcp.json 路径已修复为: $escapedRoot" -ForegroundColor Green
-    } else {
-        Write-Host "  ✗ 未找到 $mcpJsonPath" -ForegroundColor Red
+    Write-Host "  正在修复 runtime 配置路径（.agents/runtime）..." -ForegroundColor Yellow
+    $fixedAny = $false
+    $fixTargets = @(
+        (Join-Path $runtimeDir "trae.json"),
+        (Join-Path $runtimeDir "codebuddy.json")
+    )
+    $ws = $projectRoot -replace '\\', '/'
+    foreach ($t in $fixTargets) {
+        if (Test-Path $t) {
+            $content = Get-Content $t -Raw -Encoding UTF8
+            if ($content -match '\$\{workspaceFolder\}') {
+                $fixedContent = $content -replace '\$\{workspaceFolder\}', $ws
+                Set-Content -Path $t -Value $fixedContent -Encoding UTF8
+                Write-Host "  ✓ 已修复: $t" -ForegroundColor Green
+                $fixedAny = $true
+            } else {
+                Write-Host "  ℹ 无需修复（无变量）: $t" -ForegroundColor DarkGray
+            }
+        } else {
+            Write-Host "  ✗ 未找到 $t" -ForegroundColor Red
+        }
     }
+    if ($fixedAny) {
+        Write-Host "  重新同步到各平台目录..." -ForegroundColor Gray
+        & "$PSScriptRoot\scripts\sync-agent-configs.ps1"
+    }
+    Write-Host "  ⚠ 注意：修复后配置仅对当前路径有效，移动项目后需重新运行 -FixPath" -ForegroundColor Yellow
+    Write-Host "  ⚠ 注意：多运行时可移植性会降低，建议优先升级运行时版本以支持变量" -ForegroundColor Yellow
+}
+
+# ──────────────────────────────────────────
+# 安装 git pre-commit 钩子（配置同步机械防线）
+# ──────────────────────────────────────────
+Write-Host "安装 git pre-commit 钩子..." -ForegroundColor Yellow
+$HookSrc = Join-Path $projectRoot "scripts/pre-commit"
+$HookDst = Join-Path $projectRoot ".git/hooks/pre-commit"
+if (Test-Path $HookSrc) {
+    Copy-Item -Path $HookSrc -Destination $HookDst -Force
+    Write-Host "  ✓ 已安装 pre-commit 钩子（拦截直接修改生成目录 .trae/.opencode/.codebuddy/.goose 的违规提交）" -ForegroundColor Green
+    Write-Host "    若需手动安装：Copy-Item scripts/pre-commit .git/hooks/pre-commit" -ForegroundColor DarkGray
+} else {
+    Write-Host "  ⚠ 未找到 $HookSrc，跳过钩子安装" -ForegroundColor Yellow
 }
 
 # ──────────────────────────────────────────
@@ -180,21 +392,21 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "  ✓ 安装完成！" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "下一步操作：" -ForegroundColor White
+Write-Host "下一步操作（Trae / CodeBuddy / opencode 操作一致）：" -ForegroundColor White
 Write-Host ""
-Write-Host "  1. 用 Trae IDE 打开此文件夹" -ForegroundColor White
+Write-Host "  1. 用对应运行时打开此文件夹" -ForegroundColor White
 Write-Host "     文件 → 打开文件夹 → 选择: $projectRoot" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  2. 启用项目级 MCP" -ForegroundColor White
-Write-Host "     设置 → MCP → 打开'启用项目级 MCP'开关" -ForegroundColor DarkGray
+Write-Host "  2. 启用项目级 MCP（Trae: 设置 → MCP；CodeBuddy: 信任 deep-review-mcp）" -ForegroundColor White
 Write-Host ""
-Write-Host "  3. 重启 Trae" -ForegroundColor White
+Write-Host "  3. 重启运行时" -ForegroundColor White
 Write-Host ""
 Write-Host "  4. 开始使用！" -ForegroundColor White
-Write-Host "     /capture  - 采集新错题" -ForegroundColor DarkGray
-Write-Host "     /analyze  - 分析错题原因" -ForegroundColor DarkGray
-Write-Host "     /review   - 生成复习计划" -ForegroundColor DarkGray
-Write-Host "     /stats    - 查看错题统计" -ForegroundColor DarkGray
+Write-Host "     /capture       - 采集错题（拍照/文本）" -ForegroundColor DarkGray
+Write-Host "     /batch-capture - 批量采集错题" -ForegroundColor DarkGray
+Write-Host "     /analyze       - 分析错题原因" -ForegroundColor DarkGray
+Write-Host "     /review        - 生成复习计划" -ForegroundColor DarkGray
+Write-Host "     /stats         - 查看错题统计" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "  可选：启动 Web 可视化界面" -ForegroundColor Cyan
 Write-Host "     cd deep-review-mcp && uv run deep-review-web" -ForegroundColor DarkGray

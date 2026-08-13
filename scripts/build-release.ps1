@@ -8,7 +8,7 @@
 #   dist/DeepReview-v0.1.0.zip
 
 param(
-    [string]$Version = "0.1.0"
+    [string]$Version = "0.3.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -63,9 +63,17 @@ Write-Ok "cleaned"
 Write-Step "[2/6] Create directory structure..."
 # 顶层目录
 New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-# .trae 子目录
-New-Item -ItemType Directory -Path (Join-Path $tempDir ".trae\rules") -Force | Out-Null
+# .trae 子目录（skills/ 同步产物；rules 已合并入 .agents/AGENTS.md，不再打包）
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".trae\skills") -Force | Out-Null
+# AAIF 真相源 + 多 harness 目录
+New-Item -ItemType Directory -Path (Join-Path $tempDir ".agents\skills") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir ".agents\runtime") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir ".opencode\skills") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir ".codebuddy\skills") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir ".goose\skills") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir ".workbuddy") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir ".hermes") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir "scripts") -Force | Out-Null
 # deep-review-mcp 子目录
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review-mcp\src") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review-mcp\data\wrong_questions") -Force | Out-Null
@@ -98,6 +106,7 @@ $releaseMcpJson = @'
       "command": "uv",
       "args": [
         "run",
+        "--no-sync",
         "--directory",
         "${workspaceFolder}/deep-review-mcp",
         "deep-review-mcp"
@@ -107,14 +116,6 @@ $releaseMcpJson = @'
 }
 '@
 $releaseMcpJson | Set-Content -Path (Join-Path $tempDir ".trae\mcp.json") -Encoding UTF8 -NoNewline
-
-# .trae/rules/ 全部规则文件
-$rulesSrc = Join-Path $projectRoot ".trae\rules"
-if (Test-Path $rulesSrc) {
-    Get-ChildItem $rulesSrc -File | ForEach-Object {
-        Copy-Item $_.FullName (Join-Path $tempDir ".trae\rules\$($_.Name)") -Force
-    }
-}
 
 # .trae/skills/ 每个 skill 目录（只复制 SKILL.md，排除 __pycache__）
 $skillsSrc = Join-Path $projectRoot ".trae\skills"
@@ -134,6 +135,60 @@ if (Test-Path $skillsSrc) {
     }
 }
 Write-Ok ".trae config copied"
+
+# ──────────────────────────────────────────
+# [3.5/6] 复制 AAIF 真相源 + 多 harness 配置（白名单）
+# ──────────────────────────────────────────
+Write-Step "[3.5/6] Copy AAIF source + multi-harness config..."
+
+# .agents/ 完整复制（AAIF 唯一真相源，发布后 install 脚本依赖它重新同步）
+$agentsSrc = Join-Path $projectRoot ".agents"
+$agentsDst = Join-Path $tempDir ".agents"
+$agentsTopFiles = @("AGENTS.md", "tools.json", "triggers.json", "workflows.json")
+foreach ($f in $agentsTopFiles) {
+    $src = Join-Path $agentsSrc $f
+    if (Test-Path $src) {
+        Copy-Item $src (Join-Path $agentsDst $f) -Force
+    }
+}
+Copy-Item (Join-Path $agentsSrc "skills") (Join-Path $agentsDst "skills") -Recurse -Force
+Copy-Item (Join-Path $agentsSrc "runtime") (Join-Path $agentsDst "runtime") -Recurse -Force
+
+# 多 harness 生成目录（skills/AGENTS.md 统一从 .agents/ 复制，保证最新）
+foreach ($harness in @("opencode", "codebuddy", "goose")) {
+    $hDst = Join-Path $tempDir ".$harness"
+    Copy-Item (Join-Path $agentsSrc "skills") (Join-Path $hDst "skills") -Recurse -Force
+    Copy-Item (Join-Path $agentsSrc "AGENTS.md") (Join-Path $hDst "AGENTS.md") -Force
+}
+
+# .opencode/opencode.json（instructions 指向 .agents/AGENTS.md，cwd 为相对路径）
+Copy-Item (Join-Path $agentsSrc "runtime\opencode.json") (Join-Path $tempDir ".opencode\opencode.json") -Force
+# .codebuddy/mcp.json（${workspaceFolder} 变量版）
+Copy-Item (Join-Path $agentsSrc "runtime\codebuddy.json") (Join-Path $tempDir ".codebuddy\mcp.json") -Force
+
+# .goose/config.yaml：从 .agents/runtime/goose.json 生成相对路径版（--no-resolve-dir）
+$gooseGenScript = Join-Path $projectRoot "scripts\generate-goose-config.py"
+if (Test-Path $gooseGenScript) {
+    if (Get-Command python -ErrorAction SilentlyContinue) {
+        python $gooseGenScript --out-dir (Join-Path $tempDir ".goose") --no-resolve-dir | Out-Null
+    } else {
+        Write-Err "python 不可用，无法生成 .goose/config.yaml"
+        exit 1
+    }
+}
+
+# 个人级 harness 说明文档
+Copy-Item (Join-Path $projectRoot ".workbuddy\README.md") (Join-Path $tempDir ".workbuddy\README.md") -Force
+Copy-Item (Join-Path $projectRoot ".hermes\README.md") (Join-Path $tempDir ".hermes\README.md") -Force
+
+# scripts/（同步与生成工具链，发布后 install 脚本依赖）
+Copy-Item (Join-Path $projectRoot "scripts\generate-platform-configs.py") (Join-Path $tempDir "scripts\") -Force
+Copy-Item (Join-Path $projectRoot "scripts\generate-goose-config.py") (Join-Path $tempDir "scripts\") -Force
+Copy-Item (Join-Path $projectRoot "scripts\generate-aaif-declarations.py") (Join-Path $tempDir "scripts\") -Force
+Copy-Item (Join-Path $projectRoot "scripts\sync-agent-configs.ps1") (Join-Path $tempDir "scripts\") -Force
+Copy-Item (Join-Path $projectRoot "scripts\sync-agent-configs.sh") (Join-Path $tempDir "scripts\") -Force
+Copy-Item (Join-Path $projectRoot "scripts\pre-commit") (Join-Path $tempDir "scripts\") -Force
+Write-Ok "AAIF source + multi-harness config copied"
 
 # ──────────────────────────────────────────
 # [4/6] 复制 deep-review-mcp 源码（白名单）
@@ -188,7 +243,7 @@ Write-Ok "source copied"
 # [5/6] 复制顶层文档和安装脚本
 # ──────────────────────────────────────────
 Write-Step "[5/6] Copy docs and install scripts..."
-$topFiles = @("install.ps1", "install.sh", "README.md", "DEPLOY.md", "QUICKSTART.md", "LICENSE")
+$topFiles = @("install.ps1", "install.sh", "README.md", "DEPLOY.md", "QUICKSTART.md", "LICENSE", "AGENTS.md")
 foreach ($f in $topFiles) {
     $src = Join-Path $projectRoot $f
     if (Test-Path $src) {
@@ -205,8 +260,18 @@ Write-Step "[6/6] Verify and pack..."
 # 验证关键文件存在
 $requiredFiles = @(
     ".trae\mcp.json",
-    ".trae\rules\classification-rules.md",
     ".trae\skills\wrong-question-capture\SKILL.md",
+    ".agents\AGENTS.md",
+    ".agents\tools.json",
+    ".agents\triggers.json",
+    ".agents\workflows.json",
+    ".opencode\opencode.json",
+    ".codebuddy\mcp.json",
+    ".goose\config.yaml",
+    ".workbuddy\README.md",
+    ".hermes\README.md",
+    "scripts\sync-agent-configs.ps1",
+    "AGENTS.md",
     "deep-review-mcp\pyproject.toml",
     "deep-review-mcp\uv.lock",
     "deep-review-mcp\.python-version",
@@ -275,5 +340,5 @@ Write-Host ""
 Write-Host "  User steps:" -ForegroundColor White
 Write-Host "  1. Extract DeepReview-v$Version.zip" -ForegroundColor DarkGray
 Write-Host "  2. Run install.ps1" -ForegroundColor DarkGray
-Write-Host "  3. Open folder in Trae, enable project-level MCP" -ForegroundColor DarkGray
+Write-Host "  3. Open folder in your runtime (Trae/CodeBuddy/opencode/Goose), enable project-level MCP" -ForegroundColor DarkGray
 Write-Host ""
