@@ -29,7 +29,7 @@
         <!-- 原题内容 -->
         <div class="form-group">
             <label>原题内容</label>
-            <textarea name="raw_text">{{ wq.raw_text }}</textarea>
+            <textarea name="question_content">{{ wq.structured.question_content if wq.structured else '' }}</textarea>
         </div>
 
         <!-- 结构化信息 -->

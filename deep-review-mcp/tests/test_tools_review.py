@@ -13,9 +13,9 @@ def storage_with_overdue(tmp_path):
         nr = (datetime.now(timezone.utc) - timedelta(days=offset)).strftime("%Y-%m-%d")
         s.save_wrong_question(WrongQuestion(
             question_id=f"wq_{i}", created_at=datetime(2026, 6, 10+i, 10, 30, tzinfo=timezone.utc),
-            raw_text=f"题目{i}",
             structured=StructuredQuestion(subject="数学", grade_level="初二",
-                knowledge_points=["方程"], difficulty="基础", question_type="计算题"),
+                knowledge_points=["方程"], difficulty="基础", question_type="计算题",
+                question_content=f"题目{i}"),
             improvement=Improvement(plan="复习", similar_topics=["a","b","c"],
                 review_count=cnt, next_review_date=nr),
         ))

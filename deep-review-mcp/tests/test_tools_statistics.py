@@ -12,10 +12,10 @@ def storage_with_data(tmp_path):
     for i, (subj, et) in enumerate([("数学","知识漏洞"),("数学","方法错误"),("英语","粗心失误")]):
         s.save_wrong_question(WrongQuestion(
             question_id=f"wq_{i}", created_at=datetime(2026,6,10+i,10,30,tzinfo=timezone.utc),
-            raw_text=f"题目{i}",
             structured=StructuredQuestion(subject=subj, grade_level="初二",
                 knowledge_points=["方程" if subj=="数学" else "时态"],
-                difficulty="中等", question_type="计算题"),
+                difficulty="中等", question_type="计算题",
+                question_content=f"题目{i}"),
             classification=Classification(error_type=et, error_category="测试"),
         ))
     return s

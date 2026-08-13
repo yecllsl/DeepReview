@@ -17,7 +17,7 @@
          :class="{ 'active': selectedId === '{{ q.question_id }}' }">
         <div class="subject-tag subject-{{ subj }}"></div>
         <div class="card-body">
-            <div class="card-summary">{{ truncate(q.raw_text, 60) }}</div>
+            <div class="card-summary">{{ truncate((q.structured or {}).get('question_content') or '暂无内容', 60) }}</div>
             <div class="card-meta">
                 <span class="tag subject-{{ subj }}">{{ subj }}</span>
                 <span class="tag tag-error-{{ et }}">{{ et }}</span>

@@ -48,13 +48,6 @@ def delete_wrong_question(question_id: str) -> dict:
 # ──────────────────────────────────────────
 
 @mcp.tool()
-def ocr_recognize(image_path: str) -> dict:
-    """OCR识别图片中的错题内容并结构化解析"""
-    from deep_review_mcp.tools.ocr_recognize import ocr_recognize as _ocr
-    return _ocr(image_path)
-
-
-@mcp.tool()
 def classify_question(question_text: str, subject: str = "") -> dict:
     """AI驱动智能分类错题"""
     from deep_review_mcp.tools.classify import classify_question as _classify

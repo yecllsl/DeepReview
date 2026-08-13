@@ -16,11 +16,11 @@ def sample_question():
     return WrongQuestion(
         question_id="wq_20260615_001",
         created_at=datetime(2026, 6, 15, 10, 30, tzinfo=timezone.utc),
-        raw_text="若x²-5x+6=0，则x=",
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["一元二次方程", "因式分解"],
             difficulty="中等", question_type="计算题",
+            question_content="若x²-5x+6=0，则x=",
         ),
     )
 
@@ -29,7 +29,7 @@ def test_save_and_load(tmp_storage, sample_question):
     result = tmp_storage.save_wrong_question(sample_question)
     assert result["question_id"] == "wq_20260615_001"
     loaded = tmp_storage.load_wrong_question("wq_20260615_001")
-    assert loaded.raw_text == sample_question.raw_text
+    assert loaded.structured.question_content == sample_question.structured.question_content
 
 
 def test_query_by_subject(tmp_storage, sample_question):
@@ -46,9 +46,9 @@ def test_query_by_error_type(tmp_storage, sample_question):
 
 def test_update(tmp_storage, sample_question):
     tmp_storage.save_wrong_question(sample_question)
-    sample_question.raw_text = "更新后"
+    sample_question.structured.question_content = "更新后"
     tmp_storage.update_wrong_question(sample_question)
-    assert tmp_storage.load_wrong_question("wq_20260615_001").raw_text == "更新后"
+    assert tmp_storage.load_wrong_question("wq_20260615_001").structured.question_content == "更新后"
 
 
 def test_delete(tmp_storage, sample_question):

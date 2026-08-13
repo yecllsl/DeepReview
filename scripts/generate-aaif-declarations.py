@@ -123,7 +123,7 @@ def extract_skill_tools(text: str, known_tools: set[str] | None = None) -> list[
     parameter names (e.g. ``group_by``) are filtered out.
     """
     tools: list[str] = []
-    # 工具名形如 save_wrong_question / ocr_recognize（蛇形命名，含下划线）。
+    # 工具名形如 save_wrong_question / classify_question（蛇形命名，含下划线）。
     pattern = re.compile(r"`([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`")
     for m in pattern.finditer(text):
         name = m.group(1)

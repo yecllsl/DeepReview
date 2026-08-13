@@ -32,7 +32,6 @@ def test_wrong_question_creation():
     wq = WrongQuestion(
         question_id="wq_20260615_001",
         created_at=datetime.now(timezone.utc),
-        raw_text="若x²-5x+6=0，则x=",
     )
     assert wq.question_id == "wq_20260615_001"
     assert wq.structured is None
@@ -42,10 +41,10 @@ def test_wrong_question_full():
     wq = WrongQuestion(
         question_id="wq_20260615_002",
         created_at=datetime.now(timezone.utc),
-        raw_text="测试题目",
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["方程"], difficulty="基础", question_type="填空题",
+            question_content="测试题目",
         ),
         classification=Classification(error_type="知识漏洞", error_category="方程概念不清"),
     )

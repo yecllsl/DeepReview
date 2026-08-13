@@ -29,10 +29,10 @@ def sample_question():
     return WrongQuestion(
         question_id="wq_log_001",
         created_at=datetime(2026, 7, 25, 10, 0, tzinfo=timezone.utc),
-        raw_text="测试 ReviewLog 持久化",
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["方程"], difficulty="中等", question_type="计算题",
+            question_content="测试 ReviewLog 持久化",
         ),
         improvement=Improvement(
             plan="复习方程", similar_topics=["一元二次方程"],

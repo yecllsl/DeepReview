@@ -24,7 +24,6 @@
       "name": "wrong-question-batch-capture",
       "command": "/batch-capture",
       "tools": [
-        "ocr_recognize",
         "classify_question",
         "save_wrong_question"
       ]
@@ -34,7 +33,6 @@
       "name": "wrong-question-capture",
       "command": "/capture",
       "tools": [
-        "ocr_recognize",
         "classify_question",
         "save_wrong_question"
       ]

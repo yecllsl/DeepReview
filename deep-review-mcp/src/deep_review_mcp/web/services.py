@@ -189,9 +189,10 @@ def get_upcoming_reviews() -> list[dict]:
         if not wq.improvement.next_review_date:
             continue
         if wq.improvement.next_review_date <= today:
+            qc = wq.structured.question_content if wq.structured and wq.structured.question_content else "暂无内容"
             upcoming.append({
                 "question_id": wq.question_id,
-                "raw_text": wq.raw_text[:100] + ("..." if len(wq.raw_text) > 100 else ""),
+                "question_content": qc[:100] + ("..." if len(qc) > 100 else ""),
                 "subject": wq.structured.subject if wq.structured else "未分类",
                 "error_type": wq.classification.error_type if wq.classification else "未分类",
                 "next_review_date": wq.improvement.next_review_date,
@@ -244,7 +245,7 @@ def update_question(question_id: str, data: dict) -> Optional[WrongQuestion]:
     patch: dict = {}
 
     # 顶层字段
-    for field in ["raw_text", "user_answer", "correct_answer"]:
+    for field in ["user_answer", "correct_answer"]:
         if field in data and data[field] is not None:
             patch[field] = data[field]
 
@@ -259,7 +260,7 @@ def update_question(question_id: str, data: dict) -> Optional[WrongQuestion]:
             "difficulty": "中等",
             "question_type": "其他",
         }
-    for field in ["subject", "grade_level", "knowledge_points", "difficulty", "question_type"]:
+    for field in ["subject", "grade_level", "knowledge_points", "difficulty", "question_type", "question_content"]:
         if field in data and data[field] is not None:
             structured_patch[field] = data[field]
     if structured_patch:

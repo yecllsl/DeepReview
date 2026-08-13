@@ -18,6 +18,8 @@ class StructuredQuestion(BaseModel):
     knowledge_points: list[str] = Field(description="知识点标签列表")
     difficulty: str = Field(description="难度：基础/中等/困难")
     question_type: str = Field(description="题型")
+    question_content: str = Field(default="", description="题目内容")
+    options: list[str] = Field(default_factory=list, description="选项列表")
 
 
 class Classification(BaseModel):
@@ -59,7 +61,6 @@ class WrongQuestion(BaseModel):
     question_id: str = Field(description="错题唯一ID")
     created_at: datetime = Field(description="创建时间")
     image_path: Optional[str] = Field(default=None)
-    raw_text: str = Field(description="OCR原始文本")
     structured: Optional[StructuredQuestion] = Field(default=None)
     classification: Optional[Classification] = Field(default=None)
     analysis: Optional[Analysis] = Field(default=None)

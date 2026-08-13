@@ -31,13 +31,13 @@ def _make_question(qid, subject="数学", error_type="知识漏洞",
     wq = WrongQuestion(
         question_id=qid,
         created_at=created,
-        raw_text=f"测试题目 {qid}",
         structured=StructuredQuestion(
             subject=subject,
             grade_level="高中",
             knowledge_points=["函数基础", "二次函数"],
             difficulty="中等",
             question_type="选择题",
+            question_content=f"测试题目 {qid}",
         ),
         classification=Classification(
             error_type=error_type,
@@ -151,14 +151,14 @@ def test_mark_question_reviewed_not_found(temp_storage):
 def test_update_question(temp_storage):
     """编辑保存后字段应更新"""
     temp_storage.save_wrong_question(_make_question("wq_001"))
-    updated = services.update_question("wq_001", {"raw_text": "修改后的题目"})
+    updated = services.update_question("wq_001", {"question_content": "修改后的题目"})
     assert updated is not None
-    assert updated.raw_text == "修改后的题目"
+    assert updated.structured.question_content == "修改后的题目"
 
 
 def test_update_question_not_found(temp_storage):
     """更新不存在的错题应返回 None"""
-    result = services.update_question("nonexistent", {"raw_text": "x"})
+    result = services.update_question("nonexistent", {"question_content": "x"})
     assert result is None
 
 
@@ -169,7 +169,6 @@ def test_update_question_with_null_structured(temp_storage):
     wq = WQ(
         question_id="wq_null_test",
         created_at=datetime.now(timezone.utc),
-        raw_text="无分类测试题",
         structured=None,
         classification=None,
     )

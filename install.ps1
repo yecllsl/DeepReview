@@ -25,7 +25,7 @@ $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " DeepReview v0.3.0 安装向导" -ForegroundColor Cyan
+Write-Host " DeepReview v0.4.0 安装向导" -ForegroundColor Cyan
 Write-Host "  (Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
@@ -167,14 +167,12 @@ if ($versionMatch) {
 Write-Host "  ✓ $pythonVersion" -ForegroundColor Green
 
 # ──────────────────────────────────────────
-# [3/5] 安装基础依赖
+# [3/4] 安装依赖
 # ──────────────────────────────────────────
-Write-Host "[3/5] 安装基础依赖..." -ForegroundColor Yellow
-Write-Host "  基础依赖不含 OCR 引擎（paddleocr/paddlepaddle 体积大，已拆为可选）" -ForegroundColor Cyan
+Write-Host "[3/4] 安装依赖..." -ForegroundColor Yellow
 
 $mcpDir = Join-Path $projectRoot "deep-review-mcp"
 
-# 使用 uv sync 安装基础依赖（不包含 ocr extra）
 Push-Location $mcpDir
 try {
     Write-Host "  正在安装依赖包..." -ForegroundColor Cyan
@@ -194,31 +192,7 @@ try {
 }
 
 # ──────────────────────────────────────────
-# [4/5] 询问并安装可选 OCR 依赖
-# ──────────────────────────────────────────
-Write-Host "[4/5] 是否安装 OCR 可选依赖？" -ForegroundColor Yellow
-Write-Host "  OCR 用于图片错题识别，paddleocr+paddlepaddle 约 1.5GB，安装较慢。" -ForegroundColor Cyan
-Write-Host "  仅当需要 /capture 拍照录入错题时才需要。" -ForegroundColor Cyan
-$installOcr = Read-Host "  安装 OCR 依赖？[y/N]"
-if ($installOcr -match "^[Yy]$") {
-    Push-Location $mcpDir
-    try {
-        Write-Host "  正在安装 OCR 依赖..." -ForegroundColor Cyan
-        uv sync --extra ocr 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "  ✗ OCR 依赖安装失败，可稍后手动重试：uv sync --extra ocr" -ForegroundColor Red
-        } else {
-            Write-Host "  ✓ OCR 依赖安装完成" -ForegroundColor Green
-        }
-    } finally {
-        Pop-Location
-    }
-} else {
-    Write-Host "  ⊘ 已跳过 OCR 依赖。后续需要时执行：cd deep-review-mcp && uv sync --extra ocr" -ForegroundColor DarkGray
-}
-
-# ──────────────────────────────────────────
-# [5/5] Agent Runtime 配置（多 harness）
+# [4/4] Agent Runtime 配置（多 harness）
 # ──────────────────────────────────────────
 if ($AgentRuntime) {
     Write-Host ""

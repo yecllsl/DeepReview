@@ -24,10 +24,6 @@
 chmod +x install.sh && ./install.sh
 ```
 
-> ⏱️ 首次安装会询问是否安装 OCR 引擎（PaddleOCR + PaddlePaddle 约 1.5GB）。**仅当需要 `/capture` 拍照录入错题时才需要**。文本录入、统计、复习等功能无需 OCR。
-> 
-> 跳过 OCR 后若需要补装：`cd deep-review-mcp && uv sync --extra ocr`
-
 ### 第 3 步：配置 Agent 运行时
 
 安装脚本通过 `-AgentRuntime` 指定要配置的运行时（缺省只装依赖，不配置运行时）：
@@ -170,8 +166,8 @@ uv run deep-review-web
 /capture
 > 请提供错题图片路径: C:\Users\...\math_question.jpg
 
-[AI] OCR 识别完成
-原始文本: 若 x² - 5x + 6 = 0，则 x = ?
+[AI] 多模态看图解析完成
+题目内容: 若 x² - 5x + 6 = 0，则 x = ?
 
 [AI] 结构化解析:
 - 学科: 数学
@@ -327,7 +323,6 @@ question_id: wq_20260615_001
 | 安装脚本报错 "uv 未安装" | 安装 uv：`irm https://astral.sh/uv/install.ps1 \| iex` |
 | MCP Server 不生效 | 确认启用项目级 MCP → 重启对应运行时（Trae/CodeBuddy/opencode/Goose） |
 | 路径变量不替换 | 运行 `.\install.ps1 -FixPath`（或 `./install.sh --fix-path`）修复路径 |
-| PaddleOCR 安装失败 | 确认 Python >= 3.12 + 网络畅通 → `cd deep-review-mcp && uv sync` |
 | Skills 不生效 | 重启运行时 → 检查 `.agents/skills/`（生成目录由 `scripts/sync-agent-configs` 同步） |
 
 ## 下一步

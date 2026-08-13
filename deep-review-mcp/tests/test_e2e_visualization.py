@@ -49,13 +49,13 @@ def _seed_test_data(storage: Storage):
         wq = WrongQuestion(
             question_id=f"wq_e2e_{i:03d}",
             created_at=datetime.now(timezone.utc) - timedelta(days=i),
-            raw_text=f"E2E测试题目 {i} - {subjects[i % 5]}相关内容",
             structured=StructuredQuestion(
                 subject=subjects[i % 5],
                 grade_level="高中",
                 knowledge_points=["函数基础", "二次函数"] if i % 2 == 0 else ["力学", "电学"],
                 difficulty="中等" if i % 3 != 0 else "困难",
                 question_type="选择题" if i % 2 == 0 else "填空题",
+                question_content=f"E2E测试题目 {i} - {subjects[i % 5]}相关内容",
             ),
             classification=Classification(
                 error_type=error_types[i % 4],
@@ -231,7 +231,7 @@ async def test_question_edit_and_save(page: Page, server_url: str):
         # 应显示编辑表单
         await page.wait_for_selector("#edit-form", timeout=10000)
         # 修改原题内容
-        textarea = await page.query_selector('textarea[name="raw_text"]')
+        textarea = await page.query_selector('textarea[name="question_content"]')
         if textarea:
             await textarea.fill("E2E修改后的题目内容")
 

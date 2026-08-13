@@ -6,7 +6,7 @@
 
 ## 核心功能
 
-- 📷 **错题采集**: 拍照识别 + OCR文字提取 + AI结构化解析
+- 📷 **错题采集**: 拍照识别（宿主LLM多模态看图解析）+ AI结构化解析
 - 🏷️ **智能分类**: 学科分类、知识点标签、错误类型标注
 - 🔍 **原因分析**: 错误根因诊断 (知识漏洞/粗心/方法错误/审题失误)
 - 📝 **改进方案**: 针对性学习建议、同类题推荐方向
@@ -39,7 +39,7 @@ Skills 编排层 (配置定义，由 .agents/skills/ 同步到多平台)
 - **配置层**: AAIF 规范（`.agents/` 唯一真相源）+ 多 Agent harness（Trae/CodeBuddy/opencode/Goose + WorkBuddy/Hermes，单向同步）
 - **MCP Server**: Python 3.12+ / FastMCP
 - **Web 可视化**: FastAPI + HTMX（OOB 局部刷新）+ Alpine.js（轻量交互）+ ECharts（图表）
-- **OCR 引擎（可选）**: PaddleOCR（本地部署，无需 API Key；不安装也能用基础功能）
+- **图片解析**: 宿主 LLM 多模态直接看图解析（无需额外图像识别依赖）
 - **数据存储**: JSON 文件（本地存储，原子写入）
 - **包管理**: uv（现代高速 Python 包管理器）
 - **测试**: pytest + pytest-asyncio + pytest-cov + Playwright（E2E）
@@ -57,7 +57,7 @@ Skills 编排层 (配置定义，由 .agents/skills/ 同步到多平台)
 
 #### 1. 下载并解压
 
-下载 `DeepReview-v0.3.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
+下载 `DeepReview-v0.4.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
 
 #### 2. 运行安装脚本
 
@@ -75,8 +75,6 @@ chmod +x install.sh
 ```
 
 安装脚本会自动检查环境、创建虚拟环境并安装所有依赖。
-
-> ⏱️ 首次安装需要下载 PaddleOCR 模型，可能需要 2-5 分钟。
 
 #### 3. 配置 Agent 运行时（多 harness）
 
@@ -125,17 +123,6 @@ uv run deep-review-web
 ```
 
 浏览器访问 http://127.0.0.1:8001 即可使用可视化界面。
-
-### 可选：安装 OCR 引擎
-
-OCR 引擎（PaddleOCR + PaddlePaddle，约 1.5 GB）用于图片错题识别，**非必需**。仅当使用 `/capture` 拍照录入时才需要安装：
-
-```bash
-cd deep-review-mcp
-uv sync --extra ocr
-```
-
-未安装时调用 OCR 会得到友好提示，不影响其他功能。
 
 ## 下载与发布
 
@@ -209,8 +196,7 @@ DeepReview/
 │   │   ├── models.py                      # Pydantic 数据模型
 │   │   ├── storage.py                     # JSON 存储引擎（支持原子写、部分更新）
 │   │   ├── knowledge_map.py               # K12 知识点映射
-│   │   ├── tools/                         # 11 个 MCP Tools
-│   │   │   ├── ocr_recognize.py
+│   │   ├── tools/                         # 10 个 MCP Tools
 │   │   │   ├── classify.py
 │   │   │   ├── analyze.py
 │   │   │   ├── improvement.py
@@ -222,7 +208,7 @@ DeepReview/
 │   │   └── web/                           # Web 可视化模块（薄编排层）
 │   ├── tests/                             # 测试套件
 │   ├── data/                              # 运行时数据（被 .gitignore）
-│   ├── pyproject.toml                     # Python 项目配置（version 0.3.0）
+│   ├── pyproject.toml                     # Python 项目配置（version 0.4.0）
 │   └── uv.lock                            # 依赖锁定文件
 ├── scripts/                                # 开发者工具
 │   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明
@@ -277,7 +263,7 @@ Web 可视化模块位于 `deep-review-mcp/src/deep_review_mcp/web/`，提供本
 ## 数据安全
 
 - ✅ 所有数据仅存储在本地
-- ✅ OCR 本地部署，不调用外部 API
+- ✅ 图片解析由宿主 LLM 多模态完成，图片仅存本地不外传
 - ✅ 不收集任何个人身份信息
 - ✅ 图片文件存储在项目目录下
 - ✅ Web 可视化仅绑定 127.0.0.1，JS 库本地化，无外部请求
@@ -300,13 +286,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 2. 确认已重启运行时
 3. 如果 `${workspaceFolder}` 变量不被支持，运行 `.\install.ps1 -FixPath`（或 `./install.sh --fix-path`）自动修复路径
 
-### Q: OCR / PaddleOCR 安装失败
-
-- 确认 Python 版本 >= 3.12
-- 确认网络畅通（需下载模型文件）
-- OCR 为**可选依赖**，默认 `uv sync` 不会安装。需要时执行：`cd deep-review-mcp && uv sync --extra ocr`
-- 若仅使用文本录入、统计、复习等基础功能，**无需安装 OCR**
-
 ## License
 
 MIT License
@@ -322,7 +301,7 @@ MIT License
 ```bash
 cd deep-review-mcp
 
-# 仅单元/集成测试（默认不装 paddleocr/浏览器，最快）
+# 仅单元/集成测试（默认不装浏览器，最快）
 uv sync --extra dev
 uv run pytest tests/ -m "not e2e"
 
@@ -337,15 +316,15 @@ uv run pytest tests/test_e2e_visualization.py -m e2e
 
 ```powershell
 # Windows
-pwsh .\scripts\build-release.ps1 -Version 0.3.0
+pwsh .\scripts\build-release.ps1 -Version 0.4.0
 ```
 
 ```bash
 # Linux / macOS
-bash scripts/build-release.sh 0.3.0
+bash scripts/build-release.sh 0.4.0
 ```
 
-产物：`dist/DeepReview-v0.3.0.{zip,tar.zst,tar.gz}`。
+产物：`dist/DeepReview-v0.4.0.{zip,tar.zst,tar.gz}`。
 
 ### CI/CD
 

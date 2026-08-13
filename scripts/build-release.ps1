@@ -8,7 +8,7 @@
 #   dist/DeepReview-v0.1.0.zip
 
 param(
-    [string]$Version = "0.3.0"
+    [string]$Version = "0.4.0"
 )
 
 $ErrorActionPreference = "Stop"

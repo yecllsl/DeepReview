@@ -40,19 +40,6 @@ chmod +x install.sh
 # 4. 重启运行时
 ```
 
-### 安装时的可选步骤
-
-`install.ps1` / `install.sh` 会在基础依赖装完后询问：
-
-> **是否安装 OCR 可选依赖？**
-> OCR 用于图片错题识别，paddleocr + paddlepaddle 约 1.5GB，安装较慢。
-> 仅当需要 `/capture` 拍照录入错题时才需要。
-
-- 选 `N`（默认）：跳过 OCR，文本录入、统计、复习等功能完全可用
-- 选 `Y`：安装 PaddleOCR，后续可调用 `uv sync --extra ocr` 重新装
-
-> 💡 跳过后若需要补装：`cd deep-review-mcp && uv sync --extra ocr`
-
 ## 环境要求
 
 | 依赖 | 最低版本 | 安装方式 |
@@ -253,19 +240,7 @@ uv sync
 - 重跑同步脚本：`pwsh scripts/sync-agent-configs.ps1`（或 `bash scripts/sync-agent-configs.sh`）
 - 若提交被 `scripts/pre-commit` 拦截，说明直接改了生成目录，需从 `.agents/` 重做
 
-### Q5: PaddleOCR / OCR 安装失败
-
-**检查项：**
-1. Python 版本是否 >= 3.12
-2. 网络是否畅通（需下载 paddleocr + paddlepaddle 约 1.5GB）
-3. 是否在 `uv sync` 时选择了 `N` 跳过 OCR
-
-**解决方案：**
-- OCR 为**可选依赖**，默认 `uv sync` 不会安装
-- 如需使用 `/capture` 拍照录入：`cd deep-review-mcp && uv sync --extra ocr`
-- 如不使用 OCR（手动输入/纯文本录入），**无需任何额外操作**
-
-### Q6: Web 可视化界面无法访问
+### Q5: Web 可视化界面无法访问
 
 **检查项：**
 1. 端口 8001 是否被占用：`netstat -ano | findstr 8001`（Windows）/ `lsof -i :8001`（macOS/Linux）
@@ -314,7 +289,7 @@ DeepReview/
 │   │   ├── analysis_reports/              # 分析报告
 │   │   ├── review_plans/                  # 复习计划
 │   │   └── exports/                       # 导出文件
-│   ├── pyproject.toml                     # Python 项目配置（version 0.3.0）
+│   ├── pyproject.toml                     # Python 项目配置（version 0.4.0）
 │   └── uv.lock                            # 依赖锁定
 ├── scripts/                                # 开发者工具
 │   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明
@@ -324,7 +299,7 @@ DeepReview/
 │   ├── pre-commit                          # git 钩子：拦截配置同步违规
 │   └── build-release.ps1/.sh               # 发布包构建
 ├── AGENTS.md                               # [生成] 根规则文件（Trae 读取约定）
-├── install.ps1 / install.sh                # 安装脚本（-AgentRuntime/-FixPath，可选装 OCR）
+├── install.ps1 / install.sh                # 安装脚本（-AgentRuntime/-FixPath）
 ├── QUICKSTART.md / DEPLOY.md / README.md   # 文档
 └── LICENSE                                 # MIT
 ```
@@ -335,15 +310,15 @@ DeepReview/
 
 ```powershell
 # Windows (PowerShell 7+)
-pwsh .\scripts\build-release.ps1 -Version 0.3.0
+pwsh .\scripts\build-release.ps1 -Version 0.4.0
 ```
 
 ```bash
 # Linux / macOS
-bash scripts/build-release.sh 0.3.0
+bash scripts/build-release.sh 0.4.0
 ```
 
-产物：`dist/DeepReview-v0.3.0.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
+产物：`dist/DeepReview-v0.4.0.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
 
 构建脚本采用**白名单复制策略**，打包 `.agents/`（AAIF 真相源）、`.trae/` `.opencode/` `.codebuddy/` `.goose/`（harness 配置）、`.workbuddy/` `.hermes/`（个人级说明）、`scripts/`（同步工具链）与 `deep-review-mcp/`，自动排除：
 

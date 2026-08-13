@@ -36,7 +36,7 @@ def analyze_error(question_id: str, user_answer: str = "", correct_answer: str =
 
     # 使用模板生成分析提示词
     prompt = ANALYZE_PROMPT.format(
-        question_text=wq.raw_text,
+        question_text=wq.structured.question_content if wq.structured else "",
         subject=subject,
         knowledge_points=kps,
         user_answer=ua,

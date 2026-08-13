@@ -47,10 +47,10 @@ def temp_data_with_logs(tmp_path, monkeypatch):
         wq = WrongQuestion(
             question_id=f"wq_fsrs_api_{i:03d}",
             created_at=datetime.now(timezone.utc) - timedelta(days=i),
-            raw_text=f"FSRS API 测试题 {i}",
             structured=StructuredQuestion(
                 subject="数学", grade_level="高中",
                 knowledge_points=["函数"], difficulty="中等", question_type="计算题",
+                question_content=f"FSRS API 测试题 {i}",
             ),
             classification=Classification(error_type="知识漏洞", error_category="概念不清"),
             improvement=Improvement(

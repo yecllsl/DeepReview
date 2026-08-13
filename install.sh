@@ -47,7 +47,7 @@ fi
 
 echo ""
 echo "========================================"
-echo "  DeepReview v0.3.0 安装向导"
+echo "  DeepReview v0.4.0 安装向导"
 echo "  (Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes)"
 echo "========================================"
 echo ""
@@ -155,12 +155,11 @@ fi
 echo -e "  ${GREEN}✓ Python $PYTHON_VERSION${NC}"
 
 # ──────────────────────────────────────────
-# [3/5] 安装基础依赖
+# [3/4] 安装依赖
 # ──────────────────────────────────────────
 MCP_DIR="$PROJECT_ROOT/deep-review-mcp"
 
-echo "[3/5] 安装基础依赖..."
-echo "  基础依赖不含 OCR 引擎（paddleocr/paddlepaddle 体积大，已拆为可选）"
+echo "[3/4] 安装依赖..."
 
 cd "$MCP_DIR"
 
@@ -176,25 +175,7 @@ fi
 echo -e "  ${GREEN}✓ 基础依赖安装完成${NC}"
 
 # ──────────────────────────────────────────
-# [4/5] 询问并安装可选 OCR 依赖
-# ──────────────────────────────────────────
-echo "[4/5] 是否安装 OCR 可选依赖？"
-echo "  OCR 用于图片错题识别，paddleocr+paddlepaddle 约 1.5GB，安装较慢。"
-echo "  仅当需要 /capture 拍照录入错题时才需要。"
-read -p "  安装 OCR 依赖？[y/N] " INSTALL_OCR
-if [[ "$INSTALL_OCR" =~ ^[Yy]$ ]]; then
-    echo "  正在安装 OCR 依赖..."
-    if uv sync --extra ocr 2>&1; then
-        echo -e "  ${GREEN}✓ OCR 依赖安装完成${NC}"
-    else
-        echo -e "  ${RED}✗ OCR 依赖安装失败，可稍后手动重试：uv sync --extra ocr${NC}"
-    fi
-else
-    echo -e "  ${GRAY}⊘ 已跳过 OCR 依赖。后续需要时执行：cd deep-review-mcp && uv sync --extra ocr${NC}"
-fi
-
-# ──────────────────────────────────────────
-# [5/5] Agent Runtime 配置（多 harness）
+# [4/4] Agent Runtime 配置（多 harness）
 # ──────────────────────────────────────────
 SYNC_SCRIPT="$PROJECT_ROOT/scripts/sync-agent-configs.sh"
 

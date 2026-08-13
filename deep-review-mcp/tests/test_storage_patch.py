@@ -2,7 +2,7 @@
 """测试 storage.py 的增强功能：原子写、部分更新、标记复习"""
 from datetime import datetime
 
-from deep_review_mcp.models import Improvement, WrongQuestion
+from deep_review_mcp.models import Improvement, StructuredQuestion, WrongQuestion
 from deep_review_mcp.storage import Storage
 
 
@@ -16,7 +16,11 @@ def _make_question(qid: str = "wq_test_001") -> WrongQuestion:
     return WrongQuestion(
         question_id=qid,
         created_at=datetime.now(),
-        raw_text="测试题目",
+        structured=StructuredQuestion(
+            subject="数学", grade_level="初二",
+            knowledge_points=["方程"], difficulty="中等", question_type="计算题",
+            question_content="测试题目",
+        ),
     )
 
 
@@ -29,18 +33,18 @@ def test_patch_wrong_question_updates_field(tmp_path):
     storage = _make_storage(tmp_path)
     storage.save_wrong_question(_make_question())
 
-    updated = storage.patch_wrong_question("wq_test_001", {"raw_text": "修改后题目"})
+    updated = storage.patch_wrong_question("wq_test_001", {"structured": {"question_content": "修改后题目"}})
     assert updated is not None
-    assert updated.raw_text == "修改后题目"
+    assert updated.structured.question_content == "修改后题目"
 
     loaded = storage.load_wrong_question("wq_test_001")
-    assert loaded.raw_text == "修改后题目"
+    assert loaded.structured.question_content == "修改后题目"
 
 
 def test_patch_wrong_question_not_found(tmp_path):
     """更新不存在的错题应返回 None"""
     storage = _make_storage(tmp_path)
-    result = storage.patch_wrong_question("nonexistent", {"raw_text": "x"})
+    result = storage.patch_wrong_question("nonexistent", {"structured": {"question_content": "x"}})
     assert result is None
 
 
@@ -48,12 +52,12 @@ def test_patch_wrong_question_preserves_other_fields(tmp_path):
     """部分更新不应影响未修改的字段"""
     storage = _make_storage(tmp_path)
     wq = _make_question()
-    wq.raw_text = "原始题目"
+    wq.structured.question_content = "原始题目"
     wq.correct_answer = "原始答案"
     storage.save_wrong_question(wq)
 
-    updated = storage.patch_wrong_question("wq_test_001", {"raw_text": "新题目"})
-    assert updated.raw_text == "新题目"
+    updated = storage.patch_wrong_question("wq_test_001", {"structured": {"question_content": "新题目"}})
+    assert updated.structured.question_content == "新题目"
     assert updated.correct_answer == "原始答案"
 
 

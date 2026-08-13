@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-08-13
+
+### Removed
+
+- **删除本地 PaddleOCR 实现**：`ocr_recognize` MCP 工具、`tools/ocr_recognize.py`、`prompts/structure_parse.py`、`pyproject.toml` 的 `[ocr]` 可选依赖（paddleocr/paddlepaddle）、安装脚本中的 OCR 安装步骤
+- **移除 `WrongQuestion.raw_text` 字段**：题目文本改由 `StructuredQuestion.question_content`（及 `options`）承载；web 展示、编辑、搜索、analyze/export 全链路迁移
+
+### Changed
+
+- **图片导入改为宿主 LLM 多模态解析**：`/capture`、`/batch-capture` 不再调用 OCR，由宿主 LLM 直接读取图片并按结构化提示解析，解析提示内联进采集 Skill
+- **MCP 工具数量**：11 个 → 10 个（业务工具 7 → 6）
+- **版本号统一**：`pyproject.toml` / `__init__.py` / web 入口 / install 脚本 / 文档全部对齐 0.4.0
+
+### 说明
+
+- 服务层 `StructuredQuestion.question_content` 带默认值，兼容旧数据加载；图片 `image_path` 字段保留
+- 配置同步：AAIF 声明（`tools.json` / `workflows.json`）已重生成，四平台生成目录已同步
+
 ## [0.3.0] - 2026-08-13
 
 ### Added

@@ -30,13 +30,13 @@ def temp_data(tmp_path, monkeypatch):
         wq = WrongQuestion(
             question_id=f"wq_test_{i:03d}",
             created_at=datetime.now(timezone.utc) - timedelta(days=i),
-            raw_text=f"测试题目 {i} - 数学函数题",
             structured=StructuredQuestion(
                 subject="数学" if i % 2 == 0 else "物理",
                 grade_level="高中",
                 knowledge_points=["函数基础", "二次函数"],
                 difficulty="中等" if i < 3 else "困难",
                 question_type="选择题",
+                question_content=f"测试题目 {i} - 数学函数题",
             ),
             classification=Classification(
                 error_type="知识漏洞" if i % 2 == 0 else "粗心失误",
@@ -145,7 +145,7 @@ async def test_update_question_api(client):
     """PUT 保存应更新数据，并返回详情 + OOB 左侧列表片段"""
     resp = await client.put(
         "/api/questions/wq_test_000",
-        data={"raw_text": "修改后的题目", "subject": "物理", "error_type": "方法错误"},
+        data={"question_content": "修改后的题目", "subject": "物理", "error_type": "方法错误"},
         headers={"HX-Current-URL": "http://test/partials/questions"},
     )
     assert resp.status_code == 200
@@ -161,7 +161,7 @@ async def test_update_question_not_found(client):
     """更新不存在的错题应返回 404"""
     resp = await client.put(
         "/api/questions/nonexistent",
-        data={"raw_text": "x"},
+        data={"question_content": "x"},
     )
     assert resp.status_code == 404
 

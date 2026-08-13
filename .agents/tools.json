@@ -77,22 +77,6 @@
       }
     },
     {
-      "name": "ocr_recognize",
-      "description": "OCR识别图片中的错题内容并结构化解析",
-      "parameters": {
-        "additionalProperties": false,
-        "properties": {
-          "image_path": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "image_path"
-        ],
-        "type": "object"
-      }
-    },
-    {
       "name": "classify_question",
       "description": "AI驱动智能分类错题",
       "parameters": {
