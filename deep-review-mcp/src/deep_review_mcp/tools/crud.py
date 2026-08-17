@@ -85,7 +85,10 @@ def update_wrong_question(question_data: dict) -> dict:
         包含question_id和saved_path的字典
     """
     storage = get_storage()
-    wq = WrongQuestion.model_validate(question_data)
+    # 与 save 路径一致：缺失 structured/classification 时用规则默认值兜底，
+    # 避免 update 传回全量记录却不含结构字段时落库 null（业务规则 #5/#6）。
+    filled = _fill_required_defaults(question_data)
+    wq = WrongQuestion.model_validate(filled)
     return storage.update_wrong_question(wq)
 
 

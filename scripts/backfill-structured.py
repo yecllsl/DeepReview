@@ -23,6 +23,21 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "deep-review-mcp" / "data" / "wrong_questions"
 
 
+def _backfill(data: dict) -> dict:
+    """回填单条记录：迁移 raw_text 并补齐缺失的 structured/classification。
+
+    旧记录可能没有 structured 键、或 structured 为 None，需先填充默认值再注入
+    raw_text，避免 pop 后无处可写导致题目原文静默丢失。
+    """
+    data = dict(data)
+    raw_text = data.pop("raw_text", None)
+    filled = _fill_required_defaults(data)
+    structured = filled.get("structured") or {}
+    if raw_text and not structured.get("question_content"):
+        structured["question_content"] = raw_text
+    return filled
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="回填存量错题的缺失结构化字段")
     parser.add_argument("--dry-run", action="store_true", help="只统计不写入")
@@ -37,13 +52,9 @@ def main() -> int:
     for fp in sorted(DATA_DIR.glob("*.json")):
         data = json.loads(fp.read_text(encoding="utf-8"))
 
-        # 迁移废弃的 raw_text -> structured.question_content（仅当题目内容为空时）
-        raw_text = data.pop("raw_text", None)
-        if raw_text and data.get("structured", {}) is not None \
-                and not data["structured"].get("question_content"):
-            data["structured"]["question_content"] = raw_text
+        # 迁移废弃 raw_text + 补齐缺失 structured/classification（见 _backfill）。
+        filled = _backfill(data)
 
-        filled = _fill_required_defaults(data)
         if filled == data:
             untouched += 1
             continue
