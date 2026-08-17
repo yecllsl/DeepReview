@@ -1,18 +1,20 @@
 # tests/test_tools_review.py
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timezone, timedelta
-from deep_review_mcp.tools.review import recommend_review, _get_overdue_questions
+
+from deep_review_mcp.models import Improvement, StructuredQuestion, WrongQuestion
 from deep_review_mcp.storage import Storage
-from deep_review_mcp.models import WrongQuestion, StructuredQuestion, Improvement
+from deep_review_mcp.tools.review import _get_overdue_questions, recommend_review
 
 
 @pytest.fixture
 def storage_with_overdue(tmp_path):
     s = Storage(base_dir=tmp_path)
     for i, (offset, cnt) in enumerate([(0, 0), (5, 1), (10, 2)]):
-        nr = (datetime.now(timezone.utc) - timedelta(days=offset)).strftime("%Y-%m-%d")
+        nr = (datetime.now(UTC) - timedelta(days=offset)).strftime("%Y-%m-%d")
         s.save_wrong_question(WrongQuestion(
-            question_id=f"wq_{i}", created_at=datetime(2026, 6, 10+i, 10, 30, tzinfo=timezone.utc),
+            question_id=f"wq_{i}", created_at=datetime(2026, 6, 10+i, 10, 30, tzinfo=UTC),
             structured=StructuredQuestion(subject="数学", grade_level="初二",
                 knowledge_points=["方程"], difficulty="基础", question_type="计算题",
                 question_content=f"题目{i}"),

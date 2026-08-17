@@ -21,9 +21,9 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
+from typing import cast
 
 from fsrs import Card, Rating, Scheduler
 
@@ -66,7 +66,7 @@ def init_card() -> str:
     return Card().to_json()
 
 
-def schedule_review(fsrs_state: Optional[str], rating: int) -> dict:
+def schedule_review(fsrs_state: str | None, rating: int) -> dict:
     """根据用户评分更新 Card 调度状态
 
     流程：反序列化 Card → 调用 FSRS review_card → 序列化新 Card → 回填兼容字段
@@ -133,7 +133,7 @@ def optimize_parameters(review_log_jsons: list[str]) -> dict:
             "error": str|None,               # 异常错误信息（失败时）
         }
     """
-    result = {
+    result: dict[str, object] = {
         "success": False,
         "parameters": None,
         "desired_retention": None,
@@ -147,7 +147,8 @@ def optimize_parameters(review_log_jsons: list[str]) -> dict:
         return result
 
     try:
-        from fsrs import ReviewLog as _RL, Optimizer
+        from fsrs import Optimizer
+        from fsrs import ReviewLog as _RL
     except ImportError:
         result["error"] = "Optimizer 未安装，请运行: pip install \"fsrs[optimizer]\""
         return result
@@ -155,29 +156,37 @@ def optimize_parameters(review_log_jsons: list[str]) -> dict:
     # 反序列化所有 ReviewLog
     try:
         review_logs = [_RL.from_json(rl) for rl in review_log_jsons]
-    except Exception as e:
+    except (ValueError, KeyError, TypeError) as e:
         result["error"] = f"ReviewLog 反序列化失败: {e}"
         return result
 
+    warning: str | None = None
     # 数据量警告（不阻止计算，让用户自己决定是否应用）
     if len(review_logs) < 1000:
-        result["warning"] = f"数据量不足（{len(review_logs)}/1000），结果可能不稳定，建议积累更多复习记录后再应用"
+        warning = f"数据量不足（{len(review_logs)}/1000），结果可能不稳定，建议积累更多复习记录后再应用"
 
     # 调用 Optimizer 计算
     try:
         optimizer = Optimizer(review_logs)
         optimal_parameters = optimizer.compute_optimal_parameters()
         try:
-            optimal_retention = float(optimizer.compute_optimal_retention(optimal_parameters))
-        except Exception:
+            # fsrs 类型标注误标为 list[float]（见 fsrs/optimizer.py:628），
+            # 实为单个 float（line 663 return optimal_retention），cast 校正外部类型
+            optimal_retention = cast(
+                float, optimizer.compute_optimal_retention(optimal_parameters)
+            )
+        except (ValueError, TypeError):
             # 计算 optimal_retention 可能失败，降级用默认 0.9
             optimal_retention = 0.9
-            result["warning"] = (result["warning"] or "") + "；目标保持率计算失败，降级为 0.9"
+            warning = (warning or "") + "；目标保持率计算失败，降级为 0.9"
         result["success"] = True
         result["parameters"] = list(optimal_parameters)
-        result["desired_retention"] = round(optimal_retention, 4)
-    except Exception as e:
+        result["desired_retention"] = optimal_retention
+    except (ValueError, TypeError, RuntimeError) as e:
         result["error"] = f"Optimizer 计算失败: {e}"
+
+    if warning is not None:
+        result["warning"] = warning
 
     return result
 
@@ -218,7 +227,7 @@ def apply_optimized_parameters(parameters, desired_retention: float) -> bool:
     return True
 
 
-def load_persisted_parameters(params_file: Path) -> Optional[dict]:
+def load_persisted_parameters(params_file: Path) -> dict | None:
     """从持久化文件加载已保存的优化参数
 
     启动时调用：若文件存在，自动应用保存的参数到全局 _scheduler。
@@ -236,7 +245,7 @@ def load_persisted_parameters(params_file: Path) -> Optional[dict]:
         if "parameters" in data and "desired_retention" in data:
             apply_optimized_parameters(data["parameters"], data["desired_retention"])
             return data
-    except Exception as e:
+    except (json.JSONDecodeError, OSError, ValueError, TypeError, KeyError) as e:
         print(f"[fsrs_scheduler] 加载持久化参数失败，使用默认参数: {e}")
     return None
 
@@ -258,7 +267,7 @@ def save_persisted_parameters(params_file: Path, parameters, desired_retention: 
     data = {
         "parameters": list(parameters),
         "desired_retention": float(desired_retention),
-        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "saved_at": datetime.now(UTC).isoformat(),
     }
     # 原子写入：临时文件 → os.replace（与 storage.save_wrong_question 一致）
     params_file.parent.mkdir(parents=True, exist_ok=True)
@@ -276,7 +285,7 @@ def save_persisted_parameters(params_file: Path, parameters, desired_retention: 
         raise
 
 
-def get_retrievability(fsrs_state: Optional[str]) -> float:
+def get_retrievability(fsrs_state: str | None) -> float:
     """查询某错题当前的记忆可提取性（0-1）
 
     用于复习列表展示"这道题你现在还能记住多少"，不修改 Card 状态。

@@ -83,7 +83,7 @@ def get_statistics(group_by: str) -> dict:
 
 
 @mcp.tool()
-def export_data(format: str = "json", filters: dict = None) -> dict:
+def export_data(format: str = "json", filters: dict | None = None) -> dict:
     """导出错题数据"""
     from deep_review_mcp.tools.export import export_data as _export
     return _export(format, filters or {})

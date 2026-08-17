@@ -1,8 +1,10 @@
 # tests/test_tools_crud.py
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
-from deep_review_mcp.tools.crud import save_wrong_question, query_wrong_questions
+
 from deep_review_mcp.storage import Storage
+from deep_review_mcp.tools.crud import query_wrong_questions, save_wrong_question
 
 
 @pytest.fixture
@@ -14,7 +16,7 @@ def test_save_tool(tmp_storage, monkeypatch):
     monkeypatch.setattr("deep_review_mcp.tools.crud.get_storage", lambda: tmp_storage)
     result = save_wrong_question(question_data={
         "question_id": "wq_20260615_001",
-        "created_at": datetime(2026, 6, 15, 10, 30, tzinfo=timezone.utc).isoformat(),
+        "created_at": datetime(2026, 6, 15, 10, 30, tzinfo=UTC).isoformat(),
     })
     assert result["question_id"] == "wq_20260615_001"
 
@@ -24,7 +26,7 @@ def test_save_fills_required_defaults(tmp_storage, monkeypatch):
     monkeypatch.setattr("deep_review_mcp.tools.crud.get_storage", lambda: tmp_storage)
     save_wrong_question(question_data={
         "question_id": "wq_20260615_002",
-        "created_at": datetime(2026, 6, 15, 10, 30, tzinfo=timezone.utc).isoformat(),
+        "created_at": datetime(2026, 6, 15, 10, 30, tzinfo=UTC).isoformat(),
     })
     saved = query_wrong_questions(filters={})["questions"][0]
     assert saved["structured"]["subject"] == "数学"
@@ -36,7 +38,7 @@ def test_query_tool(tmp_storage, monkeypatch):
     monkeypatch.setattr("deep_review_mcp.tools.crud.get_storage", lambda: tmp_storage)
     save_wrong_question(question_data={
         "question_id": "wq_20260615_001",
-        "created_at": datetime(2026, 6, 15, 10, 30, tzinfo=timezone.utc).isoformat(),
+        "created_at": datetime(2026, 6, 15, 10, 30, tzinfo=UTC).isoformat(),
         "structured": {
             "subject": "数学", "grade_level": "初二",
             "knowledge_points": ["方程"], "difficulty": "基础", "question_type": "计算题",

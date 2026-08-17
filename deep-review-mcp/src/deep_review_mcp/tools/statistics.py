@@ -6,6 +6,7 @@
 """
 
 from collections import Counter
+
 from deep_review_mcp.tools.crud import get_storage
 
 
@@ -26,7 +27,7 @@ def get_statistics(group_by: str) -> dict:
         return {"items": [], "total": 0, "trends": {}}
 
     # 按指定维度计数
-    counter = Counter()
+    counter: Counter[str] = Counter()
     for wq in questions:
         if group_by == "subject":
             key = wq.structured.subject if wq.structured else "未分类"
@@ -49,7 +50,7 @@ def get_statistics(group_by: str) -> dict:
     items = [{"name": k, "count": v} for k, v in counter.most_common()]
 
     # 日期趋势：最近30天的每日错题数量
-    dc = Counter()
+    dc: Counter[str] = Counter()
     for wq in questions:
         if wq.created_at:
             dc[wq.created_at.strftime("%Y-%m-%d")] += 1

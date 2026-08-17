@@ -5,8 +5,7 @@
 所有读写都通过 storage / statistics / review 完成。
 """
 from collections import Counter
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from deep_review_mcp.models import WrongQuestion
 from deep_review_mcp.storage import Storage
@@ -31,8 +30,8 @@ def get_dashboard_summary() -> dict:
     storage = _get_storage()
     questions = storage.get_all_questions_for_statistics()
 
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    week_ago = (datetime.now(UTC) - timedelta(days=7)).strftime("%Y-%m-%d")
 
     # KPI 指标
     total = len(questions)
@@ -41,10 +40,10 @@ def get_dashboard_summary() -> dict:
         if wq.improvement and wq.improvement.next_review_date
         and wq.improvement.next_review_date <= today
     )
-    week_new = sum(
-        1 for wq in questions
-        if wq.created_at and wq.created_at.strftime("%Y-%m-%d") >= week_ago
-    )
+    week_new = 0
+    for wq in questions:
+        if wq.created_at and wq.created_at.strftime("%Y-%m-%d") >= week_ago:
+            week_new += 1
     week_reviewed = sum(
         1 for wq in questions
         if wq.improvement and wq.improvement.review_count > 0
@@ -52,8 +51,8 @@ def get_dashboard_summary() -> dict:
     )
 
     # 学科分布
-    subject_counter = Counter()
-    error_type_counter = Counter()
+    subject_counter: Counter[str] = Counter()
+    error_type_counter: Counter[str] = Counter()
     for wq in questions:
         if wq.structured:
             subject_counter[wq.structured.subject] += 1
@@ -65,14 +64,14 @@ def get_dashboard_summary() -> dict:
             error_type_counter["未分类"] += 1
 
     # 30天趋势
-    trend_counter = Counter()
+    trend_counter: Counter[str] = Counter()
     for wq in questions:
         if wq.created_at:
             trend_counter[wq.created_at.strftime("%Y-%m-%d")] += 1
     # 补全最近30天（含无错题的日期）
     trends = {}
     for i in range(30):
-        day = (datetime.now(timezone.utc) - timedelta(days=29 - i)).strftime("%Y-%m-%d")
+        day = (datetime.now(UTC) - timedelta(days=29 - i)).strftime("%Y-%m-%d")
         trends[day] = trend_counter.get(day, 0)
 
     return {
@@ -131,7 +130,7 @@ def get_multi_dim_stats() -> dict:
     ]
 
     # 错误类型雷达
-    error_type_counter = Counter()
+    error_type_counter: Counter[str] = Counter()
     for wq in questions:
         if wq.classification:
             error_type_counter[wq.classification.error_type] += 1
@@ -141,13 +140,13 @@ def get_multi_dim_stats() -> dict:
     ]
 
     # 时间趋势（最近30天）
-    trend_counter = Counter()
+    trend_counter: Counter[str] = Counter()
     for wq in questions:
         if wq.created_at:
             trend_counter[wq.created_at.strftime("%Y-%m-%d")] += 1
     trend_data = []
     for i in range(30):
-        day = (datetime.now(timezone.utc) - timedelta(days=29 - i)).strftime("%Y-%m-%d")
+        day = (datetime.now(UTC) - timedelta(days=29 - i)).strftime("%Y-%m-%d")
         trend_data.append({"date": day, "count": trend_counter.get(day, 0)})
 
     return {
@@ -179,9 +178,9 @@ def get_upcoming_reviews() -> list[dict]:
     按到期日期升序排列。
     """
     storage = _get_storage()
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
 
-    upcoming = []
+    upcoming: list[dict[str, object]] = []
     for qid in storage.list_all_question_ids():
         wq = storage.load_wrong_question(qid)
         if not wq or not wq.improvement:
@@ -200,8 +199,8 @@ def get_upcoming_reviews() -> list[dict]:
                 "is_overdue": wq.improvement.next_review_date < today,
             })
 
-    # 按到期日期升序
-    upcoming.sort(key=lambda x: x["next_review_date"])
+    # 按到期日期升序（next_review_date 为 "YYYY-MM-DD" 字符串）
+    upcoming.sort(key=lambda x: str(x["next_review_date"]))
     return upcoming
 
 
@@ -209,7 +208,7 @@ def get_upcoming_reviews() -> list[dict]:
 # 标记复习
 # ──────────────────────────────────────────
 
-def mark_question_reviewed(question_id: str, rating: int = 3) -> Optional[dict]:
+def mark_question_reviewed(question_id: str, rating: int = 3) -> dict | None:
     """标记错题为已复习，基于 FSRS 调度
 
     Args:
@@ -231,7 +230,7 @@ def mark_question_reviewed(question_id: str, rating: int = 3) -> Optional[dict]:
 # 编辑保存
 # ──────────────────────────────────────────
 
-def update_question(question_id: str, data: dict) -> Optional[WrongQuestion]:
+def update_question(question_id: str, data: dict) -> WrongQuestion | None:
     """编辑保存错题
 
     将扁平的表单数据转换为嵌套的 patch 结构，调用 storage.patch_wrong_question。
@@ -325,7 +324,7 @@ def get_filtered_questions(filters: dict) -> dict:
 # 单题详情
 # ──────────────────────────────────────────
 
-def get_question_detail(question_id: str) -> Optional[WrongQuestion]:
+def get_question_detail(question_id: str) -> WrongQuestion | None:
     """获取单题详情"""
     return _get_storage().load_wrong_question(question_id)
 
@@ -400,5 +399,5 @@ def apply_fsrs_parameters(parameters, desired_retention: float) -> dict:
         storage = _get_storage()
         save_persisted_parameters(storage.fsrs_params_file, parameters, desired_retention)
         return {"success": True, "error": None}
-    except Exception as e:
+    except (ValueError, TypeError) as e:
         return {"success": False, "error": str(e)}

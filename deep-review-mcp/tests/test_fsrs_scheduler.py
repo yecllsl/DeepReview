@@ -9,26 +9,25 @@
   - get_retrievability 查询记忆强度
   - optimize_parameters / apply / persist 个性化参数流程
 """
-from datetime import datetime, timezone
 import json
-from pathlib import Path
+from datetime import UTC, datetime
 
 import pytest
 
 from deep_review_mcp.tools.fsrs_scheduler import (
-    init_card,
-    schedule_review,
-    get_retrievability,
-    optimize_parameters,
-    get_current_scheduler_info,
-    apply_optimized_parameters,
-    load_persisted_parameters,
-    save_persisted_parameters,
     RATING_AGAIN,
-    RATING_HARD,
-    RATING_GOOD,
     RATING_EASY,
+    RATING_GOOD,
+    RATING_HARD,
     RATING_LABELS,
+    apply_optimized_parameters,
+    get_current_scheduler_info,
+    get_retrievability,
+    init_card,
+    load_persisted_parameters,
+    optimize_parameters,
+    save_persisted_parameters,
+    schedule_review,
 )
 
 
@@ -147,14 +146,14 @@ def test_four_ratings_all_succeed():
 def test_first_again_schedules_today():
     """首次 Again 评分：Learning 状态，1 分钟后到期，next_review_date 为今天"""
     result = schedule_review(None, RATING_AGAIN)
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     assert result["next_review_date"] == today
 
 
 def test_first_easy_schedules_future_date():
     """首次 Easy 评分：直接毕业到 Review，due 应在未来（非今天）"""
     result = schedule_review(None, RATING_EASY)
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     # Easy 会让卡毕业，调度到几天后
     assert result["next_review_date"] >= today
 
@@ -336,10 +335,10 @@ def test_apply_optimized_parameters_affects_future_scheduling(restore_scheduler)
     custom_params = list(_scheduler.parameters)
 
     # 用相同评分对比：默认 0.9 vs 应用 0.75
-    r_default = schedule_review(None, RATING_GOOD)
+    _ = schedule_review(None, RATING_GOOD)
 
     apply_optimized_parameters(custom_params, desired_retention=0.75)
-    r_custom = schedule_review(None, RATING_GOOD)
+    _ = schedule_review(None, RATING_GOOD)
 
     # 两种 desired_retention 下，due 日期应可能不同（0.75 复习更频繁，due 更近）
     # 不强求一定不同（FSRS 内部可能对首张卡有 learning_steps 影响），

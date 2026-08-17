@@ -6,8 +6,8 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from deep_review_mcp.web.app import templates
 from deep_review_mcp.web import services
+from deep_review_mcp.web.app import templates
 
 router = APIRouter()
 

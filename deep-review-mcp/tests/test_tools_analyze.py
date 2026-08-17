@@ -1,16 +1,18 @@
 # tests/test_tools_analyze.py
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
-from deep_review_mcp.tools.analyze import analyze_error
+
+from deep_review_mcp.models import Classification, StructuredQuestion, WrongQuestion
 from deep_review_mcp.storage import Storage
-from deep_review_mcp.models import WrongQuestion, StructuredQuestion, Classification
+from deep_review_mcp.tools.analyze import analyze_error
 
 
 @pytest.fixture
 def storage_with_q(tmp_path):
     s = Storage(base_dir=tmp_path)
     s.save_wrong_question(WrongQuestion(
-        question_id="wq_001", created_at=datetime(2026, 6, 15, 10, 30, tzinfo=timezone.utc),
+        question_id="wq_001", created_at=datetime(2026, 6, 15, 10, 30, tzinfo=UTC),
         structured=StructuredQuestion(subject="数学", grade_level="初二",
             knowledge_points=["一元二次方程"], difficulty="中等", question_type="计算题",
             question_content="若x²-5x+6=0，则x="),

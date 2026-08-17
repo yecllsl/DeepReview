@@ -1,7 +1,6 @@
 # tests/test_web_services.py
 """测试 Web 服务层 — 编排 storage/statistics/review"""
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -27,7 +26,7 @@ def temp_storage(tmp_path, monkeypatch):
 def _make_question(qid, subject="数学", error_type="知识漏洞",
                    days_ago=0, review_count=0, next_review=None):
     """构造完整测试错题"""
-    created = datetime.now(timezone.utc) - timedelta(days=days_ago)
+    created = datetime.now(UTC) - timedelta(days=days_ago)
     wq = WrongQuestion(
         question_id=qid,
         created_at=created,
@@ -52,7 +51,7 @@ def _make_question(qid, subject="数学", error_type="知识漏洞",
             plan="测试改进",
             similar_topics=["相似题1"],
             review_count=review_count,
-            next_review_date=next_review or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            next_review_date=next_review or datetime.now(UTC).strftime("%Y-%m-%d"),
         ),
     )
     return wq
@@ -112,11 +111,11 @@ def test_multi_dim_stats(temp_storage):
 
 def test_get_upcoming_reviews(temp_storage):
     """待复习列表应返回到期的错题"""
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     temp_storage.save_wrong_question(
         _make_question("wq_001", next_review=today)
     )
-    future = (datetime.now(timezone.utc) + timedelta(days=10)).strftime("%Y-%m-%d")
+    future = (datetime.now(UTC) + timedelta(days=10)).strftime("%Y-%m-%d")
     temp_storage.save_wrong_question(
         _make_question("wq_002", next_review=future)
     )
@@ -168,7 +167,7 @@ def test_update_question_with_null_structured(temp_storage):
     from deep_review_mcp.models import WrongQuestion as WQ
     wq = WQ(
         question_id="wq_null_test",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         structured=None,
         classification=None,
     )

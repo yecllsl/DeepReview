@@ -3,14 +3,15 @@
 
 提供复习追踪页面片段和标记复习 API。
 """
-from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Request, HTTPException, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from deep_review_mcp.web.app import templates
-from deep_review_mcp.web import services
 from deep_review_mcp.storage import REVIEW_INTERVALS
+from deep_review_mcp.web import services
+from deep_review_mcp.web.app import templates
 
 router = APIRouter()
 
@@ -27,7 +28,7 @@ async def review_partial(request: Request):
     upcoming = services.get_upcoming_reviews()
 
     # 复习日历数据：当前月每天的复习任务数
-    today = datetime.now(timezone.utc)
+    today = datetime.now(UTC)
     month_start = today.replace(day=1)
     # 计算当月天数
     if today.month == 12:

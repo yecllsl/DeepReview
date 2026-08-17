@@ -5,10 +5,11 @@
 生成优先知识点列表和每日复习计划。
 """
 
-from datetime import datetime, timezone, timedelta
 from collections import Counter
-from deep_review_mcp.tools.crud import get_storage
+from datetime import UTC, datetime, timedelta
+
 from deep_review_mcp.models import WrongQuestion
+from deep_review_mcp.tools.crud import get_storage
 
 
 def _get_overdue_questions(storage) -> list[WrongQuestion]:
@@ -23,7 +24,7 @@ def _get_overdue_questions(storage) -> list[WrongQuestion]:
     Returns:
         需要复习的错题列表
     """
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     return [wq for qid in storage.list_all_question_ids()
             if (wq := storage.load_wrong_question(qid))
             and wq.improvement and wq.improvement.next_review_date
@@ -56,7 +57,7 @@ def recommend_review(time_range: str = "", subject: str = "") -> dict:
                 "message": "当前没有需要复习的错题"}
 
     # 统计知识点出现频率，取前10作为优先复习知识点
-    tc = Counter()
+    tc: Counter[str] = Counter()
     for wq in overdue:
         if wq.structured:
             for kp in wq.structured.knowledge_points:
@@ -64,7 +65,10 @@ def recommend_review(time_range: str = "", subject: str = "") -> dict:
     priority = [t for t, _ in tc.most_common(10)]
 
     # 生成每日复习计划，每天最多5题
-    schedule, cur, daily, subj = [], datetime.now(timezone.utc), [], ""
+    schedule: list[dict] = []
+    cur = datetime.now(UTC)
+    daily: list[str] = []
+    subj = ""
     for wq in overdue:
         if len(daily) >= 5:
             schedule.append({"date": cur.strftime("%Y-%m-%d"), "question_ids": daily,

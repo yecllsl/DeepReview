@@ -7,12 +7,12 @@
   - 不同 rating 产生差异化调度
   - 默认 rating=3（Good）向后兼容
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
+from deep_review_mcp.models import Improvement, StructuredQuestion, WrongQuestion
 from deep_review_mcp.storage import Storage
-from deep_review_mcp.models import WrongQuestion, StructuredQuestion, Improvement
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def question_with_improvement():
     """带 improvement 的错题（老数据，无 fsrs_state）"""
     return WrongQuestion(
         question_id="wq_fsrs_001",
-        created_at=datetime(2026, 7, 24, 10, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 7, 24, 10, 0, tzinfo=UTC),
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["方程"], difficulty="中等", question_type="计算题",
@@ -113,7 +113,7 @@ def test_mark_reviewed_again_vs_easy_different_dates(
     # Again
     tmp_storage.save_wrong_question(question_with_improvement)
     r_again = tmp_storage.mark_reviewed("wq_fsrs_001", rating=1)
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     assert r_again.improvement.next_review_date == today
 
     # Easy（用新错题避免状态污染）
@@ -215,7 +215,7 @@ def test_mark_reviewed_without_improvement_returns_none(tmp_storage):
     """无 improvement 字段的错题返回 None"""
     q = WrongQuestion(
         question_id="wq_no_imp",
-        created_at=datetime(2026, 7, 24, 10, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 7, 24, 10, 0, tzinfo=UTC),
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["方程"], difficulty="中等", question_type="计算题",

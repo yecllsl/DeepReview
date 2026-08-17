@@ -8,7 +8,7 @@
 
 以及 /partials/review 页面包含 FSRS 优化面板。
 """
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -21,8 +21,8 @@ from deep_review_mcp.models import (
     WrongQuestion,
 )
 from deep_review_mcp.storage import Storage
-from deep_review_mcp.web.app import create_app
 from deep_review_mcp.web import services
+from deep_review_mcp.web.app import create_app
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ def temp_data_with_logs(tmp_path, monkeypatch):
     for i in range(3):
         wq = WrongQuestion(
             question_id=f"wq_fsrs_api_{i:03d}",
-            created_at=datetime.now(timezone.utc) - timedelta(days=i),
+            created_at=datetime.now(UTC) - timedelta(days=i),
             structured=StructuredQuestion(
                 subject="数学", grade_level="高中",
                 knowledge_points=["函数"], difficulty="中等", question_type="计算题",

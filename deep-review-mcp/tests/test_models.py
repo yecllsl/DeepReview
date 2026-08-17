@@ -1,8 +1,11 @@
 # tests/test_models.py
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
+
 from deep_review_mcp.models import (
-    StructuredQuestion, Classification, Analysis, Improvement,
+    Classification,
+    StructuredQuestion,
     WrongQuestion,
 )
 
@@ -31,7 +34,7 @@ def test_classification_valid_error_types():
 def test_wrong_question_creation():
     wq = WrongQuestion(
         question_id="wq_20260615_001",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     assert wq.question_id == "wq_20260615_001"
     assert wq.structured is None
@@ -40,7 +43,7 @@ def test_wrong_question_creation():
 def test_wrong_question_full():
     wq = WrongQuestion(
         question_id="wq_20260615_002",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["方程"], difficulty="基础", question_type="填空题",

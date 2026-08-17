@@ -1,7 +1,12 @@
 # src/deep_review_mcp/tools/classify.py
 """智能分类Tool - 对错题进行学科、错误类型、难度分类"""
 
-from deep_review_mcp.knowledge_map import SUBJECTS, ERROR_TYPES, DIFFICULTY_LEVELS, get_knowledge_points
+from deep_review_mcp.knowledge_map import (
+    DIFFICULTY_LEVELS,
+    ERROR_TYPES,
+    SUBJECTS,
+    get_knowledge_points,
+)
 from deep_review_mcp.prompts.classify_prompt import CLASSIFY_PROMPT
 
 

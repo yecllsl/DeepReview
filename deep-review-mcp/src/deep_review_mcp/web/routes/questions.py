@@ -5,12 +5,18 @@
 """
 from urllib.parse import parse_qs, urlparse
 
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import HTMLResponse
 
-from deep_review_mcp.web.app import templates
+from deep_review_mcp.knowledge_map import (
+    DIFFICULTY_LEVELS,
+    ERROR_TYPES,
+    KNOWLEDGE_MAP,
+    SUBJECTS,
+    get_knowledge_points,
+)
 from deep_review_mcp.web import services
-from deep_review_mcp.knowledge_map import SUBJECTS, ERROR_TYPES, DIFFICULTY_LEVELS, KNOWLEDGE_MAP, get_knowledge_points
+from deep_review_mcp.web.app import templates
 
 router = APIRouter()
 
@@ -128,12 +134,14 @@ async def update_question_api(question_id: str, request: Request):
     form = await request.form()
     data: dict = {}
     for key, value in form.items():
-        if value:
-            # 知识点和同类题可能需要特殊处理（逗号分隔）
-            if key in ("knowledge_points", "similar_topics", "study_resources"):
-                data[key] = [v.strip() for v in value.split(",") if v.strip()]
-            else:
-                data[key] = value
+        # 更新接口仅接收文本字段，跳过文件上传项
+        if not isinstance(value, str) or not value:
+            continue
+        # 知识点和同类题可能需要特殊处理（逗号分隔）
+        if key in ("knowledge_points", "similar_topics", "study_resources"):
+            data[key] = [v.strip() for v in value.split(",") if v.strip()]
+        else:
+            data[key] = value
 
     updated = services.update_question(question_id, data)
     if updated is None:

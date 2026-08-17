@@ -9,12 +9,12 @@
   - mark_reviewed 自动调用 append_review_log 持久化
 """
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
+from deep_review_mcp.models import Improvement, StructuredQuestion, WrongQuestion
 from deep_review_mcp.storage import Storage
-from deep_review_mcp.models import WrongQuestion, StructuredQuestion, Improvement
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def sample_question():
     """带 improvement 的错题（用于 mark_reviewed 测试）"""
     return WrongQuestion(
         question_id="wq_log_001",
-        created_at=datetime(2026, 7, 25, 10, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 7, 25, 10, 0, tzinfo=UTC),
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["方程"], difficulty="中等", question_type="计算题",

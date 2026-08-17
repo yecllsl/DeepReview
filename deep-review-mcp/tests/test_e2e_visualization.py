@@ -3,12 +3,10 @@
 
 测试关键用户流程：页面加载、Tab 切换、图表渲染、列表筛选、编辑保存、复习追踪。
 """
-import asyncio
 import socket
 import threading
 import time
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -41,14 +39,14 @@ def _find_free_port() -> int:
 
 def _seed_test_data(storage: Storage):
     """填充测试错题数据"""
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     subjects = ["数学", "物理", "化学", "英语", "语文"]
     error_types = ["知识漏洞", "粗心失误", "方法错误", "审题失误"]
 
     for i in range(10):
         wq = WrongQuestion(
             question_id=f"wq_e2e_{i:03d}",
-            created_at=datetime.now(timezone.utc) - timedelta(days=i),
+            created_at=datetime.now(UTC) - timedelta(days=i),
             structured=StructuredQuestion(
                 subject=subjects[i % 5],
                 grade_level="高中",
@@ -109,7 +107,7 @@ def server_url(tmp_path_factory):
         try:
             with socket.create_connection(("127.0.0.1", port), timeout=1):
                 break
-        except (ConnectionRefusedError, socket.timeout):
+        except (TimeoutError, ConnectionRefusedError):
             time.sleep(0.2)
 
     yield url

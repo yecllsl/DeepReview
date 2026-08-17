@@ -1,9 +1,10 @@
 # tests/test_storage.py
+from datetime import UTC, datetime
+
 import pytest
-from pathlib import Path
-from datetime import datetime, timezone
+
+from deep_review_mcp.models import Classification, StructuredQuestion, WrongQuestion
 from deep_review_mcp.storage import Storage
-from deep_review_mcp.models import WrongQuestion, StructuredQuestion, Classification
 
 
 @pytest.fixture
@@ -15,7 +16,7 @@ def tmp_storage(tmp_path):
 def sample_question():
     return WrongQuestion(
         question_id="wq_20260615_001",
-        created_at=datetime(2026, 6, 15, 10, 30, tzinfo=timezone.utc),
+        created_at=datetime(2026, 6, 15, 10, 30, tzinfo=UTC),
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["一元二次方程", "因式分解"],

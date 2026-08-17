@@ -8,6 +8,48 @@ on:
 
 jobs:
   # ──────────────────────────────────────────
+  # 质量门禁：ruff + mypy（提交前质量规则，见 .agents/AGENTS.md）
+  # ──────────────────────────────────────────
+  lint:
+    name: Lint (ruff + mypy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+
+    - name: Cache uv
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-lint-${{ hashFiles('deep-review-mcp/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-lint-
+
+    - name: Install dependencies
+      run: |
+        cd deep-review-mcp
+        uv sync --extra dev
+
+    - name: Run ruff
+      run: |
+        cd deep-review-mcp
+        uv run ruff check src/ tests/ ../scripts/
+
+    - name: Run mypy
+      run: |
+        cd deep-review-mcp
+        uv run mypy src/
+
+  # ──────────────────────────────────────────
   # 单元 + 集成测试
   # 不安装 PaddleOCR / Playwright 浏览器，跑得最快
   # ──────────────────────────────────────────

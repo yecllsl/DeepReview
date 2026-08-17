@@ -1,6 +1,6 @@
 # tests/test_web_routes.py
 """测试 Web 路由 — API 响应状态码和内容"""
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -14,8 +14,8 @@ from deep_review_mcp.models import (
     WrongQuestion,
 )
 from deep_review_mcp.storage import Storage
-from deep_review_mcp.web.app import create_app
 from deep_review_mcp.web import services
+from deep_review_mcp.web.app import create_app
 
 
 @pytest.fixture
@@ -25,11 +25,11 @@ def temp_data(tmp_path, monkeypatch):
     monkeypatch.setattr(services, "_get_storage", lambda: storage)
 
     # 创建测试错题
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     for i in range(5):
         wq = WrongQuestion(
             question_id=f"wq_test_{i:03d}",
-            created_at=datetime.now(timezone.utc) - timedelta(days=i),
+            created_at=datetime.now(UTC) - timedelta(days=i),
             structured=StructuredQuestion(
                 subject="数学" if i % 2 == 0 else "物理",
                 grade_level="高中",
@@ -125,7 +125,7 @@ async def test_question_list_search_with_unstructured(client, temp_data):
     """含 structured=None 记录时搜索不崩溃（回归 I2）"""
     # 注入一条 structured 为空的存量记录
     temp_data.save_wrong_question(WrongQuestion(
-        question_id="wq_null", created_at=datetime.now(timezone.utc), structured=None))
+        question_id="wq_null", created_at=datetime.now(UTC), structured=None))
     resp = await client.get("/partials/questions", params={"search": "函数"})
     assert resp.status_code == 200
 

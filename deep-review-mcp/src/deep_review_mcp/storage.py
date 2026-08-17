@@ -7,7 +7,6 @@
 import json
 import os
 from pathlib import Path
-from typing import Optional
 
 from deep_review_mcp.models import WrongQuestion
 
@@ -62,7 +61,7 @@ class Storage:
         os.replace(tmp_fp, fp)
         return {"question_id": question.question_id, "saved_path": str(fp)}
 
-    def load_wrong_question(self, question_id: str) -> Optional[WrongQuestion]:
+    def load_wrong_question(self, question_id: str) -> WrongQuestion | None:
         """根据ID加载错题，不存在则返回None"""
         fp = self.questions_dir / f"{question_id}.json"
         if not fp.exists():
@@ -73,7 +72,7 @@ class Storage:
         """更新错题（覆盖写入），语义上等同于save"""
         return self.save_wrong_question(question)
 
-    def patch_wrong_question(self, question_id: str, patch: dict) -> Optional[WrongQuestion]:
+    def patch_wrong_question(self, question_id: str, patch: dict) -> WrongQuestion | None:
         """部分更新错题，只修改 patch 中包含的字段
 
         加载现有错题 → 合并 patch → 原子写回。
@@ -98,7 +97,7 @@ class Storage:
         self.save_wrong_question(updated)
         return updated
 
-    def mark_reviewed(self, question_id: str, rating: int = 3) -> Optional[WrongQuestion]:
+    def mark_reviewed(self, question_id: str, rating: int = 3) -> WrongQuestion | None:
         """标记错题为已复习，基于 FSRS 更新调度状态
 
         使用 FSRS v6 DSR 记忆模型替代固定艾宾浩斯查表：

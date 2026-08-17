@@ -5,7 +5,8 @@
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from deep_review_mcp.tools.crud import get_storage
 
 
@@ -20,7 +21,7 @@ def _json_default(obj):
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
-def export_data(format: str = "json", filters: dict = None) -> dict:
+def export_data(format: str = "json", filters: dict | None = None) -> dict:
     """导出错题数据到文件
 
     Args:
@@ -32,7 +33,7 @@ def export_data(format: str = "json", filters: dict = None) -> dict:
     """
     storage = get_storage()
     questions = storage.query_wrong_questions(filters=filters or {})["questions"]
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     # 复用 storage.base_dir 避免重复定义数据目录
     export_dir = storage.base_dir / "exports"
     export_dir.mkdir(parents=True, exist_ok=True)

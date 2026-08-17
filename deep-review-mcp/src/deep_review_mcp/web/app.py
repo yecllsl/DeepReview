@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
         return templates.TemplateResponse(request, "base.html", {})
 
     # 注册路由模块
-    from deep_review_mcp.web.routes import dashboard, questions, stats, review
+    from deep_review_mcp.web.routes import dashboard, questions, review, stats
 
     app.include_router(dashboard.router)
     app.include_router(questions.router)
@@ -55,14 +55,14 @@ def create_app() -> FastAPI:
     # 用户通过 UI 触发优化并应用后，参数保存到 fsrs_params.json，
     # 下次启动自动加载，无需重新优化
     try:
-        from deep_review_mcp.web.services import _get_storage
         from deep_review_mcp.tools.fsrs_scheduler import load_persisted_parameters
+        from deep_review_mcp.web.services import _get_storage
 
         storage = _get_storage()
         loaded = load_persisted_parameters(storage.fsrs_params_file)
         if loaded:
             print(f"[web.app] 已加载持久化 FSRS 参数（desired_retention={loaded['desired_retention']}）")
-    except Exception as e:
+    except OSError as e:
         # 加载失败不影响应用启动，降级使用默认 21 参数
         print(f"[web.app] 加载 FSRS 持久化参数失败，使用默认参数: {e}")
 

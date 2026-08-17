@@ -1,6 +1,6 @@
 # tests/test_storage_patch.py
 """测试 storage.py 的增强功能：原子写、部分更新、标记复习"""
-from datetime import datetime
+from datetime import UTC, datetime
 
 from deep_review_mcp.models import Improvement, StructuredQuestion, WrongQuestion
 from deep_review_mcp.storage import Storage
@@ -15,7 +15,7 @@ def _make_question(qid: str = "wq_test_001") -> WrongQuestion:
     """构造测试用错题"""
     return WrongQuestion(
         question_id=qid,
-        created_at=datetime.now(),
+        created_at=datetime.now(UTC),
         structured=StructuredQuestion(
             subject="数学", grade_level="初二",
             knowledge_points=["方程"], difficulty="中等", question_type="计算题",
