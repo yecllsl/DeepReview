@@ -49,7 +49,7 @@ async def question_list_partial(
 
     # 额外的文本搜索
     if search:
-        questions = [q for q in questions if search.lower() in (q.get("structured", {}).get("question_content") or "").lower()]
+        questions = [q for q in questions if search.lower() in ((q.get("structured") or {}).get("question_content") or "").lower()]
 
     # 收集所有知识点供下拉筛选
     all_knowledge_points: set[str] = set()
@@ -158,7 +158,7 @@ async def update_question_api(question_id: str, request: Request):
     questions = result["questions"]
     search = query.get("search", [""])[0]
     if search:
-        questions = [q for q in questions if search.lower() in (q.get("structured", {}).get("question_content") or "").lower()]
+        questions = [q for q in questions if search.lower() in ((q.get("structured") or {}).get("question_content") or "").lower()]
 
     # 渲染详情片段
     detail_html = templates.get_template("partials/question_detail.html").render(

@@ -50,10 +50,7 @@ HEADER = {
 # ──────────────────────────────────────────────────────────
 def load_package_meta() -> dict[str, str]:
     """Read name/version/description from pyproject.toml (stdlib tomllib)."""
-    try:
-        import tomllib
-    except ImportError:  # pragma: no cover - Python < 3.11
-        import tomli as tomllib  # type: ignore
+    import tomllib
     data = tomllib.loads(MCP_PYPROJECT.read_text(encoding="utf-8"))
     proj = data.get("project", {})
     return {

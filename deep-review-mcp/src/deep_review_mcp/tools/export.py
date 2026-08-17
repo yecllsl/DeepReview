@@ -41,7 +41,7 @@ def export_data(format: str = "json", filters: dict = None) -> dict:
         fp = export_dir / f"wrong_questions_{ts}.md"
         lines = ["# 错题导出报告\n"]
         for q in questions:
-            lines.append(f"## {q.get('question_id','?')}\n- 原始文本: {q.get('structured', {}).get('question_content','')}\n")
+            lines.append(f"## {q.get('question_id','?')}\n- 原始文本: {(q.get('structured') or {}).get('question_content','')}\n")
             if q.get("structured"):
                 s = q["structured"]
                 lines.append(f"- 学科: {s.get('subject','')}\n- 知识点: {', '.join(s.get('knowledge_points',[]))}\n")

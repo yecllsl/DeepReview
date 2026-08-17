@@ -121,6 +121,15 @@ async def test_question_list_with_filter(client):
     assert resp.status_code == 200
 
 @pytest.mark.asyncio
+async def test_question_list_search_with_unstructured(client, temp_data):
+    """含 structured=None 记录时搜索不崩溃（回归 I2）"""
+    # 注入一条 structured 为空的存量记录
+    temp_data.save_wrong_question(WrongQuestion(
+        question_id="wq_null", created_at=datetime.now(timezone.utc), structured=None))
+    resp = await client.get("/partials/questions", params={"search": "函数"})
+    assert resp.status_code == 200
+
+@pytest.mark.asyncio
 async def test_question_detail_partial(client):
     """单题详情应返回 HTML"""
     resp = await client.get("/partials/questions/wq_test_000")

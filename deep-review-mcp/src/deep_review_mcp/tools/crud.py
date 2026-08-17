@@ -6,11 +6,40 @@
 """
 
 from pathlib import Path
-from deep_review_mcp.models import WrongQuestion
+from deep_review_mcp.models import (
+    Classification,
+    StructuredQuestion,
+    WrongQuestion,
+)
 from deep_review_mcp.storage import Storage
 
 # 默认数据目录：项目根目录下的 data/ 文件夹
 _DEFAULT_DATA_DIR = Path(__file__).parent.parent.parent.parent / "data"
+
+
+def _fill_required_defaults(question_data: dict) -> dict:
+    """为缺失的 structured/classification 填充规则默认值（业务规则 #6）
+
+    structured 与 classification 是统计分析的前置条件（规则 #5），
+    缺失会导致数据不可用。AI 未解析出结构时用待确认默认值填充，
+    structured 缺失默认 subject=数学/difficulty=中等，
+    classification 缺失默认 error_type=知识漏洞。
+    """
+    data = dict(question_data)
+    if not data.get("structured"):
+        data["structured"] = StructuredQuestion(
+            subject="数学",
+            grade_level="待确认",
+            knowledge_points=[],
+            difficulty="中等",
+            question_type="待确认",
+        ).model_dump()
+    if not data.get("classification"):
+        data["classification"] = Classification(
+            error_type="知识漏洞",
+            error_category="待确认",
+        ).model_dump()
+    return data
 
 
 def get_storage() -> Storage:
@@ -28,7 +57,8 @@ def save_wrong_question(question_data: dict) -> dict:
         包含question_id和saved_path的字典
     """
     storage = get_storage()
-    wq = WrongQuestion.model_validate(question_data)
+    filled = _fill_required_defaults(question_data)
+    wq = WrongQuestion.model_validate(filled)
     return storage.save_wrong_question(wq)
 
 
