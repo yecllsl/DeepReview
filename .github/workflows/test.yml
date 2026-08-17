@@ -39,9 +39,8 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-uv-
 
-    - name: Install dependencies (no OCR, no browser)
-      # 仅安装 dev 依赖；paddleocr/paddlepaddle 已在 pyproject.toml 拆到 optional[ocr]
-      # 单元测试 OCR 用例通过 mock 验证，不会真正调用 paddle
+    - name: Install dependencies
+      # 仅安装 dev 依赖；图片解析由宿主 LLM 多模态完成，MCP 侧无 OCR 依赖
       run: |
         cd deep-review-mcp
         uv sync --extra dev

@@ -1,7 +1,7 @@
 # src/deep_review_mcp/server.py
 """DeepReview MCP Server入口
 
-注册所有MCP工具（4个CRUD + 7个业务工具），通过FastMCP框架对外提供服务。
+注册所有MCP工具（4个CRUD + 6个业务工具），通过FastMCP框架对外提供服务。
 业务工具模块使用懒导入（函数体内import），确保server.py本身可正常加载，
 后续Task会逐个实现这些业务模块。
 """

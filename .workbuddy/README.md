@@ -79,8 +79,8 @@ ln -sfn "$(pwd)/.agents/skills"     ~/.workbuddy/skills
   业务规则、5 个 Skill（capture / batch-capture / analyze / review / stats）无任何差异。
 - **不纳入同步生成**：`.workbuddy/` 不在 `sync-agent-configs` 的生成范围内，也不在 pre-commit 拦截名单中，
   本目录唯一的产物就是这份 README。
-- **MCP 行为一致**：通过 `uv run deep-review-mcp` 启动同一个 MCP Server，4 个 CRUD + 7 个业务工具
-  （共 11 个）、FSRS 复习调度、本地 JSON 存储全部复用，无二义性。
+- **MCP 行为一致**：通过 `uv run deep-review-mcp` 启动同一个 MCP Server，4 个 CRUD + 6 个业务工具
+  （共 10 个）、FSRS 复习调度、本地 JSON 存储全部复用，无二义性。
 - **数据隔离**：错题数据仍仅存于项目内 `deep-review-mcp/data/`，不写入个人目录。
 
 ## 安装

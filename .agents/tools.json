@@ -5,7 +5,7 @@
   "manual_edits_will_be_overwritten": true,
   "package": {
     "name": "deep-review-mcp",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "description": "K12错题收集与智能分析MCP Server"
   },
   "tools": [

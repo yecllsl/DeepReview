@@ -1,6 +1,6 @@
 # DeepReview - K12 错题收集与智能分析 MCP 工具
 
-基于 Trae IDE CN / Trae Work CN / CodeBuddy / OpenCode / Goose 的 K12 错题收集与智能分析一体化解决方案。核心流程：拍照/文本录入 → 宿主LLM多模态看图解析 → AI 结构化解析 → 智能分类 → 本地保存 → 基于遗忘曲线（艾宾浩斯）的复习排程 → 到期复习推荐 → 深度原因分析 → 改进方案。配置统一维护在 `.agents/`（AAIF 真相源），通过 `scripts/sync-agent-configs` 单向同步到 `.trae/` / `.opencode/` / `.codebuddy/` / `.goose/`。
+基于 Trae IDE CN / Trae Work CN / CodeBuddy / OpenCode / Goose 的 K12 错题收集与智能分析一体化解决方案。核心流程：拍照/文本录入 → 宿主LLM多模态看图解析 → AI 结构化解析 → 智能分类 → 本地保存 → 基于 FSRS v6 的复习排程 → 到期复习推荐 → 深度原因分析 → 改进方案。配置统一维护在 `.agents/`（AAIF 真相源），通过 `scripts/sync-agent-configs` 单向同步到 `.trae/` / `.opencode/` / `.codebuddy/` / `.goose/`。
 
 ## 系统架构
 
@@ -36,7 +36,7 @@ Skills 编排层 (配置定义，由 .agents/skills/ 同步四平台)
 ## 技术栈
 
 - **MCP Server**: Python 3.12+ / FastMCP / Pydantic v2
-- **复习算法**: 艾宾浩斯遗忘曲线（1/3/7/14/30 天间隔，5 次以上固定 30 天）
+- **复习算法**: FSRS v6 间隔重复调度（DSR 记忆模型，4 档评分，支持个性化参数优化），替代固定艾宾浩斯查表
 - **图片解析**: 宿主 LLM 多模态能力直接看图解析（MCP 侧零图像处理代码）
 - **Web 可视化**: FastAPI + Jinja2 + HTMX/Alpine.js + ECharts
 - **数据存储**: JSON 文件（本地存储，原子写入）
@@ -141,7 +141,7 @@ Not lazy about: input validation at trust boundaries, error handling that preven
 
 ### 复习规则
 
-1. 复习排程由艾宾浩斯遗忘曲线驱动：1/3/7/14/30 天间隔，5 次以上固定 30 天。
+1. 复习排程由 FSRS v6 间隔重复调度驱动：按记忆难度/稳定性动态计算每次复习间隔（4 档评分调整），非固定查表。
 2. 只推荐 `next_review_date <= 今天` 的错题。
 3. 每天最多安排 5 道题，避免复习负担过重。
 4. 优先推荐错误频率高、知识漏洞类的错题。
@@ -186,6 +186,6 @@ Not lazy about: input validation at trust boundaries, error handling that preven
 | `classify_question` | AI 驱动智能分类错题 | `question_text`、`subject` |
 | `analyze_error` | 深度分析错题错误原因 | `question_id`、`user_answer`、`correct_answer` |
 | `generate_improvement` | 生成个性化改进方案 | `question_id`、`analysis_result` |
-| `recommend_review` | 基于遗忘曲线生成复习推荐 | `time_range`、`subject` |
+| `recommend_review` | 基于 FSRS v6 到期排程生成复习推荐 | `time_range`、`subject` |
 | `get_statistics` | 统计分析错题分布和趋势 | `group_by` |
 | `export_data` | 导出错题数据 | `format`(json/markdown)、`filters` |

@@ -218,7 +218,7 @@ DeepReview/
 │   ├── pre-commit                          # git 钩子：拦截配置同步违规
 │   └── build-release.ps1/.sh               # 发布包构建
 ├── AGENTS.md                               # [生成] 根规则文件（Trae 读取约定）
-├── install.ps1 / install.sh                # 安装脚本（-AgentRuntime/-FixPath，可选装 OCR）
+├── install.ps1 / install.sh                # 安装脚本（-AgentRuntime/-FixPath）
 ├── QUICKSTART.md / DEPLOY.md / README.md   # 文档
 ├── CHANGELOG.md                            # 变更记录
 └── LICENSE                                 # MIT
