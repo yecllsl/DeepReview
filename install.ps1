@@ -6,7 +6,7 @@
 #   2. 或在 PowerShell 中执行: .\install.ps1
 #
 # 可选参数：
-#   -FixPath       将 .agents/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
+#   -FixPath       将 deep-review.plugin/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
 #   -AgentRuntime  配置 Agent 运行时 (trae/codebuddy/opencode/goose/all/workbuddy/hermes)
 #                  trae/codebuddy/opencode/goose 为项目级运行时；workbuddy/hermes 为个人级 harness
 #
@@ -25,7 +25,7 @@ $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " DeepReview v0.4.0 安装向导" -ForegroundColor Cyan
+Write-Host " DeepReview v0.5.0 安装向导" -ForegroundColor Cyan
 Write-Host "  (Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
@@ -34,7 +34,7 @@ Write-Host ""
 $projectRoot = $PSScriptRoot
 
 # ──────────────────────────────────────────
-# 个人级 harness 安装辅助函数（WorkBuddy / Hermes 仅支持个人级配置，不走 .agents/ 同步）
+# 个人级 harness 安装辅助函数（WorkBuddy / Hermes 仅支持个人级配置，不走 deep-review.plugin/ 同步）
 # ──────────────────────────────────────────
 function Install-PersonalHarness {
     param(
@@ -76,7 +76,7 @@ function Install-PersonalHarness {
         mcpServers = [ordered]@{
             "deep-review-mcp" = [ordered]@{
                 command = "uv"
-                args    = @("run", "--no-sync", "--directory", (Join-Path $projectRoot "deep-review-mcp"), "deep-review-mcp")
+                args    = @("run", "--no-sync", "--directory", (Join-Path $projectRoot "deep-review.plugin\deep-review-mcp"), "deep-review-mcp")
             }
         }
     }
@@ -86,8 +86,8 @@ function Install-PersonalHarness {
     Write-Host "  [ok] 已写入 MCP 注册: $mcpPath" -ForegroundColor Green
 
     # 5. 符号链接 AGENTS.md 与 skills/（失败降级复制）
-    Link-PersonalConfig -Name "AGENTS.md" -Src (Join-Path $projectRoot ".agents\AGENTS.md") -Dst (Join-Path $cfgDir "AGENTS.md")
-    Link-PersonalConfig -Name "skills/"   -Src (Join-Path $projectRoot ".agents\skills")      -Dst (Join-Path $cfgDir "skills")
+    Link-PersonalConfig -Name "AGENTS.md" -Src (Join-Path $projectRoot "deep-review.plugin\AGENTS.md") -Dst (Join-Path $cfgDir "AGENTS.md")
+    Link-PersonalConfig -Name "skills/"   -Src (Join-Path $projectRoot "deep-review.plugin\skills")     -Dst (Join-Path $cfgDir "skills")
 }
 
 function Link-PersonalConfig {
@@ -171,7 +171,7 @@ Write-Host "  ✓ $pythonVersion" -ForegroundColor Green
 # ──────────────────────────────────────────
 Write-Host "[3/4] 安装依赖..." -ForegroundColor Yellow
 
-$mcpDir = Join-Path $projectRoot "deep-review-mcp"
+$mcpDir = Join-Path $projectRoot "deep-review.plugin\deep-review-mcp"
 
 Push-Location $mcpDir
 try {
@@ -182,7 +182,7 @@ try {
         Write-Host "  ✗ 依赖安装失败" -ForegroundColor Red
         Write-Host ""
         Write-Host "  请尝试手动安装：" -ForegroundColor Yellow
-        Write-Host "  cd deep-review-mcp" -ForegroundColor White
+        Write-Host "  cd deep-review.plugin/deep-review-mcp" -ForegroundColor White
         Write-Host "  uv sync" -ForegroundColor White
         exit 1
     }
@@ -291,15 +291,15 @@ try {
     }
 } catch {
     Write-Host "  ⚠ 自动验证失败，但不影响使用" -ForegroundColor Yellow
-    Write-Host "  如遇问题请手动验证: cd deep-review-mcp && uv run deep-review-mcp" -ForegroundColor Yellow
+    Write-Host "  如遇问题请手动验证: cd deep-review.plugin/deep-review-mcp && uv run deep-review-mcp" -ForegroundColor Yellow
 } finally {
     Pop-Location
 }
 
 # ──────────────────────────────────────────
-# mcp.json 路径回退方案（多运行时共用，AAIF 真相源 .agents/runtime）
+# mcp.json 路径回退方案（多运行时共用，AAIF 真相源 deep-review.plugin/runtime）
 # ──────────────────────────────────────────
-$runtimeDir = Join-Path $projectRoot ".agents\runtime"
+$runtimeDir = Join-Path $projectRoot "deep-review.plugin\runtime"
 $traeJson = Join-Path $runtimeDir "trae.json"
 if (Test-Path $traeJson) {
     $mcpContent = Get-Content $traeJson -Raw
@@ -314,7 +314,7 @@ if (Test-Path $traeJson) {
 
 if ($FixPath) {
     Write-Host ""
-    Write-Host "  正在修复 runtime 配置路径（.agents/runtime）..." -ForegroundColor Yellow
+    Write-Host "  正在修复 runtime 配置路径（deep-review.plugin/runtime）..." -ForegroundColor Yellow
     $fixedAny = $false
     $fixTargets = @(
         (Join-Path $runtimeDir "trae.json"),
@@ -383,6 +383,6 @@ Write-Host "     /review        - 生成复习计划" -ForegroundColor DarkGray
 Write-Host "     /stats         - 查看错题统计" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "  可选：启动 Web 可视化界面" -ForegroundColor Cyan
-Write-Host "     cd deep-review-mcp && uv run deep-review-web" -ForegroundColor DarkGray
+Write-Host "     cd deep-review.plugin/deep-review-mcp && uv run deep-review-web" -ForegroundColor DarkGray
 Write-Host "     浏览器访问 http://127.0.0.1:8001" -ForegroundColor DarkGray
 Write-Host ""

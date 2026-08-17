@@ -2,13 +2,13 @@
 # 从源码生成可分发的 zip 包（白名单复制策略，避免误打包 .venv）
 #
 # 使用方法：
-#   pwsh .\scripts\build-release.ps1 [-Version "0.1.0"]
+#   pwsh .\scripts\build-release.ps1 [-Version "0.5.0"]
 #
 # 输出：
-#   dist/DeepReview-v0.1.0.zip
+#   dist/DeepReview-v0.5.0.zip
 
 param(
-    [string]$Version = "0.4.0"
+    [string]$Version = "0.5.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -63,23 +63,23 @@ Write-Ok "cleaned"
 Write-Step "[2/6] Create directory structure..."
 # 顶层目录
 New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-# .trae 子目录（skills/ 同步产物；rules 已合并入 .agents/AGENTS.md，不再打包）
+# .trae 子目录（skills/ 同步产物；rules 已合并入 deep-review.plugin/AGENTS.md，不再打包）
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".trae\skills") -Force | Out-Null
 # AAIF 真相源 + 多 harness 目录
-New-Item -ItemType Directory -Path (Join-Path $tempDir ".agents\skills") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir ".agents\runtime") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\skills") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\runtime") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".opencode\skills") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".codebuddy\skills") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".goose\skills") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".workbuddy") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".hermes") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir "scripts") -Force | Out-Null
-# deep-review-mcp 子目录
-New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review-mcp\src") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review-mcp\data\wrong_questions") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review-mcp\data\analysis_reports") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review-mcp\data\review_plans") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review-mcp\data\exports") -Force | Out-Null
+# deep-review-mcp 子目录（内联在插件包内）
+New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\deep-review-mcp\src") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\deep-review-mcp\data\wrong_questions") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\deep-review-mcp\data\analysis_reports") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\deep-review-mcp\data\review_plans") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\deep-review-mcp\data\exports") -Force | Out-Null
 Write-Ok "directories created"
 
 # ──────────────────────────────────────────
@@ -108,7 +108,7 @@ $releaseMcpJson = @'
         "run",
         "--no-sync",
         "--directory",
-        "${workspaceFolder}/deep-review-mcp",
+        "${workspaceFolder}/deep-review.plugin/deep-review-mcp",
         "deep-review-mcp"
       ]
     }
@@ -141,32 +141,32 @@ Write-Ok ".trae config copied"
 # ──────────────────────────────────────────
 Write-Step "[3.5/6] Copy AAIF source + multi-harness config..."
 
-# .agents/ 完整复制（AAIF 唯一真相源，发布后 install 脚本依赖它重新同步）
-$agentsSrc = Join-Path $projectRoot ".agents"
-$agentsDst = Join-Path $tempDir ".agents"
-$agentsTopFiles = @("AGENTS.md", "tools.json", "triggers.json", "workflows.json")
-foreach ($f in $agentsTopFiles) {
-    $src = Join-Path $agentsSrc $f
+# deep-review.plugin/ 完整复制（AAIF 唯一真相源 + Agent Plugins 1.0，发布后 install 脚本依赖它重新同步）
+$pluginSrc = Join-Path $projectRoot "deep-review.plugin"
+$pluginDst = Join-Path $tempDir "deep-review.plugin"
+$pluginTopFiles = @("AGENTS.md", "tools.json", "triggers.json", "workflows.json", "plugin.json", "mcp.json")
+foreach ($f in $pluginTopFiles) {
+    $src = Join-Path $pluginSrc $f
     if (Test-Path $src) {
-        Copy-Item $src (Join-Path $agentsDst $f) -Force
+        Copy-Item $src (Join-Path $pluginDst $f) -Force
     }
 }
-Copy-Item (Join-Path $agentsSrc "skills") (Join-Path $agentsDst "skills") -Recurse -Force
-Copy-Item (Join-Path $agentsSrc "runtime") (Join-Path $agentsDst "runtime") -Recurse -Force
+Copy-Item (Join-Path $pluginSrc "skills") (Join-Path $pluginDst "skills") -Recurse -Force
+Copy-Item (Join-Path $pluginSrc "runtime") (Join-Path $pluginDst "runtime") -Recurse -Force
 
-# 多 harness 生成目录（skills/AGENTS.md 统一从 .agents/ 复制，保证最新）
+# 多 harness 生成目录（skills/AGENTS.md 统一从 deep-review.plugin/ 复制，保证最新）
 foreach ($harness in @("opencode", "codebuddy", "goose")) {
     $hDst = Join-Path $tempDir ".$harness"
-    Copy-Item (Join-Path $agentsSrc "skills") (Join-Path $hDst "skills") -Recurse -Force
-    Copy-Item (Join-Path $agentsSrc "AGENTS.md") (Join-Path $hDst "AGENTS.md") -Force
+    Copy-Item (Join-Path $pluginSrc "skills") (Join-Path $hDst "skills") -Recurse -Force
+    Copy-Item (Join-Path $pluginSrc "AGENTS.md") (Join-Path $hDst "AGENTS.md") -Force
 }
 
-# .opencode/opencode.json（instructions 指向 .agents/AGENTS.md，cwd 为相对路径）
-Copy-Item (Join-Path $agentsSrc "runtime\opencode.json") (Join-Path $tempDir ".opencode\opencode.json") -Force
+# .opencode/opencode.json（instructions 指向 deep-review.plugin/AGENTS.md，cwd 为相对路径）
+Copy-Item (Join-Path $pluginSrc "runtime\opencode.json") (Join-Path $tempDir ".opencode\opencode.json") -Force
 # .codebuddy/mcp.json（${workspaceFolder} 变量版）
-Copy-Item (Join-Path $agentsSrc "runtime\codebuddy.json") (Join-Path $tempDir ".codebuddy\mcp.json") -Force
+Copy-Item (Join-Path $pluginSrc "runtime\codebuddy.json") (Join-Path $tempDir ".codebuddy\mcp.json") -Force
 
-# .goose/config.yaml：从 .agents/runtime/goose.json 生成相对路径版（--no-resolve-dir）
+# .goose/config.yaml：从 deep-review.plugin/runtime/goose.json 生成相对路径版（--no-resolve-dir）
 $gooseGenScript = Join-Path $projectRoot "scripts\generate-goose-config.py"
 if (Test-Path $gooseGenScript) {
     if (Get-Command python -ErrorAction SilentlyContinue) {
@@ -188,6 +188,10 @@ Copy-Item (Join-Path $projectRoot "scripts\generate-aaif-declarations.py") (Join
 Copy-Item (Join-Path $projectRoot "scripts\sync-agent-configs.ps1") (Join-Path $tempDir "scripts\") -Force
 Copy-Item (Join-Path $projectRoot "scripts\sync-agent-configs.sh") (Join-Path $tempDir "scripts\") -Force
 Copy-Item (Join-Path $projectRoot "scripts\pre-commit") (Join-Path $tempDir "scripts\") -Force
+Copy-Item (Join-Path $projectRoot "scripts\check-config-drift.sh") (Join-Path $tempDir "scripts\") -Force
+
+# 根 package.json（AAIF 声明入口 + publish 脚本）
+Copy-Item (Join-Path $projectRoot "package.json") (Join-Path $tempDir "package.json") -Force
 Write-Ok "AAIF source + multi-harness config copied"
 
 # ──────────────────────────────────────────
@@ -195,8 +199,8 @@ Write-Ok "AAIF source + multi-harness config copied"
 # ──────────────────────────────────────────
 Write-Step "[4/6] Copy deep-review-mcp source..."
 
-$mcpSrc = Join-Path $projectRoot "deep-review-mcp"
-$mcpDst = Join-Path $tempDir "deep-review-mcp"
+$mcpSrc = Join-Path $projectRoot "deep-review.plugin\deep-review-mcp"
+$mcpDst = Join-Path $tempDir "deep-review.plugin\deep-review-mcp"
 
 # 4a. 顶层配置文件
 $mcpTopFiles = @("pyproject.toml", "uv.lock", ".python-version")
@@ -243,7 +247,7 @@ Write-Ok "source copied"
 # [5/6] 复制顶层文档和安装脚本
 # ──────────────────────────────────────────
 Write-Step "[5/6] Copy docs and install scripts..."
-$topFiles = @("install.ps1", "install.sh", "README.md", "DEPLOY.md", "QUICKSTART.md", "LICENSE", "AGENTS.md")
+$topFiles = @("install.ps1", "install.sh", "README.md", "DEPLOY.md", "QUICKSTART.md", "LICENSE", "AGENTS.md", "package.json")
 foreach ($f in $topFiles) {
     $src = Join-Path $projectRoot $f
     if (Test-Path $src) {
@@ -261,10 +265,12 @@ Write-Step "[6/6] Verify and pack..."
 $requiredFiles = @(
     ".trae\mcp.json",
     ".trae\skills\wrong-question-capture\SKILL.md",
-    ".agents\AGENTS.md",
-    ".agents\tools.json",
-    ".agents\triggers.json",
-    ".agents\workflows.json",
+    "deep-review.plugin\AGENTS.md",
+    "deep-review.plugin\tools.json",
+    "deep-review.plugin\triggers.json",
+    "deep-review.plugin\workflows.json",
+    "deep-review.plugin\plugin.json",
+    "deep-review.plugin\mcp.json",
     ".opencode\opencode.json",
     ".codebuddy\mcp.json",
     ".goose\config.yaml",
@@ -272,10 +278,11 @@ $requiredFiles = @(
     ".hermes\README.md",
     "scripts\sync-agent-configs.ps1",
     "AGENTS.md",
-    "deep-review-mcp\pyproject.toml",
-    "deep-review-mcp\uv.lock",
-    "deep-review-mcp\.python-version",
-    "deep-review-mcp\src\deep_review_mcp\server.py",
+    "package.json",
+    "deep-review.plugin\deep-review-mcp\pyproject.toml",
+    "deep-review.plugin\deep-review-mcp\uv.lock",
+    "deep-review.plugin\deep-review-mcp\.python-version",
+    "deep-review.plugin\deep-review-mcp\src\deep_review_mcp\server.py",
     "install.ps1",
     "install.sh",
     "README.md"
@@ -296,7 +303,7 @@ if ($missing.Count -gt 0) {
 }
 
 # 验证没有误包含 .venv
-$venvCheck = Join-Path $tempDir "deep-review-mcp\.venv"
+$venvCheck = Join-Path $tempDir "deep-review.plugin\deep-review-mcp\.venv"
 if (Test-Path $venvCheck) {
     Write-Err ".venv was accidentally included! Aborting."
     exit 1

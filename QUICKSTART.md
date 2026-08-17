@@ -58,7 +58,7 @@ chmod +x install.sh && ./install.sh
 如果喜欢图形化界面，可启动本地 Web 服务：
 
 ```powershell
-cd deep-review-mcp
+cd deep-review.plugin/deep-review-mcp
 uv run deep-review-web
 ```
 
@@ -186,7 +186,7 @@ uv run deep-review-web
 
 [AI] ✅ 错题已保存
 question_id: wq_20260615_001
-保存路径: deep-review-mcp/data/wrong_questions/wq_20260615_001.json
+保存路径: deep-review.plugin/deep-review-mcp/data/wrong_questions/wq_20260615_001.json
 ```
 
 ### 示例 2: 分析英语错题
@@ -277,7 +277,7 @@ question_id: wq_20260615_001
 
 [AI] ✅ 复习计划已保存
 计划ID: rp_20260615_001
-保存路径: deep-review-mcp/data/review_plans/rp_20260615_001.json
+保存路径: deep-review.plugin/deep-review-mcp/data/review_plans/rp_20260615_001.json
 ```
 
 ## 小技巧
@@ -323,7 +323,7 @@ question_id: wq_20260615_001
 | 安装脚本报错 "uv 未安装" | 安装 uv：`irm https://astral.sh/uv/install.ps1 \| iex` |
 | MCP Server 不生效 | 确认启用项目级 MCP → 重启对应运行时（Trae/CodeBuddy/opencode/Goose） |
 | 路径变量不替换 | 运行 `.\install.ps1 -FixPath`（或 `./install.sh --fix-path`）修复路径 |
-| Skills 不生效 | 重启运行时 → 检查 `.agents/skills/`（生成目录由 `scripts/sync-agent-configs` 同步） |
+| Skills 不生效 | 重启运行时 → 检查 `deep-review.plugin/skills/`（真相源；各平台 skills/ 由 `scripts/sync-agent-configs` 同步） |
 
 ## 下一步
 

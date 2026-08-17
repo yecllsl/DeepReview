@@ -1,14 +1,17 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
     "deep-review-mcp": {
+      "type": "stdio",
       "command": "uv",
       "args": [
         "run",
         "--no-sync",
         "--directory",
-        "${workspaceFolder}/deep-review.plugin/deep-review-mcp",
+        "${PLUGIN_ROOT}/deep-review-mcp",
         "deep-review-mcp"
-      ]
+      ],
+      "cwd": "${PLUGIN_ROOT}"
     }
   }
 }

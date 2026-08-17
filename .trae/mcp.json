@@ -6,7 +6,7 @@
         "run",
         "--no-sync",
         "--directory",
-        "${workspaceFolder}/deep-review-mcp",
+        "${workspaceFolder}/deep-review.plugin/deep-review-mcp",
         "deep-review-mcp"
       ]
     }

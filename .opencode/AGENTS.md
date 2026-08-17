@@ -1,14 +1,15 @@
 # DeepReview - K12 错题收集与智能分析 MCP 工具
 
-基于 Trae IDE CN / Trae Work CN / CodeBuddy / OpenCode / Goose 的 K12 错题收集与智能分析一体化解决方案。核心流程：拍照/文本录入 → 宿主LLM多模态看图解析 → AI 结构化解析 → 智能分类 → 本地保存 → 基于 FSRS v6 的复习排程 → 到期复习推荐 → 深度原因分析 → 改进方案。配置统一维护在 `.agents/`（AAIF 真相源），通过 `scripts/sync-agent-configs` 单向同步到 `.trae/` / `.opencode/` / `.codebuddy/` / `.goose/`。
+基于 Trae IDE CN / Trae Work CN / CodeBuddy / OpenCode / Goose 的 K12 错题收集与智能分析一体化解决方案。核心流程：拍照/文本录入 → 宿主LLM多模态看图解析 → AI 结构化解析 → 智能分类 → 本地保存 → 基于 FSRS v6 的复习排程 → 到期复习推荐 → 深度原因分析 → 改进方案。配置统一维护在 `deep-review.plugin/`（AAIF 真相源 + Agent Plugins 1.0 插件包），通过 `scripts/sync-agent-configs` 单向同步到 `.trae/` / `.opencode/` / `.codebuddy/` / `.goose/`。
 
 ## 系统架构
 
 **服务层 + 配置层 + 规则层** 分离：
 
-- **服务层** (`deep-review-mcp/`)：纯 Python MCP Server，通用，不绑定任何客户端，可独立发布
-- **配置层**：定义 subagent（Skill）行为、流程与约束。`.agents/` 为 AAIF 唯一真相源（**只改这里**），`.trae/`、`.opencode/`、`.codebuddy/`、`.goose/` 由 `scripts/sync-agent-configs` 单向生成，禁止直接编辑（见「流程规则 > 配置同步」）
-- **规则层**（`.agents/AGENTS.md`）：业务规则约束错题采集/分类/分析/复习流程，开发规则约束代码开发流程。历史上 `.trae/rules/` 的 4 个规则文件（classification / analysis / data-safety / interaction）已合并至此并删除，规则唯一来源即本文件，`.trae/` 不再保留独立 rules 目录。
+- **服务层** (`deep-review.plugin/deep-review-mcp/`)：纯 Python MCP Server，通用，不绑定任何客户端，可独立发布，内联在 Agent Plugin 包内
+- **配置层**：定义 subagent（Skill）行为、流程与约束。`deep-review.plugin/` 为 AAIF 唯一真相源（**只改这里**），`.trae/`、`.opencode/`、`.codebuddy/`、`.goose/` 由 `scripts/sync-agent-configs` 单向生成，禁止直接编辑（见「流程规则 > 配置同步」）
+- **规则层**（`deep-review.plugin/AGENTS.md`）：业务规则约束错题采集/分类/分析/复习流程，开发规则约束代码开发流程。历史上 `.trae/rules/` 的 4 个规则文件（classification / analysis / data-safety / interaction）已合并至此并删除，规则唯一来源即本文件，`.trae/` 不再保留独立 rules 目录。
+- **插件层**（Agent Plugins 1.0）：`deep-review.plugin/plugin.json`（manifest）+ `deep-review.plugin/mcp.json`（内联 MCP 启动配置，`${PLUGIN_ROOT}` 相对路径）使插件自包含、可整体分发，根 `package.json` 提供 `agents publish deep-review.plugin` 标准发布入口。
 
 ```
 用户交互层
@@ -16,18 +17,18 @@
 ├── 四运行时: Trae IDE CN + Trae Work CN + CodeBuddy + OpenCode + Goose
 ├── Web 可视化 (deep_review_mcp/web — 同包内 FastAPI 子模块，非独立组件)
     ↓
-Skills 编排层 (配置定义，由 .agents/skills/ 同步四平台)
-├── .agents/skills/wrong-question-* （单向同步到 .trae/.opencode/.codebuddy/.goose）
+Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步四平台)
+├── deep-review.plugin/skills/wrong-question-* （单向同步到 .trae/.opencode/.codebuddy/.goose）
 ├── 5 个 Skill: capture / batch-capture / analyze / review / stats
     ↓
-服务层 (deep_review_mcp)
+服务层 (deep_review_mcp，位于 deep-review.plugin/deep-review-mcp/)
 ├── MCP Tools: 4 CRUD (save/query/update/delete)
 │             + 6 业务 (classify/analyze/improvement/review/statistics/export)
 ├── prompts/ (AI 提示模板)
 ├── tools/   (各业务逻辑)   models.py   storage.py   server.py
 └── web/ (FastAPI + Jinja2 + ECharts 可视化)
     ↓
-规则层 (.agents/AGENTS.md — 统一规则源)
+规则层 (deep-review.plugin/AGENTS.md — 统一规则源)
     ↓
 数据存储层 (本地 JSON 文件，原子写入)
 ├── data/questions/  data/images/  data/exports/
@@ -42,6 +43,7 @@ Skills 编排层 (配置定义，由 .agents/skills/ 同步四平台)
 - **数据存储**: JSON 文件（本地存储，原子写入）
 - **包管理**: uv
 - **测试**: pytest + pytest-asyncio + pytest-cov
+- **插件规范**: Agent Plugins 1.0（AAIF / Linux 基金会），`agent-plugins.org/schemas/1.0.0/plugin.schema.json` + `mcp.schema.json`
 
 ## 开发规范
 
@@ -93,12 +95,12 @@ Not lazy about: input validation at trust boundaries, error handling that preven
 - 核心代码必须有单元测试；Mock 外部 LLM / API 调用，禁止 Mock 内部业务逻辑；测试用合成/脱敏数据，禁真实用户数据。
 - TDD：先写失败测试 → 写实现 → 重构；无失败测试不写生产代码。
 - 代码规范：禁止裸 `Exception`（用自定义异常）；禁止 `# type: ignore`；禁止 `Dict[str, Any]`（用 pydantic / TypedDict / dataclass）；禁止 `print()` 调试（用 `logging`）；禁止可变默认参数；函数 ≤ 50 行、嵌套 ≤ 4 层。
-- 文档：公共 API 有 docstring；新功能更新 CHANGELOG；版本号在 `pyproject.toml` / `README.md` / `CHANGELOG.md` 保持一致，发布前校验。
+- 文档：公共 API 有 docstring；新功能更新 CHANGELOG；版本号在 `pyproject.toml` / `plugin.json` / `package.json` / `README.md` / `CHANGELOG.md` 保持一致，发布前校验。
 
 ### 流程规则（单人模式）
 
 - 需求不明先 `brainstorming` 澄清；功能开发遵循 TDD；Bug 根因不明先 `systematic-debugging`；每次 commit 前跑 lint/test/typecheck 拿证据；声称完成必须有验证证据（禁"应该没问题"式声称）；修复循环 > 3 次仍不回退规划阶段。
-- **配置同步（强约束）**：`.agents/` 是 AAIF 配置层唯一真相源（runtime 配置在 `.agents/runtime/`、Skills 在 `.agents/skills/`、规则在 `.agents/AGENTS.md`、AAIF 声明在 `.agents/tools.json` / `triggers.json` / `workflows.json`）；`.trae/`、`.opencode/`、`.codebuddy/`、`.goose/` 是 `scripts/sync-agent-configs` 的生成产物。**严禁**以任何方式（手工、AI、脚本）直接编辑 `.trae/**`、`.opencode/**`、`.codebuddy/**`、`.goose/**` 下（`.agents/` 之外）的 Skill / MCP / 配置文件——同步脚本是单向覆盖，此类改动会在下次同步时被静默丢弃。正确流程：改 `.agents/` → 跑 `scripts/sync-agent-configs.ps1`（或 `.sh`）→ 各生成目录改动一起提交。例外仅限 `.codebuddy/memory/**` 等由运行时自行写入、不参与同步的目录。commit 前自检：若 diff 中出现 `.trae/**`、`.opencode/**`、`.codebuddy/**` 或 `.goose/**` 的修改而 `.agents/**` 下无对应改动，视为违规，必须回退并从 `.agents/` 重做。**机械防线**：`scripts/pre-commit` 钩子（由 `install.ps1`/`.sh` 安装到 `.git/hooks/pre-commit`）会在提交时自动拦截此类违规。
+- **配置同步（强约束）**：`deep-review.plugin/` 是 AAIF 配置层唯一真相源（runtime 配置在 `deep-review.plugin/runtime/`、Skills 在 `deep-review.plugin/skills/`、规则在 `deep-review.plugin/AGENTS.md`、AAIF 声明在 `deep-review.plugin/tools.json` / `triggers.json` / `workflows.json`、插件契约在 `deep-review.plugin/plugin.json` / `mcp.json`）；`.trae/`、`.opencode/`、`.codebuddy/`、`.goose/` 是 `scripts/sync-agent-configs` 的生成产物。**严禁**以任何方式（手工、AI、脚本）直接编辑 `.trae/**`、`.opencode/**`、`.codebuddy/**`、`.goose/**` 下（`deep-review.plugin/` 之外）的 Skill / MCP / 配置文件——同步脚本是单向覆盖，此类改动会在下次同步时被静默丢弃。正确流程：改 `deep-review.plugin/` → 跑 `scripts/sync-agent-configs.ps1`（或 `.sh`）→ 各生成目录改动一起提交。例外仅限 `.codebuddy/memory/**` 等由运行时自行写入、不参与同步的目录。commit 前自检：若 diff 中出现 `.trae/**`、`.opencode/**`、`.codebuddy/**` 或 `.goose/**` 的修改而 `deep-review.plugin/**` 下无对应改动，视为违规，必须回退并从 `deep-review.plugin/` 重做。**机械防线**：`scripts/pre-commit` 钩子（由 `install.ps1`/`.sh` 安装到 `.git/hooks/pre-commit`）会在提交时自动拦截此类违规；CI 另由 `check-config-drift.sh` 双防线拦截漂移。
 - 分支：main 受 GitHub 保护，禁 force-push、禁 merge commit；功能合并用 `git merge --squash`；小改动可直接 main，大功能建议用 feature 分支。
 - 发布：版本号一致后才推送 main，等 CI 通过再打 Tag；禁止 CI 未过时创建 Tag。
 

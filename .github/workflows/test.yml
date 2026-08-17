@@ -8,7 +8,7 @@ on:
 
 jobs:
   # ──────────────────────────────────────────
-  # 质量门禁：ruff + mypy（提交前质量规则，见 .agents/AGENTS.md）
+  # 质量门禁：ruff + mypy（提交前质量规则，见 deep-review.plugin/AGENTS.md）
   # ──────────────────────────────────────────
   lint:
     name: Lint (ruff + mypy)
@@ -30,23 +30,23 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/uv
-        key: ${{ runner.os }}-uv-lint-${{ hashFiles('deep-review-mcp/uv.lock') }}
+        key: ${{ runner.os }}-uv-lint-${{ hashFiles('deep-review.plugin/deep-review-mcp/uv.lock') }}
         restore-keys: |
           ${{ runner.os }}-uv-lint-
 
     - name: Install dependencies
       run: |
-        cd deep-review-mcp
+        cd deep-review.plugin/deep-review-mcp
         uv sync --extra dev
 
     - name: Run ruff
       run: |
-        cd deep-review-mcp
-        uv run ruff check src/ tests/ ../scripts/
+        cd deep-review.plugin/deep-review-mcp
+        uv run ruff check src/ tests/ ../../scripts/
 
     - name: Run mypy
       run: |
-        cd deep-review-mcp
+        cd deep-review.plugin/deep-review-mcp
         uv run mypy src/
 
   # ──────────────────────────────────────────
@@ -77,26 +77,26 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/uv
-        key: ${{ runner.os }}-uv-${{ hashFiles('deep-review-mcp/uv.lock') }}
+        key: ${{ runner.os }}-uv-${{ hashFiles('deep-review.plugin/deep-review-mcp/uv.lock') }}
         restore-keys: |
           ${{ runner.os }}-uv-
 
     - name: Install dependencies
       # 仅安装 dev 依赖；图片解析由宿主 LLM 多模态完成，MCP 侧无 OCR 依赖
       run: |
-        cd deep-review-mcp
+        cd deep-review.plugin/deep-review-mcp
         uv sync --extra dev
 
     - name: Run unit & integration tests
       run: |
-        cd deep-review-mcp
+        cd deep-review.plugin/deep-review-mcp
         uv run pytest tests/ -v --cov=src --cov-report=xml -m "not e2e"
 
     - name: Upload coverage
       if: matrix.python-version == '3.12' && always()
       uses: codecov/codecov-action@v4
       with:
-        files: ./deep-review-mcp/coverage.xml
+        files: ./deep-review.plugin/deep-review-mcp/coverage.xml
         fail_ci_if_error: false
 
   # ──────────────────────────────────────────
@@ -130,13 +130,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/uv
-        key: ${{ runner.os }}-uv-e2e-${{ hashFiles('deep-review-mcp/uv.lock') }}
+        key: ${{ runner.os }}-uv-e2e-${{ hashFiles('deep-review.plugin/deep-review-mcp/uv.lock') }}
         restore-keys: |
           ${{ runner.os }}-uv-e2e-
 
     - name: Install dependencies
       run: |
-        cd deep-review-mcp
+        cd deep-review.plugin/deep-review-mcp
         uv sync --extra dev
 
     - name: Install Playwright system deps
@@ -158,12 +158,12 @@ jobs:
 
     - name: Install Playwright Chromium
       run: |
-        cd deep-review-mcp
+        cd deep-review.plugin/deep-review-mcp
         uv run playwright install chromium
 
     - name: Run E2E tests
       run: |
-        cd deep-review-mcp
+        cd deep-review.plugin/deep-review-mcp
         uv run pytest tests/test_e2e_visualization.py -v -m e2e
 
     - name: Upload Playwright traces on failure
@@ -171,5 +171,20 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: playwright-traces-${{ matrix.python-version }}
-        path: deep-review-mcp/test-results/
+        path: deep-review.plugin/deep-review-mcp/test-results/
         if-no-files-found: ignore
+
+  # ──────────────────────────────────────────
+  # 配置漂移检查（AAIF 配置同步机械防线，见 deep-review.plugin/AGENTS.md「流程规则 > 配置同步」）
+  # pre-commit 钩子查暂存区；此处查工作区，作为绕过本地钩子场景的 CI 兜底
+  # ──────────────────────────────────────────
+  config-drift:
+    name: Config Drift (AAIF sync)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check config drift
+      run: bash scripts/check-config-drift.sh

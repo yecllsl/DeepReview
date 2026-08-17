@@ -8,7 +8,7 @@
 import importlib.util
 from pathlib import Path
 
-SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
+SCRIPTS_DIR = Path(__file__).resolve().parents[3] / "scripts"
 SCRIPT_FILE = SCRIPTS_DIR / "backfill-structured.py"
 
 

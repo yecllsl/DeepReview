@@ -38,11 +38,11 @@ env/
 Thumbs.db
 
 # MCP Server
-deep-review-mcp/data/wrong_questions/*.json
-deep-review-mcp/data/analysis_reports/*.json
-deep-review-mcp/data/review_plans/*.json
-deep-review-mcp/data/exports/*.json
-deep-review-mcp/data/exports/*.md
+deep-review.plugin/deep-review-mcp/data/wrong_questions/*.json
+deep-review.plugin/deep-review-mcp/data/analysis_reports/*.json
+deep-review.plugin/deep-review-mcp/data/review_plans/*.json
+deep-review.plugin/deep-review-mcp/data/exports/*.json
+deep-review.plugin/deep-review-mcp/data/exports/*.md
 
 # Logs
 *.log

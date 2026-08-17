@@ -1,0 +1,65 @@
+{
+  "$schema": "https://agents.aaif.io/schemas/triggers.json",
+  "triggers": [
+    {
+      "type": "command",
+      "pattern": "^/review(\\s.*)?$",
+      "handler": "handle_command",
+      "description": "review-plan-generate 命令触发器"
+    },
+    {
+      "type": "conversation",
+      "pattern": "(?i)(复习计划|复习推荐|该复习什么)",
+      "handler": "handle_trigger",
+      "description": "review-plan-generate 对话触发器"
+    },
+    {
+      "type": "command",
+      "pattern": "^/analyze(\\s.*)?$",
+      "handler": "handle_command",
+      "description": "wrong-question-analyze 命令触发器"
+    },
+    {
+      "type": "conversation",
+      "pattern": "(?i)(分析错题|错题分析|为什么做错|分析原因)",
+      "handler": "handle_trigger",
+      "description": "wrong-question-analyze 对话触发器"
+    },
+    {
+      "type": "command",
+      "pattern": "^/batch\\-capture(\\s.*)?$",
+      "handler": "handle_command",
+      "description": "wrong-question-batch-capture 命令触发器"
+    },
+    {
+      "type": "conversation",
+      "pattern": "(?i)(批量录入|一次录入多道题|连续录入|批量采集|录入今天的作业错题)",
+      "handler": "handle_trigger",
+      "description": "wrong-question-batch-capture 对话触发器"
+    },
+    {
+      "type": "command",
+      "pattern": "^/capture(\\s.*)?$",
+      "handler": "handle_command",
+      "description": "wrong-question-capture 命令触发器"
+    },
+    {
+      "type": "conversation",
+      "pattern": "(?i)(录入错题|拍照录题|添加错题|上传错题)",
+      "handler": "handle_trigger",
+      "description": "wrong-question-capture 对话触发器"
+    },
+    {
+      "type": "command",
+      "pattern": "^/stats(\\s.*)?$",
+      "handler": "handle_command",
+      "description": "wrong-question-stats 命令触发器"
+    },
+    {
+      "type": "conversation",
+      "pattern": "(?i)(错题统计|查看统计|错题分布|薄弱点)",
+      "handler": "handle_trigger",
+      "description": "wrong-question-stats 对话触发器"
+    }
+  ]
+}

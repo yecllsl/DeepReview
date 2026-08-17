@@ -1,0 +1,200 @@
+{
+  "$schema": "https://agents.aaif.io/schemas/tools.json",
+  "name": "deep-review-mcp",
+  "version": "0.5.0",
+  "description": "K12错题收集与智能分析MCP Server",
+  "tools": [
+    {
+      "name": "save_wrong_question",
+      "description": "保存错题记录到本地JSON文件",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "question_data": {
+            "additionalProperties": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "question_data"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "query_wrong_questions",
+      "description": "按条件查询错题",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "additionalProperties": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "update_wrong_question",
+      "description": "更新错题记录",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "question_data": {
+            "additionalProperties": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "question_data"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "delete_wrong_question",
+      "description": "删除错题记录",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "question_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_id"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "classify_question",
+      "description": "AI驱动智能分类错题",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "question_text": {
+            "type": "string"
+          },
+          "subject": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_text"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "analyze_error",
+      "description": "深度分析错题错误原因",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "question_id": {
+            "type": "string"
+          },
+          "user_answer": {
+            "default": "",
+            "type": "string"
+          },
+          "correct_answer": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_id"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "generate_improvement",
+      "description": "生成个性化改进方案",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "question_id": {
+            "type": "string"
+          },
+          "analysis_result": {
+            "additionalProperties": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "question_id",
+          "analysis_result"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "recommend_review",
+      "description": "基于遗忘曲线生成复习推荐",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "time_range": {
+            "default": "",
+            "type": "string"
+          },
+          "subject": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_statistics",
+      "description": "统计分析错题分布和趋势",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "group_by": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "group_by"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "export_data",
+      "description": "导出错题数据",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "default": "json",
+            "type": "string"
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      }
+    }
+  ]
+}

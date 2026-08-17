@@ -1,0 +1,22 @@
+{
+  "name": "deep-review",
+  "version": "0.5.0",
+  "description": "DeepReview K12 错题收集与智能分析 Agent Plugin（AAIF / Agent Plugins 1.0）",
+  "main": "deep-review.plugin/tools.json",
+  "author": "yecll",
+  "license": "MIT",
+  "keywords": [
+    "k12",
+    "wrong-question",
+    "mcp",
+    "agent-plugin",
+    "aaif",
+    "fsrs"
+  ],
+  "scripts": {
+    "generate-declarations": "uv run --no-sync --directory deep-review.plugin/deep-review-mcp python ../../scripts/generate-aaif-declarations.py",
+    "sync-configs": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-agent-configs.ps1",
+    "check-drift": "bash scripts/check-config-drift.sh",
+    "publish": "agents publish deep-review.plugin"
+  }
+}

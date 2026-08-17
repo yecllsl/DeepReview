@@ -2,7 +2,7 @@
 
 基于 Trae IDE CN / CodeBuddy / opencode / Goose / WorkBuddy / Hermes 多 Agent 运行时（harness）的 K12 错题收集与智能分析解决方案，帮助学生通过拍照快速录入错题，AI 自动完成分类、原因分析、改进方案生成和复习推荐。提供本地 Web 可视化界面，直观展示错题分布、趋势和薄弱点。
 
-> v0.3.0 起支持 **AAIF 规范**：`.agents/` 为配置层唯一真相源，多 harness 配置由 `scripts/sync-agent-configs` 单向同步生成。
+> v0.3.0 起支持 **AAIF 规范**；v0.5.0 起符合 **Agent Plugins 1.0**（AAIF / Linux 基金会）：`deep-review.plugin/` 为配置层唯一真相源 + 自包含插件包（`plugin.json` / `mcp.json`），多 harness 配置由 `scripts/sync-agent-configs` 单向同步生成。
 
 ## 核心功能
 
@@ -22,21 +22,22 @@
 ├── 多运行时: Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes
 └── Web 可视化界面 (本地浏览器 http://127.0.0.1:8001)
     ↓
-Skills 编排层 (配置定义，由 .agents/skills/ 同步到多平台)
+Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平台)
 ├── 5 个 Skill: capture / batch-capture / analyze / review / stats
     ↓
-服务层 (deep-review-mcp)
-├── MCP Tools: 11 个 Tools
+服务层 (deep-review.plugin/deep-review-mcp — Agent Plugins 1.0 内联 MCP)
+├── MCP Tools: 10 个 Tools
 └── Web 可视化子模块 (FastAPI + HTMX + Alpine.js + ECharts)
     ↓
-规则层 (.agents/AGENTS.md — AAIF 统一规则源)
+规则层 (deep-review.plugin/AGENTS.md — AAIF 统一规则源)
     ↓
 数据存储层 (本地JSON文件, 原子写入)
 ```
 
 ## 技术栈
 
-- **配置层**: AAIF 规范（`.agents/` 唯一真相源）+ 多 Agent harness（Trae/CodeBuddy/opencode/Goose + WorkBuddy/Hermes，单向同步）
+- **插件层**: Agent Plugins 1.0（AAIF / Linux 基金会）——`deep-review.plugin/plugin.json` + `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动），根 `package.json` 提供 `agents publish deep-review.plugin` 标准发布
+- **配置层**: AAIF 规范（`deep-review.plugin/` 唯一真相源）+ 多 Agent harness（Trae/CodeBuddy/opencode/Goose + WorkBuddy/Hermes，单向同步）
 - **MCP Server**: Python 3.12+ / FastMCP
 - **Web 可视化**: FastAPI + HTMX（OOB 局部刷新）+ Alpine.js（轻量交互）+ ECharts（图表）
 - **图片解析**: 宿主 LLM 多模态直接看图解析（无需额外图像识别依赖）
@@ -57,7 +58,7 @@ Skills 编排层 (配置定义，由 .agents/skills/ 同步到多平台)
 
 #### 1. 下载并解压
 
-下载 `DeepReview-v0.4.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
+下载 `DeepReview-v0.5.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
 
 #### 2. 运行安装脚本
 
@@ -95,7 +96,7 @@ chmod +x install.sh
 ./install.sh --agent-runtime all
 ```
 
-四个项目级运行时的配置目录由 `scripts/sync-agent-configs` 从 `.agents/`（AAIF 唯一真相源）单向生成：
+四个项目级运行时的配置目录由 `scripts/sync-agent-configs` 从 `deep-review.plugin/`（AAIF 唯一真相源）单向生成：
 
 | 运行时 | 配置目录 | 说明 |
 |--------|---------|------|
@@ -118,7 +119,7 @@ chmod +x install.sh
 ### 可选：启动 Web 可视化界面
 
 ```powershell
-cd deep-review-mcp
+cd deep-review.plugin/deep-review-mcp
 uv run deep-review-web
 ```
 
@@ -135,6 +136,27 @@ uv run deep-review-web
 | `DeepReview-vX.Y.Z.tar.gz` | 所有 Unix | 兼容性最好，老旧系统 fallback |
 
 访问 https://github.com/yecllsl/DeepReview/releases 下载最新版本。
+
+### Agent Plugins 1.0 标准发布
+
+`deep-review.plugin/` 是符合 Agent Plugins 1.0（AAIF / Linux 基金会）规范的自包含插件包，可向标准插件注册中心发布：
+
+```bash
+# 校验插件包清单（plugin.json / mcp.json schema）
+npx agents validate deep-review.plugin
+
+# 发布到插件注册中心
+npx agents publish deep-review.plugin
+```
+
+根 `package.json` 已内置脚本别名：
+
+```bash
+npm run publish        # 等价于 agents publish deep-review.plugin
+npm run generate-declarations   # 重新生成 AAIF 声明（tools/triggers/workflows.json）
+npm run sync-configs   # 同步四平台配置目录
+npm run check-drift    # 校验配置漂移
+```
 
 ## 使用方法
 
@@ -171,8 +193,10 @@ uv run deep-review-web
 
 ```
 DeepReview/
-├── .agents/                                # AAIF 唯一真相源（只改这里）
-│   ├── AGENTS.md                           # 统一规则层（4 个 rules 合并 + 架构/安全/开发规范/流程规则）
+├── deep-review.plugin/                     # Agent Plugins 1.0 插件根（AAIF 唯一真相源，自包含可分发）
+│   ├── plugin.json                         # Agent Plugins 1.0 manifest（$schema/name/version/...）
+│   ├── mcp.json                            # MCP 启动配置（${PLUGIN_ROOT} 内联 deep-review-mcp）
+│   ├── AGENTS.md                           # 统一规则层（架构/安全/开发规范/流程规则 + 业务规则）
 │   ├── skills/                             # 5 个技能源文件（frontmatter 含 command:）
 │   │   ├── wrong-question-capture/         # /capture
 │   │   ├── wrong-question-batch-capture/   # /batch-capture
@@ -183,41 +207,36 @@ DeepReview/
 │   │   ├── trae.json / codebuddy.json / opencode.json / goose.json
 │   ├── tools.json                          # AAIF 声明：MCP 工具自省（生成产物，勿手改）
 │   ├── triggers.json                       # AAIF 声明：命令+对话触发器（生成产物）
-│   └── workflows.json                      # AAIF 声明：技能工作流（生成产物）
-├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 .agents/AGENTS.md）
+│   ├── workflows.json                      # AAIF 声明：技能工作流（生成产物）
+│   └── deep-review-mcp/                    # 纯 MCP Server（内联在插件包内，通用服务层）
+│       ├── src/deep_review_mcp/
+│       │   ├── server.py                  # FastMCP 服务入口
+│       │   ├── models.py                  # Pydantic 数据模型
+│       │   ├── storage.py                 # JSON 存储引擎（支持原子写、部分更新）
+│       │   ├── knowledge_map.py           # K12 知识点映射
+│       │   ├── tools/                     # 10 个 MCP Tools
+│       │   ├── prompts/                   # AI Prompt 模板
+│       │   └── web/                       # Web 可视化模块（薄编排层）
+│       ├── tests/                         # 测试套件
+│       ├── data/                          # 运行时数据（被 .gitignore）
+│       ├── pyproject.toml                 # Python 项目配置（version 0.5.0）
+│       └── uv.lock                        # 依赖锁定文件
+├── package.json                           # AAIF 声明入口（main）+ publish 脚本（agents publish）
+├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 deep-review.plugin/AGENTS.md）
 ├── .opencode/                              # [生成] opencode 配置（opencode.json + skills + AGENTS.md）
 ├── .codebuddy/                             # [生成] CodeBuddy 配置（memory/ 由运行时写入）
 ├── .goose/                                 # [生成] Goose 配置（config.yaml + skills + AGENTS.md）
 ├── .workbuddy/                             # 个人级 harness 说明（安装脚本写入 ~/.workbuddy）
 ├── .hermes/                                # 个人级 harness 说明（安装脚本写入 ~/.hermes）
-├── deep-review-mcp/                        # 纯 MCP Server (通用服务层)
-│   ├── src/deep_review_mcp/
-│   │   ├── server.py                      # FastMCP 服务入口
-│   │   ├── models.py                      # Pydantic 数据模型
-│   │   ├── storage.py                     # JSON 存储引擎（支持原子写、部分更新）
-│   │   ├── knowledge_map.py               # K12 知识点映射
-│   │   ├── tools/                         # 10 个 MCP Tools
-│   │   │   ├── classify.py
-│   │   │   ├── analyze.py
-│   │   │   ├── improvement.py
-│   │   │   ├── review.py
-│   │   │   ├── statistics.py
-│   │   │   ├── export.py
-│   │   │   └── crud.py
-│   │   ├── prompts/                       # AI Prompt 模板
-│   │   └── web/                           # Web 可视化模块（薄编排层）
-│   ├── tests/                             # 测试套件
-│   ├── data/                              # 运行时数据（被 .gitignore）
-│   ├── pyproject.toml                     # Python 项目配置（version 0.4.0）
-│   └── uv.lock                            # 依赖锁定文件
 ├── scripts/                                # 开发者工具
-│   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明
-│   ├── generate-platform-configs.py        # 生成 .agents/runtime/ 4 平台 JSON
+│   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明（规范格式）
+│   ├── generate-platform-configs.py        # 生成 deep-review.plugin/runtime/ 4 平台 JSON
 │   ├── generate-goose-config.py            # goose.json → .goose/config.yaml
-│   ├── sync-agent-configs.ps1/.sh          # .agents/ 单向同步到 4 平台目录
-│   ├── pre-commit                          # git 钩子：拦截配置同步违规
+│   ├── sync-agent-configs.ps1/.sh          # deep-review.plugin/ 单向同步到 4 平台目录
+│   ├── pre-commit                          # git 钩子：内容一致性检查（拦截配置同步违规）
+│   ├── check-config-drift.sh               # CI 工作区漂移检查（与 pre-commit 双防线）
 │   └── build-release.ps1/.sh               # 发布包构建
-├── AGENTS.md                               # [生成] 根规则文件（Trae 读取约定）
+├── AGENTS.md                               # [生成] 根规则文件（Trae 读取约定，由 sync 复制）
 ├── install.ps1 / install.sh                # 安装脚本（-AgentRuntime/-FixPath）
 ├── QUICKSTART.md / DEPLOY.md / README.md   # 文档
 ├── CHANGELOG.md                            # 变更记录
@@ -228,27 +247,28 @@ DeepReview/
 
 ### 分层分离原则
 
-本项目采用 **"服务层 + 配置层 + 规则层"** 分离架构（对标 AAIF 规范）：
+本项目采用 **"服务层 + 配置层 + 规则层 + 插件层"** 分离架构（对标 AAIF 规范 + Agent Plugins 1.0）：
 
 | 层级 | 位置 | 用途 |
 |------|------|------|
-| **服务层** | `deep-review-mcp/` | 纯 Python MCP Server，通用，不绑定任何客户端，可独立发布 |
-| **Web 可视化层** | `deep-review-mcp/src/deep_review_mcp/web/` | 本地 Web 界面，FastAPI + HTMX + Alpine.js + ECharts |
-| **配置层** | `.agents/`（唯一真相源） | AAIF 标准：AGENTS.md + skills/ + runtime/ + tools/triggers/workflows.json |
-| **生成产物** | `.trae/` `.opencode/` `.codebuddy/` `.goose/` | 由 `scripts/sync-agent-configs` 从 `.agents/` 单向同步生成（禁止直接编辑） |
-| **规则层** | `.agents/AGENTS.md` | 业务规则（采集/分类/分析/复习/交互/数据安全）统一约束 |
+| **插件层** | `deep-review.plugin/`（自包含插件包） | Agent Plugins 1.0：`plugin.json`（manifest）+ `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动），可整体分发 |
+| **服务层** | `deep-review.plugin/deep-review-mcp/` | 纯 Python MCP Server，通用，不绑定任何客户端，内联在插件包内 |
+| **Web 可视化层** | `deep-review.plugin/deep-review-mcp/src/deep_review_mcp/web/` | 本地 Web 界面，FastAPI + HTMX + Alpine.js + ECharts |
+| **配置层** | `deep-review.plugin/`（唯一真相源） | AAIF 标准：AGENTS.md + skills/ + runtime/ + tools/triggers/workflows.json + plugin.json/mcp.json |
+| **生成产物** | `.trae/` `.opencode/` `.codebuddy/` `.goose/` | 由 `scripts/sync-agent-configs` 从 `deep-review.plugin/` 单向同步生成（禁止直接编辑） |
+| **规则层** | `deep-review.plugin/AGENTS.md` | 业务规则（采集/分类/分析/复习/交互/数据安全）统一约束 |
 
 ### 为什么要分离？
 
 1. **职责清晰**: 代码归代码，配置归配置，规则归规则
-2. **可复用**: `deep-review-mcp/` 可单独在其他 MCP 客户端中使用
-3. **AAIF 单一真相源**: 配置只在 `.agents/` 下编辑，4 个 harness 目录由同步脚本生成，杜绝配置漂移
-4. **机械防线**: `scripts/pre-commit` 钩子拦截「直接改生成目录而未同步 .agents/」的违规提交（`.codebuddy/memory/**` 例外）
+2. **可复用**: `deep-review.plugin/deep-review-mcp/` 可单独在其他 MCP 客户端中使用，也可随插件整体发布
+3. **AAIF 单一真相源**: 配置只在 `deep-review.plugin/` 下编辑，4 个 harness 目录由同步脚本生成，杜绝配置漂移
+4. **机械防线（双防线）**: `scripts/pre-commit` 钩子拦截「直接改生成目录而未同步」的违规提交（`.codebuddy/memory/**` 例外）；CI 另由 `scripts/check-config-drift.sh` 校验工作区一致性
 5. **可视化独立**: Web 模块作为薄编排层，复用现有 storage/statistics/review 逻辑
 
 ### Web 可视化模块
 
-Web 可视化模块位于 `deep-review-mcp/src/deep_review_mcp/web/`，提供本地 Web 界面：
+Web 可视化模块位于 `deep-review.plugin/deep-review-mcp/src/deep_review_mcp/web/`，提供本地 Web 界面：
 
 - **技术栈**: FastAPI（后端）+ HTMX（局部更新）+ Alpine.js（表单状态）+ ECharts（图表渲染）
 - **启动方式**: `uv run deep-review-web`，访问 http://127.0.0.1:8001
@@ -299,7 +319,7 @@ MIT License
 ### 本地运行测试
 
 ```bash
-cd deep-review-mcp
+cd deep-review.plugin/deep-review-mcp
 
 # 仅单元/集成测试（默认不装浏览器，最快）
 uv sync --extra dev
@@ -316,17 +336,17 @@ uv run pytest tests/test_e2e_visualization.py -m e2e
 
 ```powershell
 # Windows
-pwsh .\scripts\build-release.ps1 -Version 0.4.0
+pwsh .\scripts\build-release.ps1 -Version 0.5.0
 ```
 
 ```bash
 # Linux / macOS
-bash scripts/build-release.sh 0.4.0
+bash scripts/build-release.sh 0.5.0
 ```
 
-产物：`dist/DeepReview-v0.4.0.{zip,tar.zst,tar.gz}`。
+产物：`dist/DeepReview-v0.5.0.{zip,tar.zst,tar.gz}`。
 
 ### CI/CD
 
-- **PR / push** → [`.github/workflows/test.yml`](.github/workflows/test.yml) 跑单元 + E2E
+- **PR / push** → [`.github/workflows/test.yml`](.github/workflows/test.yml) 跑单元 + E2E + config-drift
 - **push tag `v*.*.*`** → [`.github/workflows/release.yml`](.github/workflows/release.yml) 自动构建并发布 GitHub Release（附 `generate_release_notes` 自动 changelog）

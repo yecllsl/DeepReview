@@ -7,7 +7,7 @@
 #   ./install.sh
 #
 # 可选参数：
-#   --fix-path                将 .agents/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
+#   --fix-path                将 deep-review.plugin/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
 #   --agent-runtime <name>    配置 Agent 运行时 (trae/codebuddy/opencode/goose/all/workbuddy/hermes)
 #                             trae/codebuddy/opencode/goose 为项目级运行时；workbuddy/hermes 为个人级 harness
 #
@@ -47,7 +47,7 @@ fi
 
 echo ""
 echo "========================================"
-echo "  DeepReview v0.4.0 安装向导"
+echo "  DeepReview v0.5.0 安装向导"
 echo "  (Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes)"
 echo "========================================"
 echo ""
@@ -56,7 +56,7 @@ echo ""
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ──────────────────────────────────────────
-# 个人级 harness 安装辅助函数（WorkBuddy / Hermes 仅支持个人级配置，不走 .agents/ 同步）
+# 个人级 harness 安装辅助函数（WorkBuddy / Hermes 仅支持个人级配置，不走 deep-review.plugin/ 同步）
 # ──────────────────────────────────────────
 install_personal_harness() {
     local harness_name="$1"   # 目录名，如 "workbuddy"
@@ -90,7 +90,7 @@ install_personal_harness() {
   "mcpServers": {
     "deep-review-mcp": {
       "command": "uv",
-      "args": ["run", "--no-sync", "--directory", "$PROJECT_ROOT/deep-review-mcp", "deep-review-mcp"]
+      "args": ["run", "--no-sync", "--directory", "$PROJECT_ROOT/deep-review.plugin/deep-review-mcp", "deep-review-mcp"]
     }
   }
 }
@@ -98,8 +98,8 @@ EOF
     echo -e "  ${GREEN}[ok] 已写入 MCP 注册: $cfg_dir/mcp.json${NC}"
 
     # 5. 符号链接 AGENTS.md 与 skills/（失败降级复制）
-    link_personal_config "AGENTS.md" "$PROJECT_ROOT/.agents/AGENTS.md" "$cfg_dir/AGENTS.md"
-    link_personal_config "skills/"   "$PROJECT_ROOT/.agents/skills"   "$cfg_dir/skills"
+    link_personal_config "AGENTS.md" "$PROJECT_ROOT/deep-review.plugin/AGENTS.md" "$cfg_dir/AGENTS.md"
+    link_personal_config "skills/"   "$PROJECT_ROOT/deep-review.plugin/skills"     "$cfg_dir/skills"
 }
 
 link_personal_config() {
@@ -157,7 +157,7 @@ echo -e "  ${GREEN}✓ Python $PYTHON_VERSION${NC}"
 # ──────────────────────────────────────────
 # [3/4] 安装依赖
 # ──────────────────────────────────────────
-MCP_DIR="$PROJECT_ROOT/deep-review-mcp"
+MCP_DIR="$PROJECT_ROOT/deep-review.plugin/deep-review-mcp"
 
 echo "[3/4] 安装依赖..."
 
@@ -168,7 +168,7 @@ if ! uv sync 2>&1; then
     echo -e "  ${RED}✗ 依赖安装失败${NC}"
     echo ""
     echo "  请尝试手动安装："
-    echo "  cd deep-review-mcp"
+    echo "  cd deep-review.plugin/deep-review-mcp"
     echo "  uv sync"
     exit 1
 fi
@@ -277,9 +277,9 @@ fi
 cd "$PROJECT_ROOT"
 
 # ──────────────────────────────────────────
-# mcp.json 路径回退方案（多运行时共用，AAIF 真相源 .agents/runtime）
+# mcp.json 路径回退方案（多运行时共用，AAIF 真相源 deep-review.plugin/runtime）
 # ──────────────────────────────────────────
-RUNTIME_DIR="$PROJECT_ROOT/.agents/runtime"
+RUNTIME_DIR="$PROJECT_ROOT/deep-review.plugin/runtime"
 TRAE_JSON="$RUNTIME_DIR/trae.json"
 if [ -f "$TRAE_JSON" ]; then
     if grep -q '${workspaceFolder}' "$TRAE_JSON" 2>/dev/null; then
@@ -291,10 +291,10 @@ if [ -f "$TRAE_JSON" ]; then
     fi
 fi
 
-# 处理 --fix-path 参数：将 .agents/runtime 中 ${workspaceFolder} 替换为实际路径
+# 处理 --fix-path 参数：将 deep-review.plugin/runtime 中 ${workspaceFolder} 替换为实际路径
 if [ "$FIX_PATH" = true ]; then
     echo ""
-    echo "  正在修复 runtime 配置路径（.agents/runtime）..."
+    echo "  正在修复 runtime 配置路径（deep-review.plugin/runtime）..."
     FIXED_ANY=false
     for f in trae.json codebuddy.json; do
         T="$RUNTIME_DIR/$f"
@@ -361,6 +361,6 @@ echo "     /review        - 生成复习计划"
 echo "     /stats         - 查看错题统计"
 echo ""
 echo "  可选：启动 Web 可视化界面"
-echo "     cd deep-review-mcp && uv run deep-review-web"
+echo "     cd deep-review.plugin/deep-review-mcp && uv run deep-review-web"
 echo "     浏览器访问 http://127.0.0.1:8001"
 echo ""

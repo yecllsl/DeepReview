@@ -9,7 +9,7 @@ structured.question_content（UTF-8 安全，仅本地运行，不做任何外�
 
 运行方式（与其它生成脚本同款 import 约定）：
 
-    uv run --no-sync --directory deep-review-mcp python scripts/backfill-structured.py [--dry-run]
+    uv run --no-sync --directory deep-review.plugin/deep-review-mcp python ../../scripts/backfill-structured.py [--dry-run]
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from pathlib import Path
 from deep_review_mcp.tools.crud import _fill_required_defaults
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "deep-review-mcp" / "data" / "wrong_questions"
+DATA_DIR = PROJECT_ROOT / "deep-review.plugin" / "deep-review-mcp" / "data" / "wrong_questions"
 
 
 def _backfill(data: dict) -> dict:

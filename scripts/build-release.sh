@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="${1:-0.4.0}"
+VERSION="${1:-0.5.0}"
 
 # ──────────────────────────────────────────
 # 路径定义
@@ -57,19 +57,19 @@ log_ok "cleaned"
 # ──────────────────────────────────────────
 log_step "[2/6] Create directory structure..."
 mkdir -p "$STAGING_DIR/.trae/skills"
-mkdir -p "$STAGING_DIR/.agents/skills"
-mkdir -p "$STAGING_DIR/.agents/runtime"
+mkdir -p "$STAGING_DIR/deep-review.plugin/skills"
+mkdir -p "$STAGING_DIR/deep-review.plugin/runtime"
 mkdir -p "$STAGING_DIR/.opencode/skills"
 mkdir -p "$STAGING_DIR/.codebuddy/skills"
 mkdir -p "$STAGING_DIR/.goose/skills"
 mkdir -p "$STAGING_DIR/.workbuddy"
 mkdir -p "$STAGING_DIR/.hermes"
 mkdir -p "$STAGING_DIR/scripts"
-mkdir -p "$STAGING_DIR/deep-review-mcp/src"
-mkdir -p "$STAGING_DIR/deep-review-mcp/data/wrong_questions"
-mkdir -p "$STAGING_DIR/deep-review-mcp/data/analysis_reports"
-mkdir -p "$STAGING_DIR/deep-review-mcp/data/review_plans"
-mkdir -p "$STAGING_DIR/deep-review-mcp/data/exports"
+mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/src"
+mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/data/wrong_questions"
+mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/data/analysis_reports"
+mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/data/review_plans"
+mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/data/exports"
 log_ok "directories created"
 
 # ──────────────────────────────────────────
@@ -92,7 +92,7 @@ cat > "$STAGING_DIR/.trae/mcp.json" <<'EOF'
         "run",
         "--no-sync",
         "--directory",
-        "${workspaceFolder}/deep-review-mcp",
+        "${workspaceFolder}/deep-review.plugin/deep-review-mcp",
         "deep-review-mcp"
       ]
     }
@@ -127,28 +127,28 @@ log_ok ".trae config copied"
 # ──────────────────────────────────────────
 log_step "[3.5/6] Copy AAIF source + multi-harness config..."
 
-# .agents/ 完整复制（AAIF 唯一真相源，发布后 install 脚本依赖它重新同步）
-AGENTS_SRC="$PROJECT_ROOT/.agents"
-AGENTS_DST="$STAGING_DIR/.agents"
-for f in AGENTS.md tools.json triggers.json workflows.json; do
-    [ -f "$AGENTS_SRC/$f" ] && cp "$AGENTS_SRC/$f" "$AGENTS_DST/$f"
+# deep-review.plugin/ 完整复制（AAIF 唯一真相源 + Agent Plugins 1.0，发布后 install 脚本依赖它重新同步）
+PLUGIN_SRC="$PROJECT_ROOT/deep-review.plugin"
+PLUGIN_DST="$STAGING_DIR/deep-review.plugin"
+for f in AGENTS.md tools.json triggers.json workflows.json plugin.json mcp.json; do
+    [ -f "$PLUGIN_SRC/$f" ] && cp "$PLUGIN_SRC/$f" "$PLUGIN_DST/$f"
 done
-cp -r "$AGENTS_SRC/skills" "$AGENTS_DST/skills"
-cp -r "$AGENTS_SRC/runtime" "$AGENTS_DST/runtime"
+cp -r "$PLUGIN_SRC/skills" "$PLUGIN_DST/skills"
+cp -r "$PLUGIN_SRC/runtime" "$PLUGIN_DST/runtime"
 
-# 多 harness 生成目录（skills/AGENTS.md 统一从 .agents/ 复制，保证最新）
+# 多 harness 生成目录（skills/AGENTS.md 统一从 deep-review.plugin/ 复制，保证最新）
 for harness in opencode codebuddy goose; do
     h_dst="$STAGING_DIR/.$harness"
-    cp -r "$AGENTS_SRC/skills" "$h_dst/skills"
-    cp "$AGENTS_SRC/AGENTS.md" "$h_dst/AGENTS.md"
+    cp -r "$PLUGIN_SRC/skills" "$h_dst/skills"
+    cp "$PLUGIN_SRC/AGENTS.md" "$h_dst/AGENTS.md"
 done
 
-# .opencode/opencode.json（instructions 指向 .agents/AGENTS.md，cwd 为相对路径）
-cp "$AGENTS_SRC/runtime/opencode.json" "$STAGING_DIR/.opencode/opencode.json"
+# .opencode/opencode.json（instructions 指向 deep-review.plugin/AGENTS.md，cwd 为相对路径）
+cp "$PLUGIN_SRC/runtime/opencode.json" "$STAGING_DIR/.opencode/opencode.json"
 # .codebuddy/mcp.json（${workspaceFolder} 变量版）
-cp "$AGENTS_SRC/runtime/codebuddy.json" "$STAGING_DIR/.codebuddy/mcp.json"
+cp "$PLUGIN_SRC/runtime/codebuddy.json" "$STAGING_DIR/.codebuddy/mcp.json"
 
-# .goose/config.yaml：从 .agents/runtime/goose.json 生成相对路径版（--no-resolve-dir）
+# .goose/config.yaml：从 deep-review.plugin/runtime/goose.json 生成相对路径版（--no-resolve-dir）
 if [ -f "$SCRIPT_DIR/generate-goose-config.py" ]; then
     if command -v python3 >/dev/null 2>&1; then
         python3 "$SCRIPT_DIR/generate-goose-config.py" --out-dir "$STAGING_DIR/.goose" --no-resolve-dir >/dev/null
@@ -163,9 +163,12 @@ fi
 [ -f "$PROJECT_ROOT/.hermes/README.md" ] && cp "$PROJECT_ROOT/.hermes/README.md" "$STAGING_DIR/.hermes/README.md"
 
 # scripts/（同步与生成工具链，发布后 install 脚本依赖）
-for f in generate-platform-configs.py generate-goose-config.py generate-aaif-declarations.py sync-agent-configs.ps1 sync-agent-configs.sh pre-commit; do
+for f in generate-platform-configs.py generate-goose-config.py generate-aaif-declarations.py sync-agent-configs.ps1 sync-agent-configs.sh pre-commit check-config-drift.sh; do
     [ -f "$PROJECT_ROOT/scripts/$f" ] && cp "$PROJECT_ROOT/scripts/$f" "$STAGING_DIR/scripts/$f"
 done
+
+# 根 package.json（AAIF 声明入口 + publish 脚本）
+[ -f "$PROJECT_ROOT/package.json" ] && cp "$PROJECT_ROOT/package.json" "$STAGING_DIR/package.json"
 log_ok "AAIF source + multi-harness config copied"
 
 # ──────────────────────────────────────────
@@ -173,8 +176,8 @@ log_ok "AAIF source + multi-harness config copied"
 # ──────────────────────────────────────────
 log_step "[4/6] Copy deep-review-mcp source..."
 
-MCP_SRC="$PROJECT_ROOT/deep-review-mcp"
-MCP_DST="$STAGING_DIR/deep-review-mcp"
+MCP_SRC="$PROJECT_ROOT/deep-review.plugin/deep-review-mcp"
+MCP_DST="$STAGING_DIR/deep-review.plugin/deep-review-mcp"
 
 # 4a. 顶层文件
 for f in pyproject.toml uv.lock .python-version; do
@@ -213,7 +216,7 @@ log_ok "source copied"
 # [5/6] 复制顶层文档和安装脚本
 # ──────────────────────────────────────────
 log_step "[5/6] Copy docs and install scripts..."
-for f in install.ps1 install.sh README.md DEPLOY.md QUICKSTART.md LICENSE AGENTS.md; do
+for f in install.ps1 install.sh README.md DEPLOY.md QUICKSTART.md LICENSE AGENTS.md package.json; do
     [ -f "$PROJECT_ROOT/$f" ] && cp "$PROJECT_ROOT/$f" "$STAGING_DIR/$f"
 done
 log_ok "docs copied"
@@ -227,10 +230,12 @@ log_step "[6/6] Verify and pack..."
 required=(
     ".trae/mcp.json"
     ".trae/skills/wrong-question-capture/SKILL.md"
-    ".agents/AGENTS.md"
-    ".agents/tools.json"
-    ".agents/triggers.json"
-    ".agents/workflows.json"
+    "deep-review.plugin/AGENTS.md"
+    "deep-review.plugin/tools.json"
+    "deep-review.plugin/triggers.json"
+    "deep-review.plugin/workflows.json"
+    "deep-review.plugin/plugin.json"
+    "deep-review.plugin/mcp.json"
     ".opencode/opencode.json"
     ".codebuddy/mcp.json"
     ".goose/config.yaml"
@@ -238,10 +243,11 @@ required=(
     ".hermes/README.md"
     "scripts/sync-agent-configs.sh"
     "AGENTS.md"
-    "deep-review-mcp/pyproject.toml"
-    "deep-review-mcp/uv.lock"
-    "deep-review-mcp/.python-version"
-    "deep-review-mcp/src/deep_review_mcp/server.py"
+    "package.json"
+    "deep-review.plugin/deep-review-mcp/pyproject.toml"
+    "deep-review.plugin/deep-review-mcp/uv.lock"
+    "deep-review.plugin/deep-review-mcp/.python-version"
+    "deep-review.plugin/deep-review-mcp/src/deep_review_mcp/server.py"
     "install.ps1"
     "install.sh"
     "README.md"
@@ -257,7 +263,7 @@ if [ ${#missing[@]} -gt 0 ]; then
 fi
 
 # 验证没有误包含 .venv
-if [ -d "$STAGING_DIR/deep-review-mcp/.venv" ]; then
+if [ -d "$STAGING_DIR/deep-review.plugin/deep-review-mcp/.venv" ]; then
     log_err ".venv was accidentally included! Aborting."
     exit 1
 fi

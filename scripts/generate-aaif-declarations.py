@@ -1,90 +1,77 @@
 #!/usr/bin/env python3
-"""Generate AAIF declaration files from the real DeepReview sources.
+"""从真实源生成 AAIF 包声明文件。
 
-The three files this script produces — tools.json, triggers.json and
-workflows.json — are part of the AAIF (Agent Agnostic Interface Format)
-standard and MUST NOT be edited by hand. They are generated from:
+产出 `deep-review.plugin/` 下三个 AAIF 标准声明文件：
+  - tools.json      ← 自省实时 MCP 服务（deep_review_mcp.server）得到工具与参数 schema
+  - triggers.json   ← 聚合各 Skill 的「When to Use」自然语言触发词 + 命令别名
+  - workflows.json  ← 聚合各 Skill 实际引用的 MCP 工具（按文中出现顺序）
 
-- MCP tools: introspected from the live FastMCP server (tools.json).
-- Skills: parsed from .agents/skills/*/SKILL.md frontmatter + body
-  (triggers.json, workflows.json).
+这些文件是 AAIF 工具链（`agents publish deep-review.plugin`）消费的声明产物，属**生成文件**，
+请勿手工编辑；运行本脚本或 `scripts/sync-agent-configs` 即可重新生成。
 
-Run this script through the MCP package environment so the deep_review_mcp
-module is importable:
+工具自省依赖 deep-review-mcp 的运行环境，因此须通过 uv 运行（脚本位于项目级
+根目录 scripts/，故 --directory 后需用 ../../scripts/ 相对路径指向它，因为 uv 会把
+工作目录切到 deep-review.plugin/deep-review-mcp 下）：
 
-    uv run --no-sync --directory deep-review-mcp python scripts/generate-aaif-declarations.py
-
-Generated files (.agents/tools.json / triggers.json / workflows.json):
-- tools.json     — MCP tool declarations (name / description / parameters).
-- triggers.json  — command triggers (/command) and conversational triggers
-                   extracted from each SKILL.md "When to Use" section.
-- workflows.json — tool invocations referenced by each skill's workflow.
+    uv run --no-sync --directory deep-review.plugin/deep-review-mcp python ../../scripts/generate-aaif-declarations.py
 """
 from __future__ import annotations
 
 import asyncio
 import json
 import re
+import tomllib
 from pathlib import Path
 from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-AGENTS_DIR = PROJECT_ROOT / ".agents"
-SKILLS_DIR = AGENTS_DIR / "skills"
-MCP_PYPROJECT = PROJECT_ROOT / "deep-review-mcp" / "pyproject.toml"
+PLUGIN_DIR = PROJECT_ROOT / "deep-review.plugin"
+SKILLS_DIR = PLUGIN_DIR / "skills"
+MCP_PYPROJECT = PLUGIN_DIR / "deep-review-mcp" / "pyproject.toml"
 
-TOOLS_OUT = AGENTS_DIR / "tools.json"
-TRIGGERS_OUT = AGENTS_DIR / "triggers.json"
-WORKFLOWS_OUT = AGENTS_DIR / "workflows.json"
-
-HEADER = {
-    "schema": "https://agents.aaif.io/schemas/tools.json",
-    "generated_by": "scripts/generate-aaif-declarations.py",
-    "generated_from": "deep-review-mcp (MCP introspection) + .agents/skills/*/SKILL.md",
-    "manual_edits_will_be_overwritten": True,
-}
+TOOLS_SCHEMA = "https://agents.aaif.io/schemas/tools.json"
+TRIGGERS_SCHEMA = "https://agents.aaif.io/schemas/triggers.json"
+WORKFLOWS_SCHEMA = "https://agents.aaif.io/schemas/workflows.json"
 
 
-# ──────────────────────────────────────────────────────────
-# MCP tool introspection
-# ──────────────────────────────────────────────────────────
 def load_package_meta() -> dict[str, str]:
-    """Read name/version/description from pyproject.toml (stdlib tomllib)."""
-    import tomllib
+    """从 pyproject.toml 读取 name/version/description（stdlib tomllib）。"""
     data = tomllib.loads(MCP_PYPROJECT.read_text(encoding="utf-8"))
-    proj = data.get("project", {})
+    project = data.get("project", {})
     return {
-        "name": proj.get("name", "deep-review-mcp"),
-        "version": proj.get("version", ""),
-        "description": proj.get("description", ""),
+        "name": project.get("name", "deep-review-mcp"),
+        "version": project.get("version", ""),
+        "description": project.get("description", ""),
     }
 
 
 def introspect_tools() -> list[dict[str, Any]]:
-    """Introspect the live FastMCP server's registered tools."""
-    from deep_review_mcp import server  # local import; run via uv --directory
-
-    async def _list() -> Any:
-        return await server.mcp.list_tools()
-
-    tools = asyncio.run(_list())
+    """读取实时 MCP 工具注册表（FastMCP 自省）。"""
+    try:
+        from deep_review_mcp import server  # local import; run via uv --directory
+    except ImportError as exc:  # 环境守卫：必须在 uv 环境运行
+        raise SystemExit(
+            "无法导入 deep_review_mcp。请通过 uv 运行本脚本：\n"
+            "  uv run --no-sync --directory deep-review.plugin/deep-review-mcp "
+            "python ../../scripts/generate-aaif-declarations.py"
+        ) from exc
+    tools = asyncio.run(server.mcp.list_tools())
     return [
         {
-            "name": t.name,
-            "description": t.description or "",
-            "parameters": (getattr(t, "parameters", None) or {"type": "object", "properties": {}}),
+            "name": tool.name,
+            "description": tool.description or "",
+            "parameters": getattr(tool, "parameters", None)
+            or {"type": "object", "properties": {}},
         }
-        for t in tools
+        for tool in tools
     ]
 
 
-# ──────────────────────────────────────────────────────────
-# SKILL.md parsing
-# ──────────────────────────────────────────────────────────
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
 
 def parse_frontmatter(text: str) -> dict[str, str]:
+    """解析 SKILL.md frontmatter（name/command/description 等键）。"""
     m = FRONTMATTER_RE.match(text)
     if not m:
         return {}
@@ -96,56 +83,23 @@ def parse_frontmatter(text: str) -> dict[str, str]:
     return data
 
 
-def extract_when_to_use(text: str) -> str:
-    """Return the text between '## When to Use' and the next '## ' heading."""
-    m = re.search(r"## When to Use\s*\n(.*?)(?=\n## |\Z)", text, re.DOTALL)
-    return m.group(1).strip() if m else ""
-
-
-def extract_conversational_triggers(section: str) -> list[str]:
-    """Extract quoted trigger phrases from the 'When to Use' section."""
-    triggers: list[str] = []
-    for m in re.finditer(r"[\"\u201c\u201d\u2018\u2019]([^\"\n]{2,60})[\"\u201c\u201d\u2018\u2019]", section):
-        phrase = m.group(1).strip()
-        if phrase and phrase not in triggers:
-            triggers.append(phrase)
-    return triggers
-
-
-def extract_skill_tools(text: str, known_tools: set[str] | None = None) -> list[str]:
-    """Extract backtick-quoted MCP tool names in first-appearance order.
-
-    Only names matching the actual MCP tool registry (introspected from the
-    live server) are kept; prompt-template names (e.g. ``analyze_prompt``) or
-    parameter names (e.g. ``group_by``) are filtered out.
-    """
-    tools: list[str] = []
-    # 工具名形如 save_wrong_question / classify_question（蛇形命名，含下划线）。
-    pattern = re.compile(r"`([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`")
-    for m in pattern.finditer(text):
-        name = m.group(1)
-        if name in tools:
-            continue
-        if known_tools is not None and name not in known_tools:
-            continue
-        tools.append(name)
-    return tools
-
-
-def iter_skills() -> list[tuple[str, str, dict[str, str], str]]:
-    """Yield (dir_name, command, frontmatter, full_text) for each skill."""
-    skills: list[tuple[str, str, dict[str, str], str]] = []
+def iter_skills() -> list[dict[str, Any]]:
+    """收集 deep-review.plugin/skills/ 下每个 SKILL.md 的元数据与正文。"""
+    skills: list[dict[str, Any]] = []
     if not SKILLS_DIR.is_dir():
         return skills
-    skill_dirs = sorted(p for p in SKILLS_DIR.iterdir() if p.is_dir())
-    for skill_dir in skill_dirs:
-        skill_file = skill_dir / "SKILL.md"
-        if not skill_file.exists():
-            continue
-        text = skill_file.read_text(encoding="utf-8")
-        fm = parse_frontmatter(text)
-        command = fm.get("command", "")
-        skills.append((skill_dir.name, command, fm, text))
+    for skill_md in sorted(SKILLS_DIR.glob("*/SKILL.md")):
+        text = skill_md.read_text(encoding="utf-8")
+        meta = parse_frontmatter(text)
+        skills.append(
+            {
+                "dir_name": skill_md.parent.name,
+                "name": meta.get("name", skill_md.parent.name),
+                "description": meta.get("description", ""),
+                "command": meta.get("command", ""),
+                "text": text,
+            }
+        )
     return skills
 
 
@@ -158,69 +112,116 @@ def derive_command_from_name(skill_name: str) -> str:
     base = skill_name
     for prefix in ("wrong-question-", "review-", "deep-review-"):
         if base.startswith(prefix):
-            base = base[len(prefix):]
+            base = base[len(prefix) :]
             break
     base = base.replace("_", "-").lower()
     return f"/{base}" if base else f"/{skill_name}"
 
 
-# ──────────────────────────────────────────────────────────
-# JSON writers
-# ──────────────────────────────────────────────────────────
+def extract_when_to_use(text: str) -> str:
+    """返回 '## When to Use' 与下一个 '## ' 标题之间的文本。"""
+    m = re.search(r"##\s*When to Use\s*\n(.*?)(?=\n##\s|\Z)", text, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+
+def extract_keywords(text: str) -> list[str]:
+    """从 'When to Use' 提取带引号的触发短语（支持中英文引号）。"""
+    wtu = extract_when_to_use(text)
+    found = re.findall(
+        r"[\"\u201c\u201d\u2018\u2019]([^\"\n\u201c\u201d\u2018\u2019]{2,60})"
+        r"[\"\u201c\u201d\u2018\u2019]",
+        wtu,
+    )
+    # 仅保留含中/英文字的触发短语，剔除包含 "|" 的代码片段
+    keywords = [k for k in found if "|" not in k and re.search(r"[\u4e00-\u9fffA-Za-z]", k)]
+    seen: set[str] = set()
+    out: list[str] = []
+    for k in keywords:
+        if k not in seen:
+            seen.add(k)
+            out.append(k)
+    return out
+
+
+def extract_skill_tools(text: str, known: list[str]) -> list[str]:
+    """按文中首次出现顺序提取反引号引用的 MCP 工具名，仅保留真实存在者。"""
+    order: list[str] = []
+    for m in re.finditer(r"`([a-z_]+)`", text):
+        name = m.group(1)
+        if name in known and name not in order:
+            order.append(name)
+    return order
+
+
+def generate_tools(meta: dict[str, str], tools: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "$schema": TOOLS_SCHEMA,
+        "name": meta["name"],
+        "version": meta["version"],
+        "description": meta["description"],
+        "tools": tools,
+    }
+
+
+def generate_triggers(skills: list[dict[str, Any]]) -> dict[str, Any]:
+    triggers: list[dict[str, str]] = []
+    for skill in skills:
+        command = skill["command"] or derive_command_from_name(skill["dir_name"])
+        triggers.append(
+            {
+                "type": "command",
+                "pattern": f"^{re.escape(command)}(\\s.*)?$",
+                "handler": "handle_command",
+                "description": f"{skill['name']} 命令触发器",
+            }
+        )
+        keywords = extract_keywords(skill["text"])
+        if keywords:
+            pattern = "(?i)(" + "|".join(re.escape(k) for k in keywords) + ")"
+            triggers.append(
+                {
+                    "type": "conversation",
+                    "pattern": pattern,
+                    "handler": "handle_trigger",
+                    "description": f"{skill['name']} 对话触发器",
+                }
+            )
+    return {"$schema": TRIGGERS_SCHEMA, "triggers": triggers}
+
+
+def generate_workflows(
+    skills: list[dict[str, Any]], tools: list[dict[str, Any]]
+) -> dict[str, Any]:
+    known = [t["name"] for t in tools]
+    desc_by_tool = {t["name"]: t["description"] for t in tools}
+    workflows: list[dict[str, Any]] = []
+    for skill in skills:
+        steps = [
+            {
+                "action": tool_name,
+                "description": f"调用 {tool_name}：{desc_by_tool.get(tool_name, '')}",
+            }
+            for tool_name in extract_skill_tools(skill["text"], known)
+        ]
+        workflows.append(
+            {"name": skill["name"], "description": skill["description"], "steps": steps}
+        )
+    return {"$schema": WORKFLOWS_SCHEMA, "workflows": workflows}
+
+
 def write_json(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"已生成 {path.relative_to(PROJECT_ROOT)}")
 
 
 def main() -> None:
-    package = load_package_meta()
-    skills = iter_skills()
-
-    # tools.json
+    meta = load_package_meta()
     tools = introspect_tools()
-    known_tool_names = {t["name"] for t in tools}
-    write_json(
-        TOOLS_OUT,
-        {
-            **HEADER,
-            "package": package,
-            "tools": tools,
-        },
-    )
-    print(f"已生成 {TOOLS_OUT.name}: {len(tools)} 个 MCP Tools")
-
-    # triggers.json
-    triggers: dict[str, Any] = {"schema": "https://agents.aaif.io/schemas/triggers.json", "triggers": []}
-    for skill_name, command, fm, text in skills:
-        entry: dict[str, Any] = {
-            "skill": skill_name,
-            "name": fm.get("name", skill_name),
-            "description": fm.get("description", ""),
-        }
-        if command:
-            entry["command"] = command
-        else:
-            entry["command"] = derive_command_from_name(skill_name)
-        when = extract_when_to_use(text)
-        conversational = extract_conversational_triggers(when)
-        entry["conversational"] = conversational
-        entry["when_to_use"] = when
-        triggers["triggers"].append(entry)
-    write_json(TRIGGERS_OUT, triggers)
-    print(f"已生成 {TRIGGERS_OUT.name}: {len(triggers['triggers'])} 个 Skill 触发器")
-
-    # workflows.json
-    workflows: dict[str, Any] = {"schema": "https://agents.aaif.io/schemas/workflows.json", "workflows": []}
-    for skill_name, command, fm, text in skills:
-        workflows["workflows"].append(
-            {
-                "skill": skill_name,
-                "name": fm.get("name", skill_name),
-                "command": command or derive_command_from_name(skill_name),
-                "tools": extract_skill_tools(text, known_tool_names),
-            }
-        )
-    write_json(WORKFLOWS_OUT, workflows)
-    print(f"已生成 {WORKFLOWS_OUT.name}: {len(workflows['workflows'])} 个 Skill 工作流")
+    skills = iter_skills()
+    write_json(PLUGIN_DIR / "tools.json", generate_tools(meta, tools))
+    write_json(PLUGIN_DIR / "triggers.json", generate_triggers(skills))
+    write_json(PLUGIN_DIR / "workflows.json", generate_workflows(skills, tools))
+    print("AAIF 声明文件已重新生成（请勿手工编辑，由脚本从真实源生成）")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-17
+
+### Added
+
+- **Agent Plugins 1.0（AAIF / Linux 基金会）规范支持**：新建 `deep-review.plugin/` 自包含插件包——`plugin.json`（`agent-plugins.org/schemas/1.0.0/plugin.schema.json` manifest）+ `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动配置），可整体分发、向标准注册中心发布（`agents publish deep-review.plugin`）
+- **根 `package.json`**：`main` 指向 `deep-review.plugin/tools.json`（AAIF 声明入口），`scripts` 内置 `generate-declarations` / `sync-configs` / `check-drift` / `publish`
+- **`scripts/check-config-drift.sh`**：CI 工作区漂移检查，与 pre-commit 钩子构成配置同步双防线
+- **CI config-drift job**：`.github/workflows/test.yml` 新增，校验四平台生成目录与 `deep-review.plugin/` 真相源一致
+
+### Changed
+
+- **配置层目录重构**：`.agents/` → `deep-review.plugin/`（AAIF 唯一真相源迁移），`deep-review-mcp/` 内联进插件包为 `deep-review.plugin/deep-review-mcp/`；同步脚本、平台生成脚本、pre-commit、build-release、install、CI、文档路径全部更新
+- **AAIF 声明格式规范化**：重写 `generate-aaif-declarations.py`，`tools.json` 用顶层 `name/version/description/tools`（去 `package` 包装与 `generated_by` 元数据）、`triggers.json` 用 `type: command/conversation` + `pattern` + `handler`、`workflows.json` 用 `name/description/steps:[{action,description}]`，并重新生成三个声明文件
+- **pre-commit 升级为内容一致性检查**：逐字节比对四平台生成目录（skills/、AGENTS.md，含 Trae 根 AGENTS.md）与 `deep-review.plugin/` 源，同时拦截「直改生成目录」与「改源忘同步」两类违规
+- **版本号统一 0.5.0**：`pyproject.toml` / `__init__.py` / web 入口 / `plugin.json` / `package.json` / install 脚本 / build-release / 文档全部对齐
+
+### Removed
+
+- **删除 `.agents/` 目录**：内容（`AGENTS.md`、`skills/`、`runtime/`）全部迁入 `deep-review.plugin/`，AAIF 真相源单一化
+
+### 说明
+
+- 服务层业务逻辑、5 个 Skill 内容、业务规则不变，纯结构重构
+- 数据目录同步更新为 `deep-review.plugin/deep-review-mcp/data/...`，`.gitignore` 路径已调整
+
 ## [0.4.0] - 2026-08-13
 
 ### Removed

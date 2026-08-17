@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# 将 .agents/ (AAIF 真相源) 单向同步到各 Agent harness 项目目录:
+# 将 deep-review.plugin/ (AAIF 真相源 + Agent Plugins 1.0) 单向同步到各 Agent harness 项目目录:
 #   .trae/  .opencode/  .codebuddy/  .goose/
 #
 # 用法:
@@ -17,10 +17,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$AgentsDir = Join-Path $ProjectRoot '.agents'
-$AgentsRuntime = Join-Path $AgentsDir 'runtime'
-$AgentsSkills = Join-Path $AgentsDir 'skills'
-$AgentsMd = Join-Path $AgentsDir 'AGENTS.md'
+$PluginDir = Join-Path $ProjectRoot 'deep-review.plugin'
+$PluginRuntime = Join-Path $PluginDir 'runtime'
+$PluginSkills = Join-Path $PluginDir 'skills'
+$PluginMd = Join-Path $PluginDir 'AGENTS.md'
+$McpDir = Join-Path $PluginDir 'deep-review-mcp'
 
 $Green = "$([char]0x1b)[32m"
 $Yellow = "$([char]0x1b)[33m"
@@ -28,13 +29,13 @@ $Cyan = "$([char]0x1b)[36m"
 $Red = "$([char]0x1b)[31m"
 $NC = "$([char]0x1b)[0m"
 
-if (-not (Test-Path $AgentsRuntime)) { throw "错误: AAIF 运行时配置目录不存在: $AgentsRuntime" }
-if (-not (Test-Path $AgentsSkills)) { throw "错误: AAIF 技能目录不存在: $AgentsSkills" }
-if (-not (Test-Path $AgentsMd)) { throw "错误: AGENTS.md 不存在: $AgentsMd" }
+if (-not (Test-Path $PluginRuntime)) { throw "错误: AAIF 运行时配置目录不存在: $PluginRuntime" }
+if (-not (Test-Path $PluginSkills)) { throw "错误: AAIF 技能目录不存在: $PluginSkills" }
+if (-not (Test-Path $PluginMd)) { throw "错误: AGENTS.md 不存在: $PluginMd" }
 
 Write-Host "$Cyan=== DeepReview AAIF Config Sync ===$NC"
 Write-Host "项目根目录: $ProjectRoot"
-Write-Host "配置源: .agents/ (AAIF 标准)"
+Write-Host "配置源: deep-review.plugin/ (AAIF 标准 + Agent Plugins 1.0)"
 
 # ── 先重新生成三个 AAIF 声明文件（tools/triggers/workflows.json）──
 function Invoke-AaifDeclarations {
@@ -42,12 +43,11 @@ function Invoke-AaifDeclarations {
         Write-Host "$Red未找到 uv，无法生成 AAIF 声明文件 (tools.json/triggers.json/workflows.json)$NC" -ForegroundColor Red
         throw "uv not found"
     }
-    $mcpDir = Join-Path $ProjectRoot 'deep-review-mcp'
     $script = Join-Path $PSScriptRoot 'generate-aaif-declarations.py'
-    Write-Host "$Yellow生成 AAIF 声明文件 → .agents/$NC"
+    Write-Host "$Yellow生成 AAIF 声明文件 → deep-review.plugin/$NC"
     Push-Location $ProjectRoot
     try {
-        & uv run --no-sync --directory $mcpDir python $script
+        & uv run --no-sync --directory $McpDir python $script
         if ($LASTEXITCODE -ne 0) { throw "AAIF 声明文件生成失败 (exit=$LASTEXITCODE)" }
     } finally {
         Pop-Location
@@ -61,7 +61,7 @@ function Sync-Skills {
     New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
     if (Test-Path $targetSkills) { Remove-Item -Recurse -Force $targetSkills }
     Write-Host "$Yellow同步 Skills → $targetSkills$NC"
-    Copy-Item -Recurse $AgentsSkills $targetSkills
+    Copy-Item -Recurse $PluginSkills $targetSkills
     $count = (Get-ChildItem $targetSkills -Directory).Count
     Write-Host "$Green  已同步 $count 个 Skills$NC"
 }
@@ -70,14 +70,14 @@ function Sync-AgentsMd {
     param([string]$TargetDir)
     $targetMd = Join-Path $TargetDir 'AGENTS.md'
     Write-Host "$Yellow同步 AGENTS.md → $targetMd$NC"
-    Copy-Item -Force $AgentsMd $targetMd
+    Copy-Item -Force $PluginMd $targetMd
     Write-Host "$Green  已同步 AGENTS.md$NC"
 }
 
 function Generate-TraeConfig {
     $traeDir = Join-Path $ProjectRoot '.trae'
     New-Item -ItemType Directory -Force -Path $traeDir | Out-Null
-    $source = Join-Path $AgentsRuntime 'trae.json'
+    $source = Join-Path $PluginRuntime 'trae.json'
     if (Test-Path $source) {
         Write-Host "$Yellow复制 Trae 配置 → .trae/$NC"
         Copy-Item -Force $source (Join-Path $traeDir 'mcp.json')
@@ -88,7 +88,7 @@ function Generate-TraeConfig {
 function Generate-OpencodeConfig {
     $opencodeDir = Join-Path $ProjectRoot '.opencode'
     New-Item -ItemType Directory -Force -Path $opencodeDir | Out-Null
-    $source = Join-Path $AgentsRuntime 'opencode.json'
+    $source = Join-Path $PluginRuntime 'opencode.json'
     if (Test-Path $source) {
         Write-Host "$Yellow复制 opencode 配置 → .opencode/$NC"
         Copy-Item -Force $source (Join-Path $opencodeDir 'opencode.json')
@@ -99,7 +99,7 @@ function Generate-OpencodeConfig {
 function Generate-CodebuddyConfig {
     $codebuddyDir = Join-Path $ProjectRoot '.codebuddy'
     New-Item -ItemType Directory -Force -Path $codebuddyDir | Out-Null
-    $source = Join-Path $AgentsRuntime 'codebuddy.json'
+    $source = Join-Path $PluginRuntime 'codebuddy.json'
     if (Test-Path $source) {
         Write-Host "$Yellow复制 CodeBuddy 配置 → .codebuddy/$NC"
         Copy-Item -Force $source (Join-Path $codebuddyDir 'mcp.json')
@@ -110,7 +110,7 @@ function Generate-CodebuddyConfig {
 function Generate-GooseConfig {
     $gooseDir = Join-Path $ProjectRoot '.goose'
     New-Item -ItemType Directory -Force -Path $gooseDir | Out-Null
-    $source = Join-Path $AgentsRuntime 'goose.json'
+    $source = Join-Path $PluginRuntime 'goose.json'
     if (Test-Path $source) {
         Write-Host "$Yellow生成 Goose 配置 → .goose/config.yaml$NC"
         $script = Join-Path $PSScriptRoot 'generate-goose-config.py'

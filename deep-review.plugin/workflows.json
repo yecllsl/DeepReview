@@ -1,0 +1,75 @@
+{
+  "$schema": "https://agents.aaif.io/schemas/workflows.json",
+  "workflows": [
+    {
+      "name": "review-plan-generate",
+      "description": "Use when 用户想生成复习计划、查看复习推荐、了解该复习什么、安排复习进度",
+      "steps": [
+        {
+          "action": "recommend_review",
+          "description": "调用 recommend_review：基于遗忘曲线生成复习推荐"
+        }
+      ]
+    },
+    {
+      "name": "wrong-question-analyze",
+      "description": "Use when 用户想分析错题原因、诊断错误根源、生成改进方案、查看错题诊断",
+      "steps": [
+        {
+          "action": "analyze_error",
+          "description": "调用 analyze_error：深度分析错题错误原因"
+        },
+        {
+          "action": "generate_improvement",
+          "description": "调用 generate_improvement：生成个性化改进方案"
+        },
+        {
+          "action": "update_wrong_question",
+          "description": "调用 update_wrong_question：更新错题记录"
+        }
+      ]
+    },
+    {
+      "name": "wrong-question-batch-capture",
+      "description": "Use when 用户想批量录入多道错题、一次采集多道题目、批量拍照识别、连续录入错题",
+      "steps": [
+        {
+          "action": "classify_question",
+          "description": "调用 classify_question：AI驱动智能分类错题"
+        },
+        {
+          "action": "save_wrong_question",
+          "description": "调用 save_wrong_question：保存错题记录到本地JSON文件"
+        }
+      ]
+    },
+    {
+      "name": "wrong-question-capture",
+      "description": "Use when 用户想录入错题、拍照识别题目、添加错题记录、上传错题图片",
+      "steps": [
+        {
+          "action": "classify_question",
+          "description": "调用 classify_question：AI驱动智能分类错题"
+        },
+        {
+          "action": "save_wrong_question",
+          "description": "调用 save_wrong_question：保存错题记录到本地JSON文件"
+        }
+      ]
+    },
+    {
+      "name": "wrong-question-stats",
+      "description": "Use when 用户想查看错题统计、查看错题分布、了解薄弱点、导出错题数据",
+      "steps": [
+        {
+          "action": "get_statistics",
+          "description": "调用 get_statistics：统计分析错题分布和趋势"
+        },
+        {
+          "action": "export_data",
+          "description": "调用 export_data：导出错题数据"
+        }
+      ]
+    }
+  ]
+}
