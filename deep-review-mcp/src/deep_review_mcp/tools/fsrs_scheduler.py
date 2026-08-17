@@ -278,8 +278,8 @@ def save_persisted_parameters(params_file: Path, parameters, desired_retention: 
         with _os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         _os.replace(tmp_path, params_file)
-    except Exception:
-        # 失败时清理临时文件
+    except OSError:
+        # 失败时清理临时文件（mkstemp/fdopen/replace 均抛 OSError）
         if _os.path.exists(tmp_path):
             _os.unlink(tmp_path)
         raise

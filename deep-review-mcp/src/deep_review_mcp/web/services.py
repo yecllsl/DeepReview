@@ -69,7 +69,7 @@ def get_dashboard_summary() -> dict:
         if wq.created_at:
             trend_counter[wq.created_at.strftime("%Y-%m-%d")] += 1
     # 补全最近30天（含无错题的日期）
-    trends = {}
+    trends: dict[str, int] = {}
     for i in range(30):
         day = (datetime.now(UTC) - timedelta(days=29 - i)).strftime("%Y-%m-%d")
         trends[day] = trend_counter.get(day, 0)
@@ -115,7 +115,7 @@ def get_multi_dim_stats() -> dict:
     ]
 
     # 难度分布：按学科分难度
-    difficulty_data: dict[str, Counter] = {}
+    difficulty_data: dict[str, Counter[str]] = {}
     for wq in questions:
         if wq.structured:
             subj = wq.structured.subject
@@ -144,10 +144,11 @@ def get_multi_dim_stats() -> dict:
     for wq in questions:
         if wq.created_at:
             trend_counter[wq.created_at.strftime("%Y-%m-%d")] += 1
-    trend_data = []
+    trend_data: list[dict[str, str | int]] = []
     for i in range(30):
         day = (datetime.now(UTC) - timedelta(days=29 - i)).strftime("%Y-%m-%d")
-        trend_data.append({"date": day, "count": trend_counter.get(day, 0)})
+        count: int = trend_counter.get(day, 0)
+        trend_data.append({"date": day, "count": count})
 
     return {
         "knowledge_heatmap": knowledge_heatmap,
