@@ -43,7 +43,7 @@ Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步四平台)
 - **数据存储**: JSON 文件（本地存储，原子写入）
 - **包管理**: uv
 - **测试**: pytest + pytest-asyncio + pytest-cov
-- **插件规范**: Agent Plugins 1.0（AAIF / Linux 基金会），`agent-plugins.org/schemas/1.0.0/plugin.schema.json` + `mcp.schema.json`
+- **插件规范**: Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系），`agent-plugins.org/schemas/1.0.0/plugin.schema.json` + `mcp.schema.json`
 
 ## 开发规范
 

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Agent Plugins 1.0（AAIF / Linux 基金会）规范支持**：新建 `deep-review.plugin/` 自包含插件包——`plugin.json`（`agent-plugins.org/schemas/1.0.0/plugin.schema.json` manifest）+ `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动配置），可整体分发、向标准注册中心发布（`agents publish deep-review.plugin`）
+- **Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）规范支持**：新建 `deep-review.plugin/` 自包含插件包——`plugin.json`（`agent-plugins.org/schemas/1.0.0/plugin.schema.json` manifest）+ `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动配置），可整体分发、向标准注册中心发布（`agents publish deep-review.plugin`）
 - **根 `package.json`**：`main` 指向 `deep-review.plugin/tools.json`（AAIF 声明入口），`scripts` 内置 `generate-declarations` / `sync-configs` / `check-drift` / `publish`
 - **`scripts/check-config-drift.sh`**：CI 工作区漂移检查，与 pre-commit 钩子构成配置同步双防线
 - **CI config-drift job**：`.github/workflows/test.yml` 新增，校验四平台生成目录与 `deep-review.plugin/` 真相源一致

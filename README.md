@@ -2,7 +2,7 @@
 
 基于 Trae IDE CN / CodeBuddy / opencode / Goose / WorkBuddy / Hermes 多 Agent 运行时（harness）的 K12 错题收集与智能分析解决方案，帮助学生通过拍照快速录入错题，AI 自动完成分类、原因分析、改进方案生成和复习推荐。提供本地 Web 可视化界面，直观展示错题分布、趋势和薄弱点。
 
-> v0.3.0 起支持 **AAIF 规范**；v0.5.0 起符合 **Agent Plugins 1.0**（AAIF / Linux 基金会）：`deep-review.plugin/` 为配置层唯一真相源 + 自包含插件包（`plugin.json` / `mcp.json`），多 harness 配置由 `scripts/sync-agent-configs` 单向同步生成。
+> v0.3.0 起支持 **AAIF 规范**；v0.5.0 起符合 **Agent Plugins 1.0**（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）：`deep-review.plugin/` 为配置层唯一真相源 + 自包含插件包（`plugin.json` / `mcp.json`），多 harness 配置由 `scripts/sync-agent-configs` 单向同步生成。
 
 ## 核心功能
 
@@ -36,7 +36,7 @@ Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平�
 
 ## 技术栈
 
-- **插件层**: Agent Plugins 1.0（AAIF / Linux 基金会）——`deep-review.plugin/plugin.json` + `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动），根 `package.json` 提供 `agents publish deep-review.plugin` 标准发布
+- **插件层**: Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）——`deep-review.plugin/plugin.json` + `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动），根 `package.json` 提供 `agents publish deep-review.plugin` 标准发布
 - **配置层**: AAIF 规范（`deep-review.plugin/` 唯一真相源）+ 多 Agent harness（Trae/CodeBuddy/opencode/Goose + WorkBuddy/Hermes，单向同步）
 - **MCP Server**: Python 3.12+ / FastMCP
 - **Web 可视化**: FastAPI + HTMX（OOB 局部刷新）+ Alpine.js（轻量交互）+ ECharts（图表）
@@ -139,7 +139,7 @@ uv run deep-review-web
 
 ### Agent Plugins 1.0 标准发布
 
-`deep-review.plugin/` 是符合 Agent Plugins 1.0（AAIF / Linux 基金会）规范的自包含插件包，可向标准插件注册中心发布：
+`deep-review.plugin/` 是符合 Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）规范的自包含插件包，可向标准插件注册中心发布：
 
 ```bash
 # 校验插件包清单（plugin.json / mcp.json schema）
@@ -193,7 +193,7 @@ npm run check-drift    # 校验配置漂移
 
 ```
 DeepReview/
-├── deep-review.plugin/                     # Agent Plugins 1.0 插件根（AAIF 唯一真相源，自包含可分发）
+├── deep-review.plugin/                     # Agent Plugins 1.0 插件根（单一配置与打包真相源，自包含可分发）
 │   ├── plugin.json                         # Agent Plugins 1.0 manifest（$schema/name/version/...）
 │   ├── mcp.json                            # MCP 启动配置（${PLUGIN_ROOT} 内联 deep-review-mcp）
 │   ├── AGENTS.md                           # 统一规则层（架构/安全/开发规范/流程规则 + 业务规则）

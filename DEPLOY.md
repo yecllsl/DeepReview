@@ -52,7 +52,7 @@ chmod +x install.sh
 
 ## Agent 运行时配置详解
 
-v0.3.0 起支持 6 个 Agent 运行时（harness）；v0.5.0 起符合 Agent Plugins 1.0（AAIF / Linux 基金会）规范。配置统一由 `scripts/sync-agent-configs` 从 `deep-review.plugin/`（AAIF 唯一真相源 + 自包含插件包）单向生成，**禁止直接编辑生成目录**。修改配置的正确流程：改 `deep-review.plugin/` → 运行同步脚本 → 各生成目录与 `deep-review.plugin/` 一起提交（`scripts/pre-commit` 钩子会拦截违规提交；CI 另由 `scripts/check-config-drift.sh` 兜底）。
+v0.3.0 起支持 6 个 Agent 运行时（harness）；v0.5.0 起符合 Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）规范。配置统一由 `scripts/sync-agent-configs` 从 `deep-review.plugin/`（AAIF 唯一真相源 + 自包含插件包）单向生成，**禁止直接编辑生成目录**。修改配置的正确流程：改 `deep-review.plugin/` → 运行同步脚本 → 各生成目录与 `deep-review.plugin/` 一起提交（`scripts/pre-commit` 钩子会拦截违规提交；CI 另由 `scripts/check-config-drift.sh` 兜底）。
 
 ### Trae IDE（项目级 MCP）
 
