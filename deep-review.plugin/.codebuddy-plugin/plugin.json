@@ -1,5 +1,4 @@
 {
-  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "deep-review",
   "version": "0.5.0",
   "description": "DeepReview K12 错题收集与智能分析 Agent Plugin（拍照/文本录入 → 多模态解析 → 智能分类 → 本地保存 → FSRS v6 复习排程 → 到期推荐 → 深度原因分析）。",
