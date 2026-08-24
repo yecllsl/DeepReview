@@ -20,6 +20,7 @@
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -114,6 +115,16 @@ def schedule_review(fsrs_state: str | None, rating: int) -> dict:
     }
 
 
+def is_optimizer_available() -> bool:
+    """检测 FSRS Optimizer（torch）是否已安装
+
+    优化面板据此提示按需安装；未安装时 optimize_parameters 降级为友好错误。
+    检测 torch 而非 Optimizer 类：py-fsrs 未装 torch 时 Optimizer 是占位类，
+    import 成功但实例化才抛 ImportError（见 fsrs/optimizer.py 的 except ImportError 分支）。
+    """
+    return importlib.util.find_spec("torch") is not None
+
+
 def optimize_parameters(review_log_jsons: list[str]) -> dict:
     """基于历史 ReviewLog 列表计算 FSRS 个性化 21 参数
 
@@ -146,18 +157,25 @@ def optimize_parameters(review_log_jsons: list[str]) -> dict:
         result["error"] = "暂无复习记录，无法分析参数"
         return result
 
+    # 反序列化所有 ReviewLog（不依赖 Optimizer，单独 try 以便定位错误）
     try:
-        from fsrs import Optimizer
         from fsrs import ReviewLog as _RL
-    except ImportError:
-        result["error"] = "Optimizer 未安装，请运行: pip install \"fsrs[optimizer]\""
-        return result
 
-    # 反序列化所有 ReviewLog
-    try:
         review_logs = [_RL.from_json(rl) for rl in review_log_jsons]
     except (ValueError, KeyError, TypeError) as e:
         result["error"] = f"ReviewLog 反序列化失败: {e}"
+        return result
+
+    # 注意：py-fsrs 未装 torch 时，import Optimizer 成功但实例化才抛 ImportError（占位类）
+    # 因此把 import 与实例化放同一 try，统一给出按需安装提示
+    try:
+        from fsrs import Optimizer
+
+        optimizer = Optimizer(review_logs)
+    except ImportError:
+        result["error"] = (
+            'Optimizer 未安装，请运行: uv sync --extra optimize（或 pip install "fsrs[optimizer]"）'
+        )
         return result
 
     warning: str | None = None
@@ -167,7 +185,6 @@ def optimize_parameters(review_log_jsons: list[str]) -> dict:
 
     # 调用 Optimizer 计算
     try:
-        optimizer = Optimizer(review_logs)
         optimal_parameters = optimizer.compute_optimal_parameters()
         try:
             # fsrs 类型标注误标为 list[float]（见 fsrs/optimizer.py:628），

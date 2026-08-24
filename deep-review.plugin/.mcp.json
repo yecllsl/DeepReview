@@ -2,15 +2,12 @@
   "mcpServers": {
     "deep-review-mcp": {
       "type": "stdio",
-      "command": "uv",
+      "command": "D:/yecll/Documents/LocalCode/DeepReview/deep-review.plugin/deep-review-mcp/.venv/Scripts/python.exe",
       "args": [
-        "run",
-        "--no-sync",
-        "--directory",
-        "${CODEBUDDY_PLUGIN_ROOT}/deep-review-mcp",
-        "deep-review-mcp"
+        "-m",
+        "deep_review_mcp.server"
       ],
-      "cwd": "${CODEBUDDY_PLUGIN_ROOT}"
+      "cwd": "D:/yecll/Documents/LocalCode/DeepReview/deep-review.plugin/deep-review-mcp"
     }
   }
 }

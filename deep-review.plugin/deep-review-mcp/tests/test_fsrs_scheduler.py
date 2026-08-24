@@ -24,6 +24,7 @@ from deep_review_mcp.tools.fsrs_scheduler import (
     get_current_scheduler_info,
     get_retrievability,
     init_card,
+    is_optimizer_available,
     load_persisted_parameters,
     optimize_parameters,
     save_persisted_parameters,
@@ -248,8 +249,15 @@ def test_optimize_parameters_empty_logs_returns_error():
     assert result["review_log_count"] == 0
 
 
-def test_optimize_parameters_returns_warning_for_few_logs():
-    """少量 ReviewLog 应返回 success + 警告（不阻止计算）"""
+def test_is_optimizer_available():
+    """is_optimizer_available 返回 bool（不抛异常）"""
+    assert isinstance(is_optimizer_available(), bool)
+
+
+def test_optimize_parameters_with_optimizer_returns_warning():
+    """已装 Optimizer：少量 ReviewLog 返回 success + 数据量不足警告（不阻止计算）"""
+    if not is_optimizer_available():
+        pytest.skip("Optimizer 未安装（跳过真实优化路径测试）")
     # 构造 5 条 ReviewLog（远少于 1000）
     review_logs = []
     state = None
@@ -264,10 +272,27 @@ def test_optimize_parameters_returns_warning_for_few_logs():
     # 数据量不足应有警告
     assert result["warning"] is not None
     assert "1000" in result["warning"]
-    # Optimizer 可能成功也可能失败（数据太少），但不应抛异常
     if result["success"]:
         assert isinstance(result["parameters"], list)
         assert result["desired_retention"] is not None
+
+
+def test_optimize_parameters_without_optimizer_returns_friendly_error():
+    """未装 Optimizer：少量 ReviewLog 返回友好安装提示（而非抛异常/500）"""
+    if is_optimizer_available():
+        pytest.skip("Optimizer 已安装（跳过未安装降级路径测试）")
+    # 构造 5 条 ReviewLog（远少于 1000）
+    review_logs = []
+    state = None
+    for _ in range(5):
+        r = schedule_review(state, RATING_GOOD)
+        review_logs.append(r["review_log"])
+        state = r["fsrs_state"]
+
+    result = optimize_parameters(review_logs)
+    assert result["success"] is False
+    assert "Optimizer 未安装" in (result["error"] or "")
+    assert "uv sync --extra optimize" in (result["error"] or "")
 
 
 def test_optimize_parameters_result_structure():

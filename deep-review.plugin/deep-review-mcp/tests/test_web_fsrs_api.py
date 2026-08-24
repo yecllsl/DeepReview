@@ -21,6 +21,7 @@ from deep_review_mcp.models import (
     WrongQuestion,
 )
 from deep_review_mcp.storage import Storage
+from deep_review_mcp.tools.fsrs_scheduler import is_optimizer_available
 from deep_review_mcp.web import services
 from deep_review_mcp.web.app import create_app
 
@@ -87,6 +88,14 @@ async def test_fsrs_status_returns_scheduler_info(client):
     assert "review_log_count" in data
     assert "progress" in data
     assert "has_persisted_params" in data
+    assert "optimizer_installed" in data
+
+
+@pytest.mark.asyncio
+async def test_fsrs_status_optimizer_installed_reflects_env(client):
+    """optimizer_installed 应反映当前环境是否安装了优化组件"""
+    resp = await client.get("/api/fsrs/status")
+    assert resp.json()["optimizer_installed"] is is_optimizer_available()
 
 
 @pytest.mark.asyncio
@@ -140,13 +149,17 @@ async def test_fsrs_optimize_returns_result_structure(client):
 
 @pytest.mark.asyncio
 async def test_fsrs_optimize_with_logs_returns_warning(client):
-    """有少量 ReviewLog 时应返回警告（数据量不足 1000）"""
+    """有少量 ReviewLog：已装 Optimizer 返回数据量警告；未装返回友好安装提示"""
     resp = await client.post("/api/fsrs/optimize")
     data = resp.json()
-    # 3 条 ReviewLog，应触发数据量不足警告
     assert data["review_log_count"] == 3
-    assert data["warning"] is not None
-    assert "1000" in data["warning"]
+    if is_optimizer_available():
+        # 3 条 ReviewLog，应触发数据量不足警告
+        assert data["warning"] is not None
+        assert "1000" in data["warning"]
+    else:
+        assert data["success"] is False
+        assert "Optimizer 未安装" in (data["error"] or "")
 
 
 @pytest.mark.asyncio

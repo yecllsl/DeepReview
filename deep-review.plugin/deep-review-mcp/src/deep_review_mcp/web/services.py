@@ -342,9 +342,13 @@ def get_fsrs_optimization_status() -> dict:
         - review_log_count: 已积累的 ReviewLog 数量
         - progress: 进度比例（count/1000），用于 UI 进度条
         - has_persisted_params: 是否有已持久化的优化参数
+        - optimizer_installed: 优化组件（torch）是否已安装
     """
     # 局部导入避免 services ↔ tools 循环依赖
-    from deep_review_mcp.tools.fsrs_scheduler import get_current_scheduler_info
+    from deep_review_mcp.tools.fsrs_scheduler import (
+        get_current_scheduler_info,
+        is_optimizer_available,
+    )
 
     storage = _get_storage()
     all_logs = storage.list_all_review_logs()
@@ -358,6 +362,8 @@ def get_fsrs_optimization_status() -> dict:
         "review_log_count": len(all_logs),
         "progress": round(len(all_logs) / 1000, 4),  # 0-1，UI 进度条用
         "has_persisted_params": has_persisted,
+        # 优化组件（torch）是否安装：UI 据此提示按需安装，避免点击后才报错
+        "optimizer_installed": is_optimizer_available(),
     }
 
 

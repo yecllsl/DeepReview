@@ -330,6 +330,16 @@ uv run playwright install chromium
 uv run pytest tests/test_e2e_visualization.py -m e2e
 ```
 
+### 按需安装 FSRS 参数优化组件（可选）
+
+复习页「FSRS 参数优化」面板默认可用默认 21 参数（对个人已足够好）。个性化参数拟合（Optimizer，依赖 numpy/pandas/torch 约 570MB）**默认不安装**，复习记录积累 512+ 条后按需启用：
+
+```bash
+uv sync --extra optimize
+```
+
+未安装时优化面板会提示安装命令，点击「分析参数」返回友好提示而非报错。
+
 测试覆盖：72 个单元/集成用例 + 8 个 E2E 用例，矩阵 Python 3.12 / 3.13。
 
 ### 本地构建发布包

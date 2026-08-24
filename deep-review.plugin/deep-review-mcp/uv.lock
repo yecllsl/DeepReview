@@ -490,7 +490,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "fastmcp" },
-    { name = "fsrs", extra = ["optimizer"] },
+    { name = "fsrs" },
     { name = "jinja2" },
     { name = "pydantic" },
     { name = "python-multipart" },
@@ -507,12 +507,16 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
+optimize = [
+    { name = "fsrs", extra = ["optimizer"] },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "fastmcp", specifier = ">=3.0.0" },
-    { name = "fsrs", extras = ["optimizer"], specifier = ">=6.0.0" },
+    { name = "fsrs", specifier = ">=6.0.0" },
+    { name = "fsrs", extras = ["optimizer"], marker = "extra == 'optimize'", specifier = ">=6.0.0" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11.0" },
@@ -525,7 +529,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.0" },
     { name = "uvicorn", specifier = ">=0.30" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["optimize", "dev"]
 
 [[package]]
 name = "dnspython"

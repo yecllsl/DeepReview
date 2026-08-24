@@ -11,11 +11,16 @@ dependencies = [
     "jinja2>=3.1",
     "python-multipart>=0.0.9",
     # FSRS v6 间隔重复调度算法 — 替代固定艾宾浩斯查表，支持 4 档评分与 DSR 记忆模型
-    # [optimizer] 拉入 Optimizer 用于 UI 触发的个性化 21 参数计算（依赖 numpy/torch）
-    "fsrs[optimizer]>=6.0.0",
+    # 个性化 21 参数优化（Optimizer，依赖 numpy/pandas/torch 约 570MB）按需安装：uv sync --extra optimize
+    "fsrs>=6.0.0",
 ]
 
 [project.optional-dependencies]
+# 可选：FSRS 21 参数个性化优化（Optimizer，依赖 numpy/pandas/torch，约 570MB）
+# 复习记录积累 512+ 条才有意义；未安装时优化面板提示按需安装（见 fsrs_scheduler.is_optimizer_available）
+optimize = [
+    "fsrs[optimizer]>=6.0.0",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",

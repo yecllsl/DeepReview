@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **`fsrs[optimizer]` 改为可选依赖**：默认安装只含 `fsrs`（纯 FSRS v6 调度，无重依赖）；个性化 21 参数优化（Optimizer，依赖 numpy/pandas/torch 约 570MB）改为 `uv sync --extra optimize` 按需安装。此前默认背上 torch 是过度设计——复习记录积累 512+ 条前 Optimizer 会空转返回默认参数，retention 优化子功能因 `review_duration` 未记录而必然降级
+- **`/api/fsrs/status` 新增 `optimizer_installed` 字段**（`fsrs_scheduler.is_optimizer_available` 检测 torch），优化面板据此提示按需安装
+- **优化面板增强**：未安装优化组件时显示黄色提示条（含安装命令）；点击「分析参数」返回友好错误（修复了 py-fsrs 占位 Optimizer 实例化抛 ImportError 未被捕获导致 500 的问题）
+- **测试适配可选依赖**：优化路径测试在未装 torch 时验证降级提示、已装时验证真实警告，CI（`uv sync --extra dev`）与本地均可通过
+
 ## [0.5.0] - 2026-08-17
 
 ### Added

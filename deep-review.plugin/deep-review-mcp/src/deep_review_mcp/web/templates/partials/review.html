@@ -148,6 +148,13 @@
             </button>
         </div>
 
+        {# 优化组件未安装提示：按需安装（fsrs[optimizer] 依赖 torch 约 570MB） #}
+        {% if not fsrs_status.optimizer_installed %}
+        <div style="font-size:12px;color:#b45309;background:#fffbeb;border-left:3px solid #f59e0b;padding:8px;border-radius:4px;margin-bottom:12px;">
+            ⚠️ 优化组件未安装（依赖约 570MB）。复习记录积累 500+ 条后按需安装：<code>uv sync --extra optimize</code>；未安装时点击分析将返回安装提示。
+        </div>
+        {% endif %}
+
         {# 结果展示区（动态渲染） #}
         <div id="fsrs-result-area"></div>
     </div>
