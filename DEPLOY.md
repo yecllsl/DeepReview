@@ -156,11 +156,11 @@ Skills 和 Rules 的**唯一真相源**在 `deep-review.plugin/`（AAIF 规范 +
 
 | Skill 名称 | 触发命令 | 功能描述 |
 |-----------|---------|---------|
-| wrong-question-capture | `/capture` | 错题采集流程编排 |
-| wrong-question-batch-capture | `/batch-capture` | 多道错题连续采集 |
-| wrong-question-analyze | `/analyze` | 错题分析流程编排 |
-| review-plan-generate | `/review` | 复习计划生成 |
-| wrong-question-stats | `/stats` | 错题统计查询 |
+| deep-review-capture | `/capture` | 错题采集流程编排 |
+| deep-review-batch-capture | `/batch-capture` | 多道错题连续采集 |
+| deep-review-analyze | `/analyze` | 错题分析流程编排 |
+| deep-review-review | `/review` | 复习计划生成 |
+| deep-review-stats | `/stats` | 错题统计查询 |
 
 ## Web 可视化界面
 

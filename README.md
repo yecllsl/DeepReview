@@ -198,11 +198,11 @@ DeepReview/
 │   ├── mcp.json                            # MCP 启动配置（${PLUGIN_ROOT} 内联 deep-review-mcp）
 │   ├── AGENTS.md                           # 统一规则层（架构/安全/开发规范/流程规则 + 业务规则）
 │   ├── skills/                             # 5 个技能源文件（frontmatter 含 command:）
-│   │   ├── wrong-question-capture/         # /capture
-│   │   ├── wrong-question-batch-capture/   # /batch-capture
-│   │   ├── wrong-question-analyze/         # /analyze
-│   │   ├── review-plan-generate/           # /review
-│   │   └── wrong-question-stats/           # /stats
+│   │   ├── deep-review-capture/         # /capture
+│   │   ├── deep-review-batch-capture/   # /batch-capture
+│   │   ├── deep-review-analyze/         # /analyze
+│   │   ├── deep-review-review/          # /review
+│   │   └── deep-review-stats/           # /stats
 │   ├── runtime/                            # 4 平台运行时配置（generate-platform-configs.py 生成）
 │   │   ├── trae.json / codebuddy.json / opencode.json / goose.json
 │   ├── tools.json                          # AAIF 声明：MCP 工具自省（生成产物，勿手改）

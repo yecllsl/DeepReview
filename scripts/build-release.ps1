@@ -264,7 +264,7 @@ Write-Step "[6/6] Verify and pack..."
 # 验证关键文件存在
 $requiredFiles = @(
     ".trae\mcp.json",
-    ".trae\skills\wrong-question-capture\SKILL.md",
+    ".trae\skills\deep-review-capture\SKILL.md",
     "deep-review.plugin\AGENTS.md",
     "deep-review.plugin\tools.json",
     "deep-review.plugin\triggers.json",

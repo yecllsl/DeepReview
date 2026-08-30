@@ -2,17 +2,7 @@
   "$schema": "https://agents.aaif.io/schemas/workflows.json",
   "workflows": [
     {
-      "name": "review-plan-generate",
-      "description": "Use when 用户想生成复习计划、查看复习推荐、了解该复习什么、安排复习进度",
-      "steps": [
-        {
-          "action": "recommend_review",
-          "description": "调用 recommend_review：基于遗忘曲线生成复习推荐"
-        }
-      ]
-    },
-    {
-      "name": "wrong-question-analyze",
+      "name": "deep-review-analyze",
       "description": "Use when 用户想分析错题原因、诊断错误根源、生成改进方案、查看错题诊断",
       "steps": [
         {
@@ -30,7 +20,7 @@
       ]
     },
     {
-      "name": "wrong-question-batch-capture",
+      "name": "deep-review-batch-capture",
       "description": "Use when 用户想批量录入多道错题、一次采集多道题目、批量拍照识别、连续录入错题",
       "steps": [
         {
@@ -44,7 +34,7 @@
       ]
     },
     {
-      "name": "wrong-question-capture",
+      "name": "deep-review-capture",
       "description": "Use when 用户想录入错题、拍照识别题目、添加错题记录、上传错题图片",
       "steps": [
         {
@@ -58,7 +48,17 @@
       ]
     },
     {
-      "name": "wrong-question-stats",
+      "name": "deep-review-review",
+      "description": "Use when 用户想生成复习计划、查看复习推荐、了解该复习什么、安排复习进度",
+      "steps": [
+        {
+          "action": "recommend_review",
+          "description": "调用 recommend_review：基于遗忘曲线生成复习推荐"
+        }
+      ]
+    },
+    {
+      "name": "deep-review-stats",
       "description": "Use when 用户想查看错题统计、查看错题分布、了解薄弱点、导出错题数据",
       "steps": [
         {

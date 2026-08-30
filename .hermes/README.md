@@ -26,7 +26,7 @@ Hermes 的个人级配置目录按操作系统确定：
 ~/.hermes/
 ├── mcp.json        # MCP 服务器注册（stdio）
 ├── AGENTS.md       # → 指向 .agents/AGENTS.md 的符号链接（业务规则）
-└── skills/         # → 指向 .agents/skills/ 的符号链接（5 个 wrong-question-* 技能）
+└── skills/         # → 指向 .agents/skills/ 的符号链接（5 个 deep-review-* 技能）
 ```
 
 ## 2. 格式要求

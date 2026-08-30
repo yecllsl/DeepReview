@@ -18,7 +18,7 @@
 ├── Web 可视化 (deep_review_mcp/web — 同包内 FastAPI 子模块，非独立组件)
     ↓
 Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步四平台)
-├── deep-review.plugin/skills/wrong-question-* （单向同步到 .trae/.opencode/.codebuddy/.goose）
+├── deep-review.plugin/skills/deep-review-* （单向同步到 .trae/.opencode/.codebuddy/.goose）
 ├── 5 个 Skill: capture / batch-capture / analyze / review / stats
     ↓
 服务层 (deep_review_mcp，位于 deep-review.plugin/deep-review-mcp/)
@@ -171,11 +171,11 @@ Not lazy about: input validation at trust boundaries, error handling that preven
 
 | 命令 | 触发词 | Skill | 关键 MCP Tools |
 |------|--------|-------|----------------|
-| `/capture` | 录入错题/拍照录题/添加错题/上传错题 | wrong-question-capture | `classify_question`、`save_wrong_question` |
-| `/batch-capture` | 批量录入/一次录入多道题/连续录入/批量采集 | wrong-question-batch-capture | `classify_question`、`save_wrong_question` |
-| `/analyze` | 分析错题/错题分析/为什么做错/分析原因 | wrong-question-analyze | `analyze_error`、`generate_improvement`、`update_wrong_question` |
-| `/review` | 复习计划/复习推荐/该复习什么 | review-plan-generate | `recommend_review` |
-| `/stats` | 错题统计/查看统计/错题分布/薄弱点 | wrong-question-stats | `get_statistics`（group_by: subject/error_type/knowledge_point/date）、`export_data` |
+| `/capture` | 录入错题/拍照录题/添加错题/上传错题 | deep-review-capture | `classify_question`、`save_wrong_question` |
+| `/batch-capture` | 批量录入/一次录入多道题/连续录入/批量采集 | deep-review-batch-capture | `classify_question`、`save_wrong_question` |
+| `/analyze` | 分析错题/错题分析/为什么做错/分析原因 | deep-review-analyze | `analyze_error`、`generate_improvement`、`update_wrong_question` |
+| `/review` | 复习计划/复习推荐/该复习什么 | deep-review-review | `recommend_review` |
+| `/stats` | 错题统计/查看统计/错题分布/薄弱点 | deep-review-stats | `get_statistics`（group_by: subject/error_type/knowledge_point/date）、`export_data` |
 
 ## MCP Tools 参考
 
