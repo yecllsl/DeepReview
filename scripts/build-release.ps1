@@ -71,8 +71,6 @@ New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\runti
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".opencode\skills") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".codebuddy\skills") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".goose\skills") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir ".workbuddy") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir ".hermes") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir "scripts") -Force | Out-Null
 # deep-review-mcp 子目录（内联在插件包内）
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\deep-review-mcp\src") -Force | Out-Null
@@ -177,10 +175,6 @@ if (Test-Path $gooseGenScript) {
     }
 }
 
-# 个人级 harness 说明文档
-Copy-Item (Join-Path $projectRoot ".workbuddy\README.md") (Join-Path $tempDir ".workbuddy\README.md") -Force
-Copy-Item (Join-Path $projectRoot ".hermes\README.md") (Join-Path $tempDir ".hermes\README.md") -Force
-
 # scripts/（同步与生成工具链，发布后 install 脚本依赖）
 Copy-Item (Join-Path $projectRoot "scripts\generate-platform-configs.py") (Join-Path $tempDir "scripts\") -Force
 Copy-Item (Join-Path $projectRoot "scripts\generate-goose-config.py") (Join-Path $tempDir "scripts\") -Force
@@ -274,8 +268,6 @@ $requiredFiles = @(
     ".opencode\opencode.json",
     ".codebuddy\mcp.json",
     ".goose\config.yaml",
-    ".workbuddy\README.md",
-    ".hermes\README.md",
     "scripts\sync-agent-configs.ps1",
     "AGENTS.md",
     "package.json",

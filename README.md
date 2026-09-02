@@ -1,6 +1,6 @@
 # DeepReview - K12错题收集与智能分析Agent
 
-基于 Trae IDE CN / CodeBuddy / opencode / Goose / WorkBuddy / Hermes 多 Agent 运行时（harness）的 K12 错题收集与智能分析解决方案，帮助学生通过拍照快速录入错题，AI 自动完成分类、原因分析、改进方案生成和复习推荐。提供本地 Web 可视化界面，直观展示错题分布、趋势和薄弱点。
+基于 Trae / CodeBuddy / opencode / Goose 多 Agent 运行时（harness）的 K12 错题收集与智能分析解决方案，帮助学生通过拍照快速录入错题，AI 自动完成分类、原因分析、改进方案生成和复习推荐。提供本地 Web 可视化界面，直观展示错题分布、趋势和薄弱点。
 
 > v0.3.0 起支持 **AAIF 规范**；v0.5.0 起符合 **Agent Plugins 1.0**（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）：`deep-review.plugin/` 为配置层唯一真相源 + 自包含插件包（`plugin.json` / `mcp.json`），多 harness 配置由 `scripts/sync-agent-configs` 单向同步生成。
 
@@ -19,7 +19,7 @@
 ```
 用户交互层
 ├── 对话式交互 (命令/自然语言)
-├── 多运行时: Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes
+├── 多运行时: Trae + CodeBuddy + opencode + Goose
 └── Web 可视化界面 (本地浏览器 http://127.0.0.1:8001)
     ↓
 Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平台)
@@ -37,7 +37,7 @@ Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平�
 ## 技术栈
 
 - **插件层**: Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）——`deep-review.plugin/plugin.json` + `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动），根 `package.json` 提供 `agents publish deep-review.plugin` 标准发布
-- **配置层**: AAIF 规范（`deep-review.plugin/` 唯一真相源）+ 多 Agent harness（Trae/CodeBuddy/opencode/Goose + WorkBuddy/Hermes，单向同步）
+- **配置层**: AAIF 规范（`deep-review.plugin/` 唯一真相源）+ 多 Agent harness（Trae/CodeBuddy/opencode/Goose，单向同步）
 - **MCP Server**: Python 3.12+ / FastMCP
 - **Web 可视化**: FastAPI + HTMX（OOB 局部刷新）+ Alpine.js（轻量交互）+ ECharts（图表）
 - **图片解析**: 宿主 LLM 多模态直接看图解析（无需额外图像识别依赖）
@@ -52,7 +52,7 @@ Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平�
 
 - Python 3.12+
 - [uv 包管理器](https://docs.astral.sh/uv/)（Windows: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`）
-- 任一 Agent 运行时：Trae IDE CN / CodeBuddy / opencode / Goose（WorkBuddy / Hermes 为个人级 harness，无需桌面 IDE）
+- 任一 Agent 运行时：Trae / CodeBuddy / opencode / Goose
 
 ### 安装步骤
 
@@ -82,13 +82,12 @@ chmod +x install.sh
 安装脚本支持通过 `-AgentRuntime` 指定要配置的运行时：
 
 ```powershell
-# Windows：一次性配置全部（Trae/CodeBuddy/opencode/Goose + 个人级 WorkBuddy/Hermes）
+# Windows：一次性配置全部（Trae/CodeBuddy/opencode/Goose）
 .\install.ps1 -AgentRuntime all
 
 # 或只配置单个运行时
 .\install.ps1 -AgentRuntime codebuddy
 .\install.ps1 -AgentRuntime goose
-.\install.ps1 -AgentRuntime workbuddy   # 个人级，写入 ~/.workbuddy
 ```
 
 ```bash
@@ -100,7 +99,7 @@ chmod +x install.sh
 
 | 运行时 | 配置目录 | 说明 |
 |--------|---------|------|
-| Trae IDE CN | `.trae/` | 设置 → MCP → 启用项目级 MCP |
+| Trae | `.trae/` | 设置 → MCP → 启用项目级 MCP |
 | CodeBuddy | `.codebuddy/` | 打开项目后信任 deep-review-mcp |
 | opencode | `.opencode/` | 项目目录运行 `opencode` 自动加载 |
 | Goose | `.goose/` | 打开项目自动读取 `config.yaml` |
@@ -226,8 +225,6 @@ DeepReview/
 ├── .opencode/                              # [生成] opencode 配置（opencode.json + skills + AGENTS.md）
 ├── .codebuddy/                             # [生成] CodeBuddy 配置（memory/ 由运行时写入）
 ├── .goose/                                 # [生成] Goose 配置（config.yaml + skills + AGENTS.md）
-├── .workbuddy/                             # 个人级 harness 说明（安装脚本写入 ~/.workbuddy）
-├── .hermes/                                # 个人级 harness 说明（安装脚本写入 ~/.hermes）
 ├── scripts/                                # 开发者工具
 │   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明（规范格式）
 │   ├── generate-platform-configs.py        # 生成 deep-review.plugin/runtime/ 4 平台 JSON

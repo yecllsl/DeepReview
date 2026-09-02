@@ -29,9 +29,9 @@ chmod +x install.sh && ./install.sh
 安装脚本通过 `-AgentRuntime` 指定要配置的运行时（缺省只装依赖，不配置运行时）：
 
 ```powershell
-# Windows：一次配置全部（Trae/CodeBuddy/opencode/Goose + WorkBuddy/Hermes）
+# Windows：一次配置全部（Trae/CodeBuddy/opencode/Goose）
 .\install.ps1 -AgentRuntime all
-# 或只配置单个：.\install.ps1 -AgentRuntime codebuddy / goose / opencode / trae / workbuddy / hermes
+# 或只配置单个：.\install.ps1 -AgentRuntime codebuddy / goose / opencode / trae
 ```
 
 ```bash
@@ -41,11 +41,10 @@ chmod +x install.sh && ./install.sh
 
 | 运行时 | 使用方式 |
 |--------|---------|
-| Trae IDE CN | 打开项目 → 设置 → MCP → 启用项目级 MCP |
+| Trae | 打开项目 → 设置 → MCP → 启用项目级 MCP |
 | CodeBuddy | 打开项目 → 信任 deep-review-mcp |
 | opencode | 项目目录运行 `opencode`，自动加载 AGENTS.md |
 | Goose | 打开项目，自动读取 `.goose/config.yaml` |
-| WorkBuddy / Hermes | 个人级 harness，配置写入 `~/.workbuddy` / `~/.hermes` |
 
 ### 第 4 步：开始使用
 

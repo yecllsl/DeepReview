@@ -1,6 +1,6 @@
 # DeepReview - K12 错题收集与智能分析 MCP 工具
 
-基于 Trae IDE CN / Trae Work CN / CodeBuddy / OpenCode / Goose 的 K12 错题收集与智能分析一体化解决方案。核心流程：拍照/文本录入 → 宿主LLM多模态看图解析 → AI 结构化解析 → 智能分类 → 本地保存 → 基于 FSRS v6 的复习排程 → 到期复习推荐 → 深度原因分析 → 改进方案。配置统一维护在 `deep-review.plugin/`（AAIF 真相源 + Agent Plugins 1.0 插件包），通过 `scripts/sync-agent-configs` 单向同步到 `.trae/` / `.opencode/` / `.codebuddy/` / `.goose/`。
+基于 Trae / CodeBuddy / OpenCode / Goose 的 K12 错题收集与智能分析一体化解决方案。核心流程：拍照/文本录入 → 宿主LLM多模态看图解析 → AI 结构化解析 → 智能分类 → 本地保存 → 基于 FSRS v6 的复习排程 → 到期复习推荐 → 深度原因分析 → 改进方案。配置统一维护在 `deep-review.plugin/`（AAIF 真相源 + Agent Plugins 1.0 插件包），通过 `scripts/sync-agent-configs` 单向同步到 `.trae/` / `.opencode/` / `.codebuddy/` / `.goose/`。
 
 ## 系统架构
 
@@ -14,7 +14,7 @@
 ```
 用户交互层
 ├── 对话式交互 (命令 / 自然语言)
-├── 四运行时: Trae IDE CN + Trae Work CN + CodeBuddy + OpenCode + Goose
+├── 四运行时: Trae + CodeBuddy + OpenCode + Goose
 ├── Web 可视化 (deep_review_mcp/web — 同包内 FastAPI 子模块，非独立组件)
     ↓
 Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步四平台)

@@ -10,7 +10,7 @@
 
 # 2. 运行安装脚本（-AgentRuntime 指定要配置的运行时）
 .\install.ps1 -AgentRuntime all
-#    或只配置单个：.\install.ps1 -AgentRuntime trae / codebuddy / opencode / goose / workbuddy / hermes
+#    或只配置单个：.\install.ps1 -AgentRuntime trae / codebuddy / opencode / goose
 
 # 3. 用你的运行时打开文件夹
 #    Trae:       设置 → MCP → 启用项目级 MCP
@@ -30,7 +30,7 @@
 # 2. 运行安装脚本（--agent-runtime 指定要配置的运行时）
 chmod +x install.sh
 ./install.sh --agent-runtime all
-#    或只配置单个：./install.sh --agent-runtime trae / codebuddy / opencode / goose / workbuddy / hermes
+#    或只配置单个：./install.sh --agent-runtime trae / codebuddy / opencode / goose
 
 # 3. 用你的运行时打开文件夹
 #    Trae:       设置 → MCP → 启用项目级 MCP
@@ -47,20 +47,19 @@ chmod +x install.sh
 | Python | 3.12+ | https://www.python.org/downloads/ |
 | uv | 最新版 | Windows: `irm https://astral.sh/uv/install.ps1 \| iex` |
 | | | Linux/macOS: `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| Trae IDE CN / CodeBuddy / opencode / Goose | 最新版 | 任一 Agent 运行时 |
-| WorkBuddy / Hermes | 最新版 | 个人级 harness（配置写入 ~/.workbuddy / ~/.hermes） |
+| Trae / CodeBuddy / opencode / Goose | 最新版 | 任一 Agent 运行时 |
 
 ## Agent 运行时配置详解
 
-v0.3.0 起支持 6 个 Agent 运行时（harness）；v0.5.0 起符合 Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）规范。配置统一由 `scripts/sync-agent-configs` 从 `deep-review.plugin/`（AAIF 唯一真相源 + 自包含插件包）单向生成，**禁止直接编辑生成目录**。修改配置的正确流程：改 `deep-review.plugin/` → 运行同步脚本 → 各生成目录与 `deep-review.plugin/` 一起提交（`scripts/pre-commit` 钩子会拦截违规提交；CI 另由 `scripts/check-config-drift.sh` 兜底）。
+v0.3.0 起支持 4 个 Agent 运行时（harness）：Trae / CodeBuddy / opencode / Goose；v0.5.0 起符合 Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）规范。配置统一由 `scripts/sync-agent-configs` 从 `deep-review.plugin/`（AAIF 唯一真相源 + 自包含插件包）单向生成，**禁止直接编辑生成目录**。修改配置的正确流程：改 `deep-review.plugin/` → 运行同步脚本 → 各生成目录与 `deep-review.plugin/` 一起提交（`scripts/pre-commit` 钩子会拦截违规提交；CI 另由 `scripts/check-config-drift.sh` 兜底）。
 
-### Trae IDE（项目级 MCP）
+### Trae（项目级 MCP）
 
 项目级 MCP 配置已内置于 `.trae/mcp.json`，使用 `${workspaceFolder}` 变量自动适配路径，无需手动填写。
 
 **启用步骤：**
 
-1. 打开 Trae IDE
+1. 打开 Trae
 2. 进入 **设置** (齿轮图标) → **MCP**
 3. 打开 **"启用项目级 MCP"** 开关
 4. 在弹窗中确认信任
@@ -101,13 +100,6 @@ v0.3.0 起支持 6 个 Agent 运行时（harness）；v0.5.0 起符合 Agent Plu
 
 - 配置目录 `.goose/`（config.yaml + skills + AGENTS.md）
 - 用 Goose 打开项目文件夹，自动读取 `.goose/config.yaml` 加载 MCP 扩展
-
-### WorkBuddy / Hermes（个人级 harness）
-
-- 由安装脚本写入个人配置目录：`~/.workbuddy/mcp.json`、`~/.hermes/mcp.json`
-- 使用**绝对路径**启动 MCP Server（无 `${workspaceFolder}` 变量），避免路径歧义
-- AGENTS.md 与 skills/ 通过符号链接指向项目 `deep-review.plugin/`（失败降级为复制）
-- 项目移动后需重新运行安装脚本刷新配置
 
 ### 手动配置（回退方案）
 
@@ -293,8 +285,6 @@ DeepReview/
 ├── .opencode/                              # [生成] opencode 配置（opencode.json + skills + AGENTS.md）
 ├── .codebuddy/                             # [生成] CodeBuddy 配置（memory/ 由运行时写入）
 ├── .goose/                                 # [生成] Goose 配置（config.yaml + skills + AGENTS.md）
-├── .workbuddy/                             # 个人级 harness 说明（安装脚本写入 ~/.workbuddy）
-├── .hermes/                                # 个人级 harness 说明（安装脚本写入 ~/.hermes）
 ├── scripts/                                # 开发者工具
 │   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明（规范格式）
 │   ├── generate-platform-configs.py        # 生成 deep-review.plugin/runtime/ 4 平台 JSON
@@ -325,7 +315,7 @@ bash scripts/build-release.sh 0.5.0
 
 产物：`dist/DeepReview-v0.5.0.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
 
-构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（AAIF 真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/`）、`.trae/` `.opencode/` `.codebuddy/` `.goose/`（harness 配置）、`.workbuddy/` `.hermes/`（个人级说明）、`scripts/`（同步工具链）、`package.json`（发布入口），自动排除：
+构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（AAIF 真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/`）、`.trae/` `.opencode/` `.codebuddy/` `.goose/`（harness 配置）、`scripts/`（同步工具链）、`package.json`（发布入口），自动排除：
 
 - `__pycache__/`、`.pytest_cache/`、`*.pyc`
 - `.venv/`、`.git/`、`.vscode/`

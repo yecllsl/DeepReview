@@ -8,8 +8,7 @@
 #
 # 可选参数：
 #   --fix-path                将 deep-review.plugin/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
-#   --agent-runtime <name>    配置 Agent 运行时 (trae/codebuddy/opencode/goose/all/workbuddy/hermes)
-#                             trae/codebuddy/opencode/goose 为项目级运行时；workbuddy/hermes 为个人级 harness
+#   --agent-runtime <name>    配置 Agent 运行时 (trae/codebuddy/opencode/goose/all)
 #
 # 前置要求：
 #   - Python 3.12+
@@ -28,14 +27,14 @@ while [[ $# -gt 0 ]]; do
         --agent-runtime)
             if [[ -z "$2" ]]; then echo "错误: --agent-runtime 需要一个值"; exit 1; fi
             AGENT_RUNTIME="$2"; shift 2 ;;
-        *) echo "未知参数: $1"; echo "用法: ./install.sh [--fix-path] [--agent-runtime trae|codebuddy|opencode|goose|all|workbuddy|hermes]"; exit 1 ;;
+        *) echo "未知参数: $1"; echo "用法: ./install.sh [--fix-path] [--agent-runtime trae|codebuddy|opencode|goose|all]"; exit 1 ;;
     esac
 done
 
 # 校验 AgentRuntime 值
 case "$AGENT_RUNTIME" in
-    ""|trae|codebuddy|opencode|goose|all|workbuddy|hermes) ;;
-    *) echo "错误: --agent-runtime 仅支持 trae/codebuddy/opencode/goose/all/workbuddy/hermes"; exit 1 ;;
+    ""|trae|codebuddy|opencode|goose|all) ;;
+    *) echo "错误: --agent-runtime 仅支持 trae/codebuddy/opencode/goose/all"; exit 1 ;;
 esac
 
 # 颜色输出（非 TTY 时禁用）
@@ -48,75 +47,12 @@ fi
 echo ""
 echo "========================================"
 echo "  DeepReview v0.5.0 安装向导"
-echo "  (Trae IDE CN + CodeBuddy + opencode + Goose + WorkBuddy + Hermes)"
+echo "  (Trae + CodeBuddy + opencode + Goose)"
 echo "========================================"
 echo ""
 
 # 获取脚本所在目录（项目根目录）
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# ──────────────────────────────────────────
-# 个人级 harness 安装辅助函数（WorkBuddy / Hermes 仅支持个人级配置，不走 deep-review.plugin/ 同步）
-# ──────────────────────────────────────────
-install_personal_harness() {
-    local harness_name="$1"   # 目录名，如 "workbuddy"
-    local executable="$2"     # 可执行文件名，如 "workbuddy"
-
-    echo ""
-    echo -e "${CYAN}=== 个人级 harness: $harness_name ===${NC}"
-
-    # 1. 检测可执行文件
-    if command -v "$executable" &> /dev/null; then
-        echo -e "  ${GREEN}[ok] 检测到 $executable 可执行文件: $(command -v "$executable")${NC}"
-    else
-        echo -e "  ${YELLOW}[warn] 未检测到 $executable 可执行文件，将仍生成个人级配置；请先安装 $harness_name 后重启使其生效。${NC}"
-    fi
-
-    # 2. 解析个人配置目录
-    local cfg_dir="$HOME/.$harness_name"
-    mkdir -p "$cfg_dir"
-    echo -e "  个人配置目录: ${CYAN}$cfg_dir${NC}"
-
-    # 3. 检测 uv（mcp.json 的 command=uv）
-    if command -v uv &> /dev/null; then
-        :
-    else
-        echo -e "  ${YELLOW}[warn] 未检测到 uv，mcp.json 中 command=uv 将不可用，请先安装 uv。${NC}"
-    fi
-
-    # 4. 写入 mcp.json（绝对路径，无 ${workspaceFolder}）
-    cat > "$cfg_dir/mcp.json" <<EOF
-{
-  "mcpServers": {
-    "deep-review-mcp": {
-      "command": "uv",
-      "args": ["run", "--no-sync", "--directory", "$PROJECT_ROOT/deep-review.plugin/deep-review-mcp", "deep-review-mcp"]
-    }
-  }
-}
-EOF
-    echo -e "  ${GREEN}[ok] 已写入 MCP 注册: $cfg_dir/mcp.json${NC}"
-
-    # 5. 符号链接 AGENTS.md 与 skills/（失败降级复制）
-    link_personal_config "AGENTS.md" "$PROJECT_ROOT/deep-review.plugin/AGENTS.md" "$cfg_dir/AGENTS.md"
-    link_personal_config "skills/"   "$PROJECT_ROOT/deep-review.plugin/skills"     "$cfg_dir/skills"
-}
-
-link_personal_config() {
-    local name="$1" src="$2" dst="$3"
-    if [ ! -e "$src" ]; then
-        echo -e "  ${YELLOW}[warn] 源不存在，跳过 $name : $src${NC}"
-        return
-    fi
-    # 移除已有目标（符号链接或真实文件/目录）
-    rm -rf "$dst"
-    if ln -s "$src" "$dst" 2>/dev/null; then
-        echo -e "  ${GREEN}[ok] 已建立符号链接: $dst -> $src${NC}"
-    else
-        cp -r "$src" "$dst"
-        echo -e "  ${YELLOW}[warn] 符号链接不可用，已降级复制: $dst（项目配置更新后需重新运行安装脚本）${NC}"
-    fi
-}
 
 # ──────────────────────────────────────────
 # [1/5] 检查 uv 包管理器
@@ -224,13 +160,9 @@ if [ -n "$AGENT_RUNTIME" ]; then
                 echo "  CodeBuddy: 在 MCP 配置中信任 deep-review-mcp"
                 echo "  opencode: 在项目目录运行 opencode"
                 echo "  Goose: 打开项目文件夹，自动读取 .goose/config.yaml"
-                echo "  WorkBuddy: 个人级配置 ~/.workbuddy"
-                echo "  Hermes:    个人级配置 ~/.hermes"
             else
                 echo -e "  ${RED}  同步脚本不存在: $SYNC_SCRIPT${NC}"
             fi
-            install_personal_harness "workbuddy" "workbuddy"
-            install_personal_harness "hermes" "hermes"
             ;;
         "goose")
             echo -e "  ${YELLOW}正在同步 Goose 配置...${NC}"
@@ -243,12 +175,6 @@ if [ -n "$AGENT_RUNTIME" ]; then
             else
                 echo -e "  ${RED}  同步脚本不存在: $SYNC_SCRIPT${NC}"
             fi
-            ;;
-        "workbuddy")
-            install_personal_harness "workbuddy" "workbuddy"
-            ;;
-        "hermes")
-            install_personal_harness "hermes" "hermes"
             ;;
     esac
 fi

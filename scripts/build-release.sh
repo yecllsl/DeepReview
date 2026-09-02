@@ -62,8 +62,6 @@ mkdir -p "$STAGING_DIR/deep-review.plugin/runtime"
 mkdir -p "$STAGING_DIR/.opencode/skills"
 mkdir -p "$STAGING_DIR/.codebuddy/skills"
 mkdir -p "$STAGING_DIR/.goose/skills"
-mkdir -p "$STAGING_DIR/.workbuddy"
-mkdir -p "$STAGING_DIR/.hermes"
 mkdir -p "$STAGING_DIR/scripts"
 mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/src"
 mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/data/wrong_questions"
@@ -158,10 +156,6 @@ if [ -f "$SCRIPT_DIR/generate-goose-config.py" ]; then
     fi
 fi
 
-# 个人级 harness 说明文档
-[ -f "$PROJECT_ROOT/.workbuddy/README.md" ] && cp "$PROJECT_ROOT/.workbuddy/README.md" "$STAGING_DIR/.workbuddy/README.md"
-[ -f "$PROJECT_ROOT/.hermes/README.md" ] && cp "$PROJECT_ROOT/.hermes/README.md" "$STAGING_DIR/.hermes/README.md"
-
 # scripts/（同步与生成工具链，发布后 install 脚本依赖）
 for f in generate-platform-configs.py generate-goose-config.py generate-aaif-declarations.py sync-agent-configs.ps1 sync-agent-configs.sh pre-commit check-config-drift.sh; do
     [ -f "$PROJECT_ROOT/scripts/$f" ] && cp "$PROJECT_ROOT/scripts/$f" "$STAGING_DIR/scripts/$f"
@@ -239,8 +233,6 @@ required=(
     ".opencode/opencode.json"
     ".codebuddy/mcp.json"
     ".goose/config.yaml"
-    ".workbuddy/README.md"
-    ".hermes/README.md"
     "scripts/sync-agent-configs.sh"
     "AGENTS.md"
     "package.json"
