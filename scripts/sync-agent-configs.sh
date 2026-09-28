@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# 将 deep-review.plugin/ (AAIF 真相源 + Agent Plugins 1.0) 单向同步到各 Agent harness 项目目录:
-#   .trae/  .opencode/  .codebuddy/  .goose/
+# 将 deep-review.plugin/ (配置真相源 + Agent Plugins 1.0 插件包) 单向同步到各 Agent harness 项目目录:
+#   .trae/  .opencode/  .codebuddy/
 #
 # 用法:
 #   ./scripts/sync-agent-configs.sh                 # 同步全部
 #   ./scripts/sync-agent-configs.sh --skip-trae     # 跳过 Trae
-#   ./scripts/sync-agent-configs.sh --skip-goose    # 跳过 Goose
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,7 +15,6 @@ PLUGIN_RUNTIME="$PLUGIN_DIR/runtime"
 PLUGIN_SKILLS="$PLUGIN_DIR/skills"
 PLUGIN_MD="$PLUGIN_DIR/AGENTS.md"
 MCP_DIR="$PLUGIN_DIR/deep-review-mcp"
-PYTHON_BIN="$(command -v python3 || command -v python || echo python3)"
 
 [ -d "$PLUGIN_RUNTIME" ] || { echo "错误: AAIF 运行时配置目录不存在: $PLUGIN_RUNTIME"; exit 1; }
 [ -d "$PLUGIN_SKILLS" ] || { echo "错误: AAIF 技能目录不存在: $PLUGIN_SKILLS"; exit 1; }
@@ -35,13 +33,11 @@ echo "配置源: deep-review.plugin/ (AAIF 标准 + Agent Plugins 1.0)"
 SKIP_TRAE=false
 SKIP_OPENCODE=false
 SKIP_CODEBUDDY=false
-SKIP_GOOSE=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --skip-trae) SKIP_TRAE=true; shift ;;
         --skip-opencode) SKIP_OPENCODE=true; shift ;;
         --skip-codebuddy) SKIP_CODEBUDDY=true; shift ;;
-        --skip-goose) SKIP_GOOSE=true; shift ;;
         *) echo "未知参数: $1"; exit 1 ;;
     esac
 done
@@ -99,17 +95,6 @@ generate_codebuddy_config() {
     fi
 }
 
-generate_goose_config() {
-    local goose_dir="$PROJECT_ROOT/.goose"
-    mkdir -p "$goose_dir"
-    local source_config="$PLUGIN_RUNTIME/goose.json"
-    if [ -f "$source_config" ]; then
-        echo -e "${YELLOW}生成 Goose 配置 → .goose/config.yaml${NC}"
-        "$PYTHON_BIN" "$SCRIPT_DIR/generate-goose-config.py"
-        echo -e "${GREEN}  已生成 Goose 配置${NC}"
-    fi
-}
-
 generate_aaif_declarations() {
     if ! command -v uv >/dev/null 2>&1; then
         echo -e "${RED}未找到 uv，无法生成 AAIF 声明文件 (tools.json/triggers.json/workflows.json)${NC}" >&2
@@ -144,12 +129,6 @@ if [ "$SKIP_CODEBUDDY" = false ]; then
     sync_skills "$PROJECT_ROOT/.codebuddy"
     sync_agents_md "$PROJECT_ROOT/.codebuddy"
     generate_codebuddy_config
-fi
-if [ "$SKIP_GOOSE" = false ]; then
-    echo -e "\n${CYAN}--- Goose ---${NC}"
-    sync_skills "$PROJECT_ROOT/.goose"
-    sync_agents_md "$PROJECT_ROOT/.goose"
-    generate_goose_config
 fi
 
 echo -e "\n${CYAN}=== 同步完成 ===${NC}"

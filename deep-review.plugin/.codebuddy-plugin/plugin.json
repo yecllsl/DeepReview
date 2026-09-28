@@ -6,12 +6,13 @@
     "name": "yecll"
   },
   "license": "MIT",
+  "mcpServers": "./.mcp.json",
   "keywords": [
     "k12",
     "wrong-question",
     "mcp",
     "agent-plugin",
-    "aaif",
+    "agent-plugins-1.0",
     "fsrs"
   ]
 }

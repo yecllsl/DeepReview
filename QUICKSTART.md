@@ -29,9 +29,9 @@ chmod +x install.sh && ./install.sh
 安装脚本通过 `-AgentRuntime` 指定要配置的运行时（缺省只装依赖，不配置运行时）：
 
 ```powershell
-# Windows：一次配置全部（Trae/CodeBuddy/opencode/Goose）
+# Windows：一次配置全部（Trae/CodeBuddy/opencode）
 .\install.ps1 -AgentRuntime all
-# 或只配置单个：.\install.ps1 -AgentRuntime codebuddy / goose / opencode / trae
+# 或只配置单个：.\install.ps1 -AgentRuntime codebuddy / opencode / trae
 ```
 
 ```bash
@@ -44,7 +44,6 @@ chmod +x install.sh && ./install.sh
 | Trae | 打开项目 → 设置 → MCP → 启用项目级 MCP |
 | CodeBuddy | 打开项目 → 信任 deep-review-mcp |
 | opencode | 项目目录运行 `opencode`，自动加载 AGENTS.md |
-| Goose | 打开项目，自动读取 `.goose/config.yaml` |
 
 ### 第 4 步：开始使用
 
@@ -320,7 +319,7 @@ question_id: wq_20260615_001
 | 问题 | 解决方案 |
 |------|---------|
 | 安装脚本报错 "uv 未安装" | 安装 uv：`irm https://astral.sh/uv/install.ps1 \| iex` |
-| MCP Server 不生效 | 确认启用项目级 MCP → 重启对应运行时（Trae/CodeBuddy/opencode/Goose） |
+| MCP Server 不生效 | 确认启用项目级 MCP → 重启对应运行时（Trae/CodeBuddy/opencode） |
 | 路径变量不替换 | 运行 `.\install.ps1 -FixPath`（或 `./install.sh --fix-path`）修复路径 |
 | Skills 不生效 | 重启运行时 → 检查 `deep-review.plugin/skills/`（真相源；各平台 skills/ 由 `scripts/sync-agent-configs` 同步） |
 

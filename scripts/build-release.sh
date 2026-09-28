@@ -61,7 +61,9 @@ mkdir -p "$STAGING_DIR/deep-review.plugin/skills"
 mkdir -p "$STAGING_DIR/deep-review.plugin/runtime"
 mkdir -p "$STAGING_DIR/.opencode/skills"
 mkdir -p "$STAGING_DIR/.codebuddy/skills"
-mkdir -p "$STAGING_DIR/.goose/skills"
+# CodeBuddy 插件清单目录（Tier 2 市场通道）：插件根内 .codebuddy-plugin/ + 根级 .codebuddy-plugin/
+mkdir -p "$STAGING_DIR/deep-review.plugin/.codebuddy-plugin"
+mkdir -p "$STAGING_DIR/.codebuddy-plugin"
 mkdir -p "$STAGING_DIR/scripts"
 mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/src"
 mkdir -p "$STAGING_DIR/deep-review.plugin/deep-review-mcp/data/wrong_questions"
@@ -135,7 +137,7 @@ cp -r "$PLUGIN_SRC/skills" "$PLUGIN_DST/skills"
 cp -r "$PLUGIN_SRC/runtime" "$PLUGIN_DST/runtime"
 
 # 多 harness 生成目录（skills/AGENTS.md 统一从 deep-review.plugin/ 复制，保证最新）
-for harness in opencode codebuddy goose; do
+for harness in opencode codebuddy; do
     h_dst="$STAGING_DIR/.$harness"
     cp -r "$PLUGIN_SRC/skills" "$h_dst/skills"
     cp "$PLUGIN_SRC/AGENTS.md" "$h_dst/AGENTS.md"
@@ -146,18 +148,13 @@ cp "$PLUGIN_SRC/runtime/opencode.json" "$STAGING_DIR/.opencode/opencode.json"
 # .codebuddy/mcp.json（${workspaceFolder} 变量版）
 cp "$PLUGIN_SRC/runtime/codebuddy.json" "$STAGING_DIR/.codebuddy/mcp.json"
 
-# .goose/config.yaml：从 deep-review.plugin/runtime/goose.json 生成相对路径版（--no-resolve-dir）
-if [ -f "$SCRIPT_DIR/generate-goose-config.py" ]; then
-    if command -v python3 >/dev/null 2>&1; then
-        python3 "$SCRIPT_DIR/generate-goose-config.py" --out-dir "$STAGING_DIR/.goose" --no-resolve-dir >/dev/null
-    else
-        log_err "python3 不可用，无法生成 .goose/config.yaml"
-        exit 1
-    fi
-fi
+# Tier 2（CodeBuddy，自有格式）：市场通道三文件
+cp "$PLUGIN_SRC/.mcp.json" "$STAGING_DIR/deep-review.plugin/.mcp.json"
+cp "$PLUGIN_SRC/.codebuddy-plugin/plugin.json" "$STAGING_DIR/deep-review.plugin/.codebuddy-plugin/plugin.json"
+cp "$PROJECT_ROOT/.codebuddy-plugin/marketplace.json" "$STAGING_DIR/.codebuddy-plugin/marketplace.json"
 
 # scripts/（同步与生成工具链，发布后 install 脚本依赖）
-for f in generate-platform-configs.py generate-goose-config.py generate-aaif-declarations.py sync-agent-configs.ps1 sync-agent-configs.sh pre-commit check-config-drift.sh; do
+for f in generate-platform-configs.py generate-aaif-declarations.py sync-agent-configs.ps1 sync-agent-configs.sh pre-commit check-config-drift.sh; do
     [ -f "$PROJECT_ROOT/scripts/$f" ] && cp "$PROJECT_ROOT/scripts/$f" "$STAGING_DIR/scripts/$f"
 done
 
@@ -232,7 +229,9 @@ required=(
     "deep-review.plugin/mcp.json"
     ".opencode/opencode.json"
     ".codebuddy/mcp.json"
-    ".goose/config.yaml"
+    "deep-review.plugin/.mcp.json"
+    "deep-review.plugin/.codebuddy-plugin/plugin.json"
+    ".codebuddy-plugin/marketplace.json"
     "scripts/sync-agent-configs.sh"
     "AGENTS.md"
     "package.json"
@@ -315,5 +314,5 @@ echo ""
 echo "  User steps:"
 echo "  1. Extract DeepReview-v$VERSION.{zip|tar.zst|tar.gz}"
 echo "  2. Run install.ps1 (or install.sh on Linux/macOS)"
-echo "  3. Open folder in your runtime (Trae/CodeBuddy/opencode/Goose), enable project-level MCP"
+echo "  3. Open folder in your runtime (Trae/CodeBuddy/opencode), enable project-level MCP"
 echo ""

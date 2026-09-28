@@ -2,7 +2,7 @@
 """Generate AAIF platform runtime configs into deep-review.plugin/runtime/.
 
 The generated files are consumed by scripts/sync-agent-configs(.ps1/.sh),
-which distributes them to the .trae / .opencode / .codebuddy / .goose
+which distributes them to the .trae / .opencode / .codebuddy
 platform directories.
 
 Usage:
@@ -37,6 +37,7 @@ def generate_trae() -> dict:
 
 def generate_opencode() -> dict:
     return {
+        "$schema": "https://opencode.ai/config.json",
         "mcp": {
             "deep-review-mcp": {
                 "type": "local",
@@ -65,32 +66,6 @@ def generate_codebuddy() -> dict:
     }
 
 
-def generate_goose() -> dict:
-    # Goose 原生 extension schema（非 mcpServers/mcp）。
-    # --directory 用相对路径 "deep-review.plugin/deep-review-mcp"，由
-    # generate-goose-config.py 解析为绝对路径写入 .goose/config.yaml，
-    # 保证 Goose 可在任意工作目录启动。
-    return {
-        "extensions": {
-            "deep-review-mcp": {
-                "name": "deep-review-mcp",
-                "enabled": True,
-                "type": "stdio",
-                "cmd": "uv",
-                "args": [
-                    "run",
-                    "--no-sync",
-                    "--directory",
-                    "deep-review.plugin/deep-review-mcp",
-                    "deep-review-mcp",
-                ],
-                "timeout": 300,
-                "description": "DeepReview K12 错题收集与智能分析 MCP 服务",
-            }
-        }
-    }
-
-
 def main() -> None:
     (RUNTIME_DIR / "trae.json").write_text(
         json.dumps(generate_trae(), indent=2) + "\n", encoding="utf-8"
@@ -100,9 +75,6 @@ def main() -> None:
     )
     (RUNTIME_DIR / "codebuddy.json").write_text(
         json.dumps(generate_codebuddy(), indent=2) + "\n", encoding="utf-8"
-    )
-    (RUNTIME_DIR / "goose.json").write_text(
-        json.dumps(generate_goose(), indent=2) + "\n", encoding="utf-8"
     )
     print("已生成所有平台配置 (deep-review.plugin/runtime/)")
 

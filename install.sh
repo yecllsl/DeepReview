@@ -8,7 +8,7 @@
 #
 # 可选参数：
 #   --fix-path                将 deep-review.plugin/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
-#   --agent-runtime <name>    配置 Agent 运行时 (trae/codebuddy/opencode/goose/all)
+#   --agent-runtime <name>    配置 Agent 运行时 (trae/codebuddy/opencode/all)
 #
 # 前置要求：
 #   - Python 3.12+
@@ -27,14 +27,14 @@ while [[ $# -gt 0 ]]; do
         --agent-runtime)
             if [[ -z "$2" ]]; then echo "错误: --agent-runtime 需要一个值"; exit 1; fi
             AGENT_RUNTIME="$2"; shift 2 ;;
-        *) echo "未知参数: $1"; echo "用法: ./install.sh [--fix-path] [--agent-runtime trae|codebuddy|opencode|goose|all]"; exit 1 ;;
+        *) echo "未知参数: $1"; echo "用法: ./install.sh [--fix-path] [--agent-runtime trae|codebuddy|opencode|all]"; exit 1 ;;
     esac
 done
 
 # 校验 AgentRuntime 值
 case "$AGENT_RUNTIME" in
-    ""|trae|codebuddy|opencode|goose|all) ;;
-    *) echo "错误: --agent-runtime 仅支持 trae/codebuddy/opencode/goose/all"; exit 1 ;;
+    ""|trae|codebuddy|opencode|all) ;;
+    *) echo "错误: --agent-runtime 仅支持 trae/codebuddy/opencode/all"; exit 1 ;;
 esac
 
 # 颜色输出（非 TTY 时禁用）
@@ -47,7 +47,7 @@ fi
 echo ""
 echo "========================================"
 echo "  DeepReview v0.5.0 安装向导"
-echo "  (Trae + CodeBuddy + opencode + Goose)"
+echo "  (Trae + CodeBuddy + opencode)"
 echo "========================================"
 echo ""
 
@@ -159,19 +159,6 @@ if [ -n "$AGENT_RUNTIME" ]; then
                 echo "  Trae: 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
                 echo "  CodeBuddy: 在 MCP 配置中信任 deep-review-mcp"
                 echo "  opencode: 在项目目录运行 opencode"
-                echo "  Goose: 打开项目文件夹，自动读取 .goose/config.yaml"
-            else
-                echo -e "  ${RED}  同步脚本不存在: $SYNC_SCRIPT${NC}"
-            fi
-            ;;
-        "goose")
-            echo -e "  ${YELLOW}正在同步 Goose 配置...${NC}"
-            if [ -f "$SYNC_SCRIPT" ]; then
-                bash "$SYNC_SCRIPT"
-                echo ""
-                echo -e "  ${YELLOW}下一步:${NC}"
-                echo "  1. 用 Goose 打开项目文件夹"
-                echo "  2. Goose 会自动读取 .goose/config.yaml 加载 deep-review-mcp"
             else
                 echo -e "  ${RED}  同步脚本不存在: $SYNC_SCRIPT${NC}"
             fi
@@ -256,7 +243,7 @@ if [ -f "$HOOK_SRC" ]; then
     mkdir -p "$PROJECT_ROOT/.git/hooks"
     cp -f "$HOOK_SRC" "$HOOK_DST"
     chmod +x "$HOOK_DST"
-    echo -e "  ${GREEN}✓ 已安装 pre-commit 钩子（拦截直接修改生成目录 .trae/.opencode/.codebuddy/.goose 的违规提交）${NC}"
+    echo -e "  ${GREEN}✓ 已安装 pre-commit 钩子（拦截直接修改生成目录 .trae/.opencode/.codebuddy 的违规提交）${NC}"
     echo -e "  ${GRAY}    若需手动安装：cp scripts/pre-commit .git/hooks/pre-commit${NC}"
 else
     echo -e "  ${YELLOW}⚠ 未找到 $HOOK_SRC，跳过钩子安装${NC}"

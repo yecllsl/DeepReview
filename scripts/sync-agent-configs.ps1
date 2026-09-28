@@ -1,17 +1,15 @@
 #!/usr/bin/env pwsh
-# 将 deep-review.plugin/ (AAIF 真相源 + Agent Plugins 1.0) 单向同步到各 Agent harness 项目目录:
-#   .trae/  .opencode/  .codebuddy/  .goose/
+# 将 deep-review.plugin/ (配置真相源 + Agent Plugins 1.0 插件包) 单向同步到各 Agent harness 项目目录:
+#   .trae/  .opencode/  .codebuddy/
 #
 # 用法:
 #   ./scripts/sync-agent-configs.ps1                 # 同步全部
 #   ./scripts/sync-agent-configs.ps1 -SkipTrae       # 跳过 Trae
-#   ./scripts/sync-agent-configs.ps1 -SkipGoose      # 跳过 Goose
 [CmdletBinding()]
 param(
     [switch]$SkipTrae,
     [switch]$SkipOpencode,
-    [switch]$SkipCodebuddy,
-    [switch]$SkipGoose
+    [switch]$SkipCodebuddy
 )
 
 $ErrorActionPreference = 'Stop'
@@ -107,19 +105,6 @@ function Generate-CodebuddyConfig {
     }
 }
 
-function Generate-GooseConfig {
-    $gooseDir = Join-Path $ProjectRoot '.goose'
-    New-Item -ItemType Directory -Force -Path $gooseDir | Out-Null
-    $source = Join-Path $PluginRuntime 'goose.json'
-    if (Test-Path $source) {
-        Write-Host "$Yellow生成 Goose 配置 → .goose/config.yaml$NC"
-        $script = Join-Path $PSScriptRoot 'generate-goose-config.py'
-        & python $script
-        if ($LASTEXITCODE -ne 0) { throw "Goose 配置生成失败 (exit=$LASTEXITCODE)" }
-        Write-Host "$Green  已生成 Goose 配置$NC"
-    }
-}
-
 # ── 主流程 ──
 Invoke-AaifDeclarations
 
@@ -140,12 +125,6 @@ if (-not $SkipCodebuddy) {
     Sync-Skills (Join-Path $ProjectRoot '.codebuddy')
     Sync-AgentsMd (Join-Path $ProjectRoot '.codebuddy')
     Generate-CodebuddyConfig
-}
-if (-not $SkipGoose) {
-    Write-Host "`n$Cyan--- Goose ---$NC"
-    Sync-Skills (Join-Path $ProjectRoot '.goose')
-    Sync-AgentsMd (Join-Path $ProjectRoot '.goose')
-    Generate-GooseConfig
 }
 
 Write-Host "`n$Cyan=== 同步完成 ===$NC"

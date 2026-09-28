@@ -10,13 +10,12 @@
 
 # 2. 运行安装脚本（-AgentRuntime 指定要配置的运行时）
 .\install.ps1 -AgentRuntime all
-#    或只配置单个：.\install.ps1 -AgentRuntime trae / codebuddy / opencode / goose
+#    或只配置单个：.\install.ps1 -AgentRuntime trae / codebuddy / opencode
 
 # 3. 用你的运行时打开文件夹
 #    Trae:       设置 → MCP → 启用项目级 MCP
 #    CodeBuddy:  打开项目后信任 deep-review-mcp
 #    opencode:   项目目录运行 opencode
-#    Goose:      打开项目自动读取 .goose/config.yaml
 # 4. 重启运行时
 ```
 
@@ -30,13 +29,12 @@
 # 2. 运行安装脚本（--agent-runtime 指定要配置的运行时）
 chmod +x install.sh
 ./install.sh --agent-runtime all
-#    或只配置单个：./install.sh --agent-runtime trae / codebuddy / opencode / goose
+#    或只配置单个：./install.sh --agent-runtime trae / codebuddy / opencode
 
 # 3. 用你的运行时打开文件夹
 #    Trae:       设置 → MCP → 启用项目级 MCP
 #    CodeBuddy:  打开项目后信任 deep-review-mcp
 #    opencode:   项目目录运行 opencode
-#    Goose:      打开项目自动读取 .goose/config.yaml
 # 4. 重启运行时
 ```
 
@@ -47,11 +45,11 @@ chmod +x install.sh
 | Python | 3.12+ | https://www.python.org/downloads/ |
 | uv | 最新版 | Windows: `irm https://astral.sh/uv/install.ps1 \| iex` |
 | | | Linux/macOS: `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| Trae / CodeBuddy / opencode / Goose | 最新版 | 任一 Agent 运行时 |
+| Trae / CodeBuddy / opencode | 最新版 | 任一 Agent 运行时 |
 
 ## Agent 运行时配置详解
 
-v0.3.0 起支持 4 个 Agent 运行时（harness）：Trae / CodeBuddy / opencode / Goose；v0.5.0 起符合 Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）规范。配置统一由 `scripts/sync-agent-configs` 从 `deep-review.plugin/`（AAIF 唯一真相源 + 自包含插件包）单向生成，**禁止直接编辑生成目录**。修改配置的正确流程：改 `deep-review.plugin/` → 运行同步脚本 → 各生成目录与 `deep-review.plugin/` 一起提交（`scripts/pre-commit` 钩子会拦截违规提交；CI 另由 `scripts/check-config-drift.sh` 兜底）。
+v0.3.0 起支持 Agent 运行时（harness）：Trae / CodeBuddy / opencode；v0.5.0 起符合 Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）规范。配置统一由 `scripts/sync-agent-configs` 从 `deep-review.plugin/`（配置唯一真相源 + 自包含插件包）单向生成，**禁止直接编辑生成目录**。修改配置的正确流程：改 `deep-review.plugin/` → 运行同步脚本 → 各生成目录与 `deep-review.plugin/` 一起提交（`scripts/pre-commit` 钩子会拦截违规提交；CI 另由 `scripts/check-config-drift.sh` 兜底）。
 
 ### Trae（项目级 MCP）
 
@@ -96,10 +94,34 @@ v0.3.0 起支持 4 个 Agent 运行时（harness）：Trae / CodeBuddy / opencod
 - 配置目录 `.opencode/`（opencode.json + skills + AGENTS.md）
 - 在项目目录运行 `opencode`，自动加载 `deep-review.plugin/AGENTS.md` 规则
 
-### Goose（项目级）
+### CodeBuddy 插件市场通道（Tier 2 可选）
 
-- 配置目录 `.goose/`（config.yaml + skills + AGENTS.md）
-- 用 Goose 打开项目文件夹，自动读取 `.goose/config.yaml` 加载 MCP 扩展
+除项目级 MCP 外，CodeBuddy 也可经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marketplace.json`，市场名 `deep-review-local-market`）：**插件管理 → 插件市场 → 添加本地市场** → 选择仓库根目录 → 安装 `deep-review` 插件。
+
+### 手动 E2E 验收方法（Tier 1 / Tier 2 交付链路）
+
+> 用于发版后人工验收交付链路。本节只描述方法；实测后在下表回填结果（未实测的通道不得标 ✅）。
+
+**Tier 1 — VS Code / Copilot（Agent Plugins 1.0 插件标准）**
+
+1. 打开 VS Code → Agents Window → 插件面板
+2. 选择 **Install from Source**，指向仓库（或发布包解压目录）内的 `deep-review.plugin/`
+3. 预期：插件被识别为 **5 skills + 1 MCP server**（deep-review-mcp）
+4. 发起 `/capture`，确认 MCP 工具 `save_wrong_question` 可调用并落盘 `data/wrong_questions/`
+
+**Tier 2 — CodeBuddy（本地插件市场通道）**
+
+1. 打开 CodeBuddy → **插件管理 → 插件市场 → 添加本地市场**
+2. 选择仓库（或发布包解压后）根目录（内含 `.codebuddy-plugin/marketplace.json`）
+3. 从市场 `deep-review-local-market` 安装 `deep-review` 插件
+4. 预期：插件安装成功、`deep-review-mcp` 出现在 MCP 列表；发起 `/capture` 验证工具链路
+
+**验收记录**
+
+| 通道 | 日期 | 结果 | 备注 |
+|------|------|------|------|
+| Tier 1 VS Code Agents Window | - | 未实测 | |
+| Tier 2 CodeBuddy 本地市场 | - | 未实测 | |
 
 ### 手动配置（回退方案）
 
@@ -142,7 +164,7 @@ Skills 和 Rules 的**唯一真相源**在 `deep-review.plugin/`（AAIF 规范 +
 - **Rules**：`deep-review.plugin/AGENTS.md`（统一规则，含采集/分类/分析/复习/交互/数据安全规则）
 - **插件契约**：`deep-review.plugin/plugin.json`（manifest）+ `deep-review.plugin/mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动）
 
-四个项目级 harness 目录（`.trae/` `.opencode/` `.codebuddy/` `.goose/`）由 `scripts/sync-agent-configs` 单向生成，**禁止直接编辑**。修改后需重跑同步脚本，并提交 `deep-review.plugin/` 与各生成目录的改动（`scripts/pre-commit` 钩子与 CI `scripts/check-config-drift.sh` 双防线自动拦截违规）。
+三个项目级 harness 目录（`.trae/` `.opencode/` `.codebuddy/`）由 `scripts/sync-agent-configs` 单向生成，**禁止直接编辑**。修改后需重跑同步脚本，并提交 `deep-review.plugin/` 与各生成目录的改动（`scripts/pre-commit` 钩子与 CI `scripts/check-config-drift.sh` 双防线自动拦截违规）。
 
 ### Skills 说明
 
@@ -213,8 +235,8 @@ uv sync
 ### Q3: 运行时无法识别 MCP Server
 
 **检查项：**
-1. 是否已启用项目级 MCP（Trae/CodeBuddy）或已打开项目（opencode/Goose）
-2. 对应配置目录是否存在（`.trae/mcp.json` / `.codebuddy/mcp.json` / `.opencode/opencode.json` / `.goose/config.yaml`）
+1. 是否已启用项目级 MCP（Trae/CodeBuddy）或已打开项目（opencode）
+2. 对应配置目录是否存在（`.trae/mcp.json` / `.codebuddy/mcp.json` / `.opencode/opencode.json`）
 3. 是否已重启运行时
 
 **解决方案：**
@@ -256,12 +278,12 @@ uv sync
 
 ```
 DeepReview/
-├── deep-review.plugin/                     # Agent Plugins 1.0 插件根（AAIF 唯一真相源，自包含可分发）
+├── deep-review.plugin/                     # Agent Plugins 1.0 插件根（配置唯一真相源，自包含可分发）
 │   ├── plugin.json                         # Agent Plugins 1.0 manifest（$schema/name/version/...）
 │   ├── mcp.json                            # MCP 启动配置（${PLUGIN_ROOT} 内联 deep-review-mcp）
 │   ├── AGENTS.md                           # 统一规则层（架构/安全/开发规范/流程规则 + 业务规则）
 │   ├── skills/                             # 5 个技能源文件（frontmatter 含 command:）
-│   ├── runtime/                            # 4 平台运行时配置（generate-platform-configs.py 生成）
+│   ├── runtime/                            # 3 平台运行时配置（generate-platform-configs.py 生成）
 │   ├── tools.json / triggers.json / workflows.json   # AAIF 声明（生成产物，勿手改）
 │   └── deep-review-mcp/                    # 纯 MCP Server (通用服务层，内联)
 │       ├── src/deep_review_mcp/
@@ -284,14 +306,13 @@ DeepReview/
 ├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 deep-review.plugin/AGENTS.md）
 ├── .opencode/                              # [生成] opencode 配置（opencode.json + skills + AGENTS.md）
 ├── .codebuddy/                             # [生成] CodeBuddy 配置（memory/ 由运行时写入）
-├── .goose/                                 # [生成] Goose 配置（config.yaml + skills + AGENTS.md）
 ├── scripts/                                # 开发者工具
 │   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明（规范格式）
-│   ├── generate-platform-configs.py        # 生成 deep-review.plugin/runtime/ 4 平台 JSON
-│   ├── generate-goose-config.py            # goose.json → .goose/config.yaml
-│   ├── sync-agent-configs.ps1/.sh          # deep-review.plugin/ 单向同步到 4 平台目录
+│   ├── generate-platform-configs.py        # 生成 deep-review.plugin/runtime/ 3 平台 JSON
+│   ├── sync-agent-configs.ps1/.sh          # deep-review.plugin/ 单向同步到 3 平台目录
 │   ├── pre-commit                          # git 钩子：内容一致性检查（拦截配置同步违规）
 │   ├── check-config-drift.sh               # CI 工作区漂移检查（双防线）
+│   ├── check_version.py                    # 版本一致性校验（CI config-drift job 调用）
 │   └── build-release.ps1/.sh               # 发布包构建
 ├── AGENTS.md                               # [生成] 根规则文件（Trae 读取约定，由 sync 复制）
 ├── install.ps1 / install.sh                # 安装脚本（-AgentRuntime/-FixPath）
@@ -315,14 +336,12 @@ bash scripts/build-release.sh 0.5.0
 
 产物：`dist/DeepReview-v0.5.0.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
 
-构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（AAIF 真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/`）、`.trae/` `.opencode/` `.codebuddy/` `.goose/`（harness 配置）、`scripts/`（同步工具链）、`package.json`（发布入口），自动排除：
+构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（配置真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/` 与 CodeBuddy 市场通道文件 `.mcp.json` / `.codebuddy-plugin/`）、`.trae/` `.opencode/` `.codebuddy/`（harness 配置）、根 `.codebuddy-plugin/marketplace.json`（本地市场清单）、`scripts/`（同步工具链）、`package.json`（发布入口），自动排除：
 
 - `__pycache__/`、`.pytest_cache/`、`*.pyc`
 - `.venv/`、`.git/`、`.vscode/`
 - `data/*.json`（用户数据不打包，只放 `.gitkeep` 占位）
 - `dist/`（构建产物本身）
-
-> 发布包内的 `.goose/config.yaml` 使用相对路径版（`generate-goose-config.py --no-resolve-dir`），用户本地运行安装脚本后自动重新生成绝对路径版。
 
 ### 本地运行测试
 

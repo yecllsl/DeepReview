@@ -70,7 +70,9 @@ New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\skill
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\runtime") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".opencode\skills") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".codebuddy\skills") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir ".goose\skills") -Force | Out-Null
+# CodeBuddy 插件清单目录（Tier 2 市场通道）：插件根内 .codebuddy-plugin/ + 根级 .codebuddy-plugin/
+New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\.codebuddy-plugin") -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $tempDir ".codebuddy-plugin") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir "scripts") -Force | Out-Null
 # deep-review-mcp 子目录（内联在插件包内）
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\deep-review-mcp\src") -Force | Out-Null
@@ -153,7 +155,7 @@ Copy-Item (Join-Path $pluginSrc "skills") (Join-Path $pluginDst "skills") -Recur
 Copy-Item (Join-Path $pluginSrc "runtime") (Join-Path $pluginDst "runtime") -Recurse -Force
 
 # 多 harness 生成目录（skills/AGENTS.md 统一从 deep-review.plugin/ 复制，保证最新）
-foreach ($harness in @("opencode", "codebuddy", "goose")) {
+foreach ($harness in @("opencode", "codebuddy")) {
     $hDst = Join-Path $tempDir ".$harness"
     Copy-Item (Join-Path $pluginSrc "skills") (Join-Path $hDst "skills") -Recurse -Force
     Copy-Item (Join-Path $pluginSrc "AGENTS.md") (Join-Path $hDst "AGENTS.md") -Force
@@ -164,20 +166,13 @@ Copy-Item (Join-Path $pluginSrc "runtime\opencode.json") (Join-Path $tempDir ".o
 # .codebuddy/mcp.json（${workspaceFolder} 变量版）
 Copy-Item (Join-Path $pluginSrc "runtime\codebuddy.json") (Join-Path $tempDir ".codebuddy\mcp.json") -Force
 
-# .goose/config.yaml：从 deep-review.plugin/runtime/goose.json 生成相对路径版（--no-resolve-dir）
-$gooseGenScript = Join-Path $projectRoot "scripts\generate-goose-config.py"
-if (Test-Path $gooseGenScript) {
-    if (Get-Command python -ErrorAction SilentlyContinue) {
-        python $gooseGenScript --out-dir (Join-Path $tempDir ".goose") --no-resolve-dir | Out-Null
-    } else {
-        Write-Err "python 不可用，无法生成 .goose/config.yaml"
-        exit 1
-    }
-}
+# Tier 2（CodeBuddy，自有格式）：市场通道三文件
+Copy-Item (Join-Path $pluginSrc ".mcp.json") (Join-Path $tempDir "deep-review.plugin\.mcp.json") -Force
+Copy-Item (Join-Path $pluginSrc ".codebuddy-plugin\plugin.json") (Join-Path $tempDir "deep-review.plugin\.codebuddy-plugin\plugin.json") -Force
+Copy-Item (Join-Path $projectRoot ".codebuddy-plugin\marketplace.json") (Join-Path $tempDir ".codebuddy-plugin\marketplace.json") -Force
 
 # scripts/（同步与生成工具链，发布后 install 脚本依赖）
 Copy-Item (Join-Path $projectRoot "scripts\generate-platform-configs.py") (Join-Path $tempDir "scripts\") -Force
-Copy-Item (Join-Path $projectRoot "scripts\generate-goose-config.py") (Join-Path $tempDir "scripts\") -Force
 Copy-Item (Join-Path $projectRoot "scripts\generate-aaif-declarations.py") (Join-Path $tempDir "scripts\") -Force
 Copy-Item (Join-Path $projectRoot "scripts\sync-agent-configs.ps1") (Join-Path $tempDir "scripts\") -Force
 Copy-Item (Join-Path $projectRoot "scripts\sync-agent-configs.sh") (Join-Path $tempDir "scripts\") -Force
@@ -267,7 +262,9 @@ $requiredFiles = @(
     "deep-review.plugin\mcp.json",
     ".opencode\opencode.json",
     ".codebuddy\mcp.json",
-    ".goose\config.yaml",
+    "deep-review.plugin\.mcp.json",
+    "deep-review.plugin\.codebuddy-plugin\plugin.json",
+    ".codebuddy-plugin\marketplace.json",
     "scripts\sync-agent-configs.ps1",
     "AGENTS.md",
     "package.json",
@@ -339,5 +336,5 @@ Write-Host ""
 Write-Host "  User steps:" -ForegroundColor White
 Write-Host "  1. Extract DeepReview-v$Version.zip" -ForegroundColor DarkGray
 Write-Host "  2. Run install.ps1" -ForegroundColor DarkGray
-Write-Host "  3. Open folder in your runtime (Trae/CodeBuddy/opencode/Goose), enable project-level MCP" -ForegroundColor DarkGray
+Write-Host "  3. Open folder in your runtime (Trae/CodeBuddy/opencode), enable project-level MCP" -ForegroundColor DarkGray
 Write-Host ""

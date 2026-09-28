@@ -188,3 +188,6 @@ jobs:
 
     - name: Check config drift
       run: bash scripts/check-config-drift.sh
+
+    - name: Check version consistency
+      run: python3 scripts/check_version.py
