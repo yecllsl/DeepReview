@@ -46,7 +46,7 @@ fi
 
 echo ""
 echo "========================================"
-echo "  DeepReview v0.5.0 安装向导"
+echo "  DeepReview v0.6.0 安装向导"
 echo "  (Trae + CodeBuddy + opencode)"
 echo "========================================"
 echo ""

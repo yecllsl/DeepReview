@@ -83,7 +83,7 @@ Harness 支持只分两层，判定标准是「是否采纳 Agent Plugins 1.0 �
 
 #### 1. 下载并解压
 
-下载 `DeepReview-v0.5.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
+下载 `DeepReview-v0.6.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
 
 #### 2. 运行安装脚本
 
@@ -242,7 +242,7 @@ DeepReview/
 │       │   └── web/                       # Web 可视化模块（薄编排层）
 │       ├── tests/                         # 测试套件
 │       ├── data/                          # 运行时数据（被 .gitignore）
-│       ├── pyproject.toml                 # Python 项目配置（version 0.5.0）
+│       ├── pyproject.toml                 # Python 项目配置（version 0.6.0）
 │       └── uv.lock                        # 依赖锁定文件
 ├── package.json                           # AAIF 声明入口（main）+ publish 脚本（agents publish）
 ├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 deep-review.plugin/AGENTS.md）
@@ -366,15 +366,15 @@ uv sync --extra optimize
 
 ```powershell
 # Windows
-pwsh .\scripts\build-release.ps1 -Version 0.5.0
+pwsh .\scripts\build-release.ps1 -Version 0.6.0
 ```
 
 ```bash
 # Linux / macOS
-bash scripts/build-release.sh 0.5.0
+bash scripts/build-release.sh 0.6.0
 ```
 
-产物：`dist/DeepReview-v0.5.0.{zip,tar.zst,tar.gz}`。
+产物：`dist/DeepReview-v0.6.0.{zip,tar.zst,tar.gz}`。
 
 ### CI/CD
 

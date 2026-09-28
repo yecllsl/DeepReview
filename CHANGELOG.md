@@ -5,14 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-09-28
+
+### Added
+
+- **CodeBuddy 本地插件市场通道**：新建根级 `.codebuddy-plugin/marketplace.json`（市场 `deep-review-local-market`，单插件）；`deep-review.plugin/.codebuddy-plugin/plugin.json` 补 `mcpServers` 指向可移植 `.mcp.json`（`${CODEBUDDY_PLUGIN_ROOT}` + `uv` 入口，替换原硬编码绝对路径版）；build-release 白名单增补市场通道三文件（mkdir + 显式复制 + 包内校验三件套）
+- **`scripts/check_version.py` 版本一致性校验**：以 `pyproject.toml` 为真相源，覆盖文档发行包名/构建示例、插件/市场/AAIF 声明清单与 `__init__.py` 硬编码 `__version__`（vocabcraft 同源漂移教训），并接入 CI config-drift job
+- **README「支持的 Harness」与各客户端安装方式对照表**；**DEPLOY 手动 E2E 验收方法**（Tier 1 Agents Window / Tier 2 CodeBuddy 本地市场；实测状态如实标「未实测」）
 
 ### Changed
 
+- **两层 Harness 策略写入真相源与文档**：Tier 1 — Agent Plugins 1.0 插件标准（代表 VS Code / Copilot，插件形态分发，规范不携带 AGENTS.md）；Tier 2 — 免费额度 / 开箱即用（Trae、CodeBuddy、OpenCode 原生目录 + install 脚本）；明确不支持 WorkBuddy / Hermes / Goose
+- **术语清理**：「AAIF 真相源 / AAIF 配置层 / AAIF 插件包」等混写统一为「配置唯一真相源」，打包标准统一表述为 Agent Plugins 1.0（AAIF 作为基金会/单项标准的表述保留）
 - **`fsrs[optimizer]` 改为可选依赖**：默认安装只含 `fsrs`（纯 FSRS v6 调度，无重依赖）；个性化 21 参数优化（Optimizer，依赖 numpy/pandas/torch 约 570MB）改为 `uv sync --extra optimize` 按需安装。此前默认背上 torch 是过度设计——复习记录积累 512+ 条前 Optimizer 会空转返回默认参数，retention 优化子功能因 `review_duration` 未记录而必然降级
 - **`/api/fsrs/status` 新增 `optimizer_installed` 字段**（`fsrs_scheduler.is_optimizer_available` 检测 torch），优化面板据此提示按需安装
 - **优化面板增强**：未安装优化组件时显示黄色提示条（含安装命令）；点击「分析参数」返回友好错误（修复了 py-fsrs 占位 Optimizer 实例化抛 ImportError 未被捕获导致 500 的问题）
 - **测试适配可选依赖**：优化路径测试在未装 torch 时验证降级提示、已装时验证真实警告，CI（`uv sync --extra dev`）与本地均可通过
+
+### Removed
+
+- **Goose 支持**：`.goose/` 目录、`runtime/goose.json`、`generate-goose-config.py`、sync/install/build-release 的 Goose 分支、pre-commit 与 check-config-drift 校验项、文档全部引用（历史条目保留）
 
 ## [0.5.0] - 2026-08-17
 
