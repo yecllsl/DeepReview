@@ -7,7 +7,7 @@
 #
 # 可选参数：
 #   -FixPath       将 deep-review.plugin/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
-#   -AgentRuntime  配置 Agent 运行时 (trae/codebuddy/opencode/all)
+#   -AgentRuntime  配置 Agent 运行时 (vscode/trae/codebuddy/opencode/all)
 #
 # 前置要求：
 #   - Python 3.12+
@@ -16,7 +16,7 @@
 param(
     [switch]$FixPath,
     [Parameter(Mandatory=$false)]
-    [ValidateSet("trae", "codebuddy", "opencode", "all")]
+    [ValidateSet("vscode", "trae", "codebuddy", "opencode", "all")]
     [string]$AgentRuntime
 )
 
@@ -110,28 +110,37 @@ if ($AgentRuntime) {
     $SyncScript = Join-Path $PSScriptRoot "scripts/sync-agent-configs.ps1"
 
     switch ($AgentRuntime) {
-        "trae" {
-            Write-Host "Trae 配置说明:" -ForegroundColor Yellow
-            Write-Host "  1. 用 Trae 打开项目文件夹"
-            Write-Host "  2. 设置 > MCP > 启用「项目级 MCP」"
-            Write-Host "  3. 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
+        "vscode" {
+            Write-Host "VS Code 配置说明 (Tier 1 · Agent Plugins 1.0):" -ForegroundColor Yellow
+            Write-Host "  1. 用 VS Code 打开项目文件夹"
+            Write-Host "  2. 在 Agent 面板添加本地 Agent Plugin，指向目录: deep-review.plugin/"
+            Write-Host "     (含 plugin.json + mcp.json + skills/，即 Agent Plugins 1.0 包)"
         }
         "codebuddy" {
-            Write-Host "正在同步 CodeBuddy 配置..." -ForegroundColor Yellow
+            Write-Host "CodeBuddy 配置说明 (Tier 1 · 本地插件市场):" -ForegroundColor Yellow
+            Write-Host "  1. 用 CodeBuddy 打开项目文件夹"
+            Write-Host "  2. 在对话框执行: /plugin marketplace add $projectRoot"
+            Write-Host "     (该目录含 .codebuddy-plugin/marketplace.json，source 指向 ./deep-review.plugin)"
+            Write-Host "  3. 执行: /plugin install deep-review@deep-review-local-market"
+            Write-Host "  4. 必要时执行: /reload-plugins"
+        }
+        "trae" {
+            Write-Host "正在同步 Trae 配置 (Tier 2 原生目录)..." -ForegroundColor Yellow
             if (Test-Path $SyncScript) {
                 & $SyncScript -SkipOpencode
                 Write-Host ""
                 Write-Host "下一步:" -ForegroundColor Yellow
-                Write-Host "  1. 用 CodeBuddy 打开项目文件夹"
-                Write-Host "  2. 在 MCP 配置中信任 deep-review-mcp"
+                Write-Host "  1. 用 Trae 打开项目文件夹"
+                Write-Host "  2. 设置 > MCP > 启用「项目级 MCP」"
+                Write-Host "  3. 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
             } else {
                 Write-Host "  同步脚本不存在: $SyncScript" -ForegroundColor Red
             }
         }
         "opencode" {
-            Write-Host "正在同步 opencode 配置..." -ForegroundColor Yellow
+            Write-Host "正在同步 opencode 配置 (Tier 2 原生目录)..." -ForegroundColor Yellow
             if (Test-Path $SyncScript) {
-                & $SyncScript -SkipCodebuddy
+                & $SyncScript -SkipTrae
                 Write-Host ""
                 Write-Host "下一步:" -ForegroundColor Yellow
                 Write-Host "  1. 在项目目录运行 opencode"
@@ -141,14 +150,17 @@ if ($AgentRuntime) {
             }
         }
         "all" {
-            Write-Host "正在同步所有 Agent Runtime 配置..." -ForegroundColor Yellow
+            Write-Host "正在同步 Tier 2 配置 (Trae + opencode)..." -ForegroundColor Yellow
             if (Test-Path $SyncScript) {
                 & $SyncScript
                 Write-Host ""
-                Write-Host "所有配置已同步。各运行时下一步:" -ForegroundColor Green
+                Write-Host "Tier 2 配置已同步。各运行时下一步:" -ForegroundColor Green
                 Write-Host "  Trae: 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
-                Write-Host "  CodeBuddy: 在 MCP 配置中信任 deep-review-mcp"
                 Write-Host "  opencode: 在项目目录运行 opencode"
+                Write-Host ""
+                Write-Host "Tier 1 (VS Code / CodeBuddy) 请手动安装插件:" -ForegroundColor Yellow
+                Write-Host "  VS Code:   添加本地 Agent Plugin → deep-review.plugin/"
+                Write-Host "  CodeBuddy: /plugin marketplace add $projectRoot → /plugin install deep-review@deep-review-local-market"
             } else {
                 Write-Host "  同步脚本不存在: $SyncScript" -ForegroundColor Red
             }
@@ -203,8 +215,7 @@ if ($FixPath) {
     Write-Host "  正在修复 runtime 配置路径（deep-review.plugin/runtime）..." -ForegroundColor Yellow
     $fixedAny = $false
     $fixTargets = @(
-        (Join-Path $runtimeDir "trae.json"),
-        (Join-Path $runtimeDir "codebuddy.json")
+        (Join-Path $runtimeDir "trae.json")
     )
     $ws = $projectRoot -replace '\\', '/'
     foreach ($t in $fixTargets) {
@@ -252,7 +263,7 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "  ✓ 安装完成！" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "下一步操作（Trae / CodeBuddy / opencode 操作一致）：" -ForegroundColor White
+Write-Host "下一步操作（按所用运行时选择对应通道）：" -ForegroundColor White
 Write-Host ""
 Write-Host "  1. 用对应运行时打开此文件夹" -ForegroundColor White
 Write-Host "     文件 → 打开文件夹 → 选择: $projectRoot" -ForegroundColor DarkGray

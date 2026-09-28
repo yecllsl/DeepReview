@@ -29,9 +29,10 @@ chmod +x install.sh && ./install.sh
 安装脚本通过 `-AgentRuntime` 指定要配置的运行时（缺省只装依赖，不配置运行时）：
 
 ```powershell
-# Windows：一次配置全部（Trae/CodeBuddy/opencode）
+# Windows：Tier 2 一次配置全部（Trae + opencode）
 .\install.ps1 -AgentRuntime all
-# 或只配置单个：.\install.ps1 -AgentRuntime codebuddy / opencode / trae
+# 或只配置单个：.\install.ps1 -AgentRuntime trae / opencode
+# VS Code / CodeBuddy 走 Tier 1 插件通道，无需此步（见下方表格）
 ```
 
 ```bash
@@ -39,11 +40,12 @@ chmod +x install.sh && ./install.sh
 ./install.sh --agent-runtime all
 ```
 
-| 运行时 | 使用方式 |
-|--------|---------|
-| Trae | 打开项目 → 设置 → MCP → 启用项目级 MCP |
-| CodeBuddy | 打开项目 → 信任 deep-review-mcp |
-| opencode | 项目目录运行 `opencode`，自动加载 AGENTS.md |
+| 运行时 | 通道 | 使用方式 |
+|--------|------|---------|
+| VS Code | Tier 1 插件 | 打开项目 → Agent 面板添加本地 Agent Plugin → 指向 `deep-review.plugin/` |
+| CodeBuddy | Tier 1 插件 | 打开项目 → `/plugin marketplace add <根目录>` → `/plugin install deep-review@deep-review-local-market` |
+| Trae | Tier 2 原生 | 打开项目 → 设置 → MCP → 启用项目级 MCP（`.trae/` 由 install 同步生成） |
+| opencode | Tier 2 原生 | 项目目录运行 `opencode`，自动加载（`.opencode/` 由 install 同步生成） |
 
 ### 第 4 步：开始使用
 

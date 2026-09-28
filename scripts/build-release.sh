@@ -60,7 +60,6 @@ mkdir -p "$STAGING_DIR/.trae/skills"
 mkdir -p "$STAGING_DIR/deep-review.plugin/skills"
 mkdir -p "$STAGING_DIR/deep-review.plugin/runtime"
 mkdir -p "$STAGING_DIR/.opencode/skills"
-mkdir -p "$STAGING_DIR/.codebuddy/skills"
 # CodeBuddy 插件清单目录（Tier 2 市场通道）：插件根内 .codebuddy-plugin/ + 根级 .codebuddy-plugin/
 mkdir -p "$STAGING_DIR/deep-review.plugin/.codebuddy-plugin"
 mkdir -p "$STAGING_DIR/.codebuddy-plugin"
@@ -136,8 +135,8 @@ done
 cp -r "$PLUGIN_SRC/skills" "$PLUGIN_DST/skills"
 cp -r "$PLUGIN_SRC/runtime" "$PLUGIN_DST/runtime"
 
-# 多 harness 生成目录（skills/AGENTS.md 统一从 deep-review.plugin/ 复制，保证最新）
-for harness in opencode codebuddy; do
+# Tier 2 原生生成目录（opencode；skills/AGENTS.md 统一从 deep-review.plugin/ 复制，保证最新）
+for harness in opencode; do
     h_dst="$STAGING_DIR/.$harness"
     cp -r "$PLUGIN_SRC/skills" "$h_dst/skills"
     cp "$PLUGIN_SRC/AGENTS.md" "$h_dst/AGENTS.md"
@@ -145,8 +144,6 @@ done
 
 # .opencode/opencode.json（instructions 指向 deep-review.plugin/AGENTS.md，cwd 为相对路径）
 cp "$PLUGIN_SRC/runtime/opencode.json" "$STAGING_DIR/.opencode/opencode.json"
-# .codebuddy/mcp.json（${workspaceFolder} 变量版）
-cp "$PLUGIN_SRC/runtime/codebuddy.json" "$STAGING_DIR/.codebuddy/mcp.json"
 
 # Tier 2（CodeBuddy，自有格式）：市场通道三文件
 cp "$PLUGIN_SRC/.mcp.json" "$STAGING_DIR/deep-review.plugin/.mcp.json"
@@ -228,7 +225,6 @@ required=(
     "deep-review.plugin/plugin.json"
     "deep-review.plugin/mcp.json"
     ".opencode/opencode.json"
-    ".codebuddy/mcp.json"
     "deep-review.plugin/.mcp.json"
     "deep-review.plugin/.codebuddy-plugin/plugin.json"
     ".codebuddy-plugin/marketplace.json"

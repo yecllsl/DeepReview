@@ -84,19 +84,20 @@ v0.3.0 起支持 Agent 运行时（harness）：Trae / CodeBuddy / opencode；v0
 
 `${workspaceFolder}` 会在 MCP Server 启动时自动替换为项目根目录路径，因此解压到任意位置都能正常工作；`--no-sync` 复用安装时 `uv sync` 的环境，避免每次启动解析依赖。
 
-### CodeBuddy（项目级）
+### CodeBuddy（插件通道 · Tier 1）
 
-- 配置目录 `.codebuddy/`（mcp.json + skills + AGENTS.md）
-- 用 CodeBuddy 打开项目文件夹，在 MCP 配置中信任 `deep-review-mcp`
+- CodeBuddy 走 Agent Plugins 1.0 插件通道（**不再生成 `.codebuddy/` 原生目录**）
+- 用 CodeBuddy 打开项目文件夹，在对话框执行：`/plugin marketplace add <项目根目录>`（根目录含 `.codebuddy-plugin/marketplace.json`，其 `source` 指向 `./deep-review.plugin`）
+- 再执行：`/plugin install deep-review@deep-review-local-market`，必要时 `/reload-plugins`
 
 ### opencode（项目级）
 
 - 配置目录 `.opencode/`（opencode.json + skills + AGENTS.md）
 - 在项目目录运行 `opencode`，自动加载 `deep-review.plugin/AGENTS.md` 规则
 
-### CodeBuddy 插件市场通道（Tier 2 可选）
+### CodeBuddy 插件市场通道（Tier 1 主通道）
 
-除项目级 MCP 外，CodeBuddy 也可经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marketplace.json`，市场名 `deep-review-local-market`）：**插件管理 → 插件市场 → 添加本地市场** → 选择仓库根目录 → 安装 `deep-review` 插件。
+CodeBuddy 经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marketplace.json`，市场名 `deep-review-local-market`）：**插件管理 → 插件市场 → 添加本地市场** → 选择仓库根目录 → 安装 `deep-review` 插件。
 
 ### 手动 E2E 验收方法（Tier 1 / Tier 2 交付链路）
 
@@ -164,7 +165,7 @@ Skills 和 Rules 的**唯一真相源**在 `deep-review.plugin/`（AAIF 规范 +
 - **Rules**：`deep-review.plugin/AGENTS.md`（统一规则，含采集/分类/分析/复习/交互/数据安全规则）
 - **插件契约**：`deep-review.plugin/plugin.json`（manifest）+ `deep-review.plugin/mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动）
 
-三个项目级 harness 目录（`.trae/` `.opencode/` `.codebuddy/`）由 `scripts/sync-agent-configs` 单向生成，**禁止直接编辑**。修改后需重跑同步脚本，并提交 `deep-review.plugin/` 与各生成目录的改动（`scripts/pre-commit` 钩子与 CI `scripts/check-config-drift.sh` 双防线自动拦截违规）。
+两个项目级 harness 目录（`.trae/` `.opencode/`）由 `scripts/sync-agent-configs` 单向生成，**禁止直接编辑**（CodeBuddy / VS Code 走 Tier 1 插件通道，不产生原生目录）。修改后需重跑同步脚本，并提交 `deep-review.plugin/` 与各生成目录的改动（`scripts/pre-commit` 钩子与 CI `scripts/check-config-drift.sh` 双防线自动拦截违规）。
 
 ### Skills 说明
 
@@ -236,7 +237,7 @@ uv sync
 
 **检查项：**
 1. 是否已启用项目级 MCP（Trae/CodeBuddy）或已打开项目（opencode）
-2. 对应配置目录是否存在（`.trae/mcp.json` / `.codebuddy/mcp.json` / `.opencode/opencode.json`）
+2. 对应配置目录是否存在（Tier 2：`.trae/mcp.json` / `.opencode/opencode.json`；Tier 1：插件是否已安装）
 3. 是否已重启运行时
 
 **解决方案：**
@@ -283,7 +284,7 @@ DeepReview/
 │   ├── mcp.json                            # MCP 启动配置（${PLUGIN_ROOT} 内联 deep-review-mcp）
 │   ├── AGENTS.md                           # 统一规则层（架构/安全/开发规范/流程规则 + 业务规则）
 │   ├── skills/                             # 5 个技能源文件（frontmatter 含 command:）
-│   ├── runtime/                            # 3 平台运行时配置（generate-platform-configs.py 生成）
+│   ├── runtime/                            # 2 平台（Tier 2）运行时配置（generate-platform-configs.py 生成）
 │   ├── tools.json / triggers.json / workflows.json   # AAIF 声明（生成产物，勿手改）
 │   └── deep-review-mcp/                    # 纯 MCP Server (通用服务层，内联)
 │       ├── src/deep_review_mcp/
@@ -305,11 +306,10 @@ DeepReview/
 ├── package.json                           # AAIF 声明入口（main）+ publish 脚本（agents publish）
 ├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 deep-review.plugin/AGENTS.md）
 ├── .opencode/                              # [生成] opencode 配置（opencode.json + skills + AGENTS.md）
-├── .codebuddy/                             # [生成] CodeBuddy 配置（memory/ 由运行时写入）
 ├── scripts/                                # 开发者工具
 │   ├── generate-aaif-declarations.py       # FastMCP 自省生成 AAIF 声明（规范格式）
-│   ├── generate-platform-configs.py        # 生成 deep-review.plugin/runtime/ 3 平台 JSON
-│   ├── sync-agent-configs.ps1/.sh          # deep-review.plugin/ 单向同步到 3 平台目录
+│   ├── generate-platform-configs.py        # 生成 deep-review.plugin/runtime/ 2 平台（Tier 2）JSON
+│   ├── sync-agent-configs.ps1/.sh          # deep-review.plugin/ 单向同步到 Tier 2 平台目录
 │   ├── pre-commit                          # git 钩子：内容一致性检查（拦截配置同步违规）
 │   ├── check-config-drift.sh               # CI 工作区漂移检查（双防线）
 │   ├── check_version.py                    # 版本一致性校验（CI config-drift job 调用）
@@ -336,7 +336,7 @@ bash scripts/build-release.sh 0.6.0
 
 产物：`dist/DeepReview-v0.6.0.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
 
-构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（配置真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/` 与 CodeBuddy 市场通道文件 `.mcp.json` / `.codebuddy-plugin/`）、`.trae/` `.opencode/` `.codebuddy/`（harness 配置）、根 `.codebuddy-plugin/marketplace.json`（本地市场清单）、`scripts/`（同步工具链）、`package.json`（发布入口），自动排除：
+构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（配置真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/` 与 CodeBuddy 市场通道文件 `.mcp.json` / `.codebuddy-plugin/`）、`.trae/` `.opencode/`（Tier 2 harness 配置）、根 `.codebuddy-plugin/marketplace.json`（本地市场清单）、`scripts/`（同步工具链）、`package.json`（发布入口），自动排除：
 
 - `__pycache__/`、`.pytest_cache/`、`*.pyc`
 - `.venv/`、`.git/`、`.vscode/`

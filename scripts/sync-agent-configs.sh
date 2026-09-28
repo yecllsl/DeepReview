@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# 将 deep-review.plugin/ (配置真相源 + Agent Plugins 1.0 插件包) 单向同步到各 Agent harness 项目目录:
-#   .trae/  .opencode/  .codebuddy/
+# 将 deep-review.plugin/ (配置真相源 + Agent Plugins 1.0 插件包) 单向同步到 Tier 2 原生 harness 项目目录:
+#   .trae/  .opencode/
+#
+# 注：CodeBuddy 与 VS Code 走 Tier 1 插件通道（deep-review.plugin/ 即 Agent Plugins 1.0 包，
+#      经 .codebuddy-plugin/marketplace.json 本地市场安装），不再生成 .codebuddy/ 原生目录。
 #
 # 用法:
-#   ./scripts/sync-agent-configs.sh                 # 同步全部
+#   ./scripts/sync-agent-configs.sh                 # 同步全部 (Tier 2: .trae + .opencode)
 #   ./scripts/sync-agent-configs.sh --skip-trae     # 跳过 Trae
 set -euo pipefail
 
@@ -32,12 +35,10 @@ echo "配置源: deep-review.plugin/ (AAIF 标准 + Agent Plugins 1.0)"
 
 SKIP_TRAE=false
 SKIP_OPENCODE=false
-SKIP_CODEBUDDY=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --skip-trae) SKIP_TRAE=true; shift ;;
         --skip-opencode) SKIP_OPENCODE=true; shift ;;
-        --skip-codebuddy) SKIP_CODEBUDDY=true; shift ;;
         *) echo "未知参数: $1"; exit 1 ;;
     esac
 done
@@ -84,17 +85,6 @@ generate_opencode_config() {
     fi
 }
 
-generate_codebuddy_config() {
-    local codebuddy_dir="$PROJECT_ROOT/.codebuddy"
-    mkdir -p "$codebuddy_dir"
-    local source_config="$PLUGIN_RUNTIME/codebuddy.json"
-    if [ -f "$source_config" ]; then
-        echo -e "${YELLOW}复制 CodeBuddy 配置 → .codebuddy/${NC}"
-        cp -f "$source_config" "$codebuddy_dir/mcp.json"
-        echo -e "${GREEN}  已生成 CodeBuddy 配置${NC}"
-    fi
-}
-
 generate_aaif_declarations() {
     if ! command -v uv >/dev/null 2>&1; then
         echo -e "${RED}未找到 uv，无法生成 AAIF 声明文件 (tools.json/triggers.json/workflows.json)${NC}" >&2
@@ -123,12 +113,6 @@ if [ "$SKIP_OPENCODE" = false ]; then
     sync_skills "$PROJECT_ROOT/.opencode"
     sync_agents_md "$PROJECT_ROOT/.opencode"
     generate_opencode_config
-fi
-if [ "$SKIP_CODEBUDDY" = false ]; then
-    echo -e "\n${CYAN}--- CodeBuddy ---${NC}"
-    sync_skills "$PROJECT_ROOT/.codebuddy"
-    sync_agents_md "$PROJECT_ROOT/.codebuddy"
-    generate_codebuddy_config
 fi
 
 echo -e "\n${CYAN}=== 同步完成 ===${NC}"

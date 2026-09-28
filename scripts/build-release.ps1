@@ -69,7 +69,6 @@ New-Item -ItemType Directory -Path (Join-Path $tempDir ".trae\skills") -Force | 
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\skills") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\runtime") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".opencode\skills") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $tempDir ".codebuddy\skills") -Force | Out-Null
 # CodeBuddy 插件清单目录（Tier 2 市场通道）：插件根内 .codebuddy-plugin/ + 根级 .codebuddy-plugin/
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\.codebuddy-plugin") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".codebuddy-plugin") -Force | Out-Null
@@ -154,8 +153,8 @@ foreach ($f in $pluginTopFiles) {
 Copy-Item (Join-Path $pluginSrc "skills") (Join-Path $pluginDst "skills") -Recurse -Force
 Copy-Item (Join-Path $pluginSrc "runtime") (Join-Path $pluginDst "runtime") -Recurse -Force
 
-# 多 harness 生成目录（skills/AGENTS.md 统一从 deep-review.plugin/ 复制，保证最新）
-foreach ($harness in @("opencode", "codebuddy")) {
+# Tier 2 原生生成目录（opencode；skills/AGENTS.md 统一从 deep-review.plugin/ 复制，保证最新）
+foreach ($harness in @("opencode")) {
     $hDst = Join-Path $tempDir ".$harness"
     Copy-Item (Join-Path $pluginSrc "skills") (Join-Path $hDst "skills") -Recurse -Force
     Copy-Item (Join-Path $pluginSrc "AGENTS.md") (Join-Path $hDst "AGENTS.md") -Force
@@ -163,8 +162,6 @@ foreach ($harness in @("opencode", "codebuddy")) {
 
 # .opencode/opencode.json（instructions 指向 deep-review.plugin/AGENTS.md，cwd 为相对路径）
 Copy-Item (Join-Path $pluginSrc "runtime\opencode.json") (Join-Path $tempDir ".opencode\opencode.json") -Force
-# .codebuddy/mcp.json（${workspaceFolder} 变量版）
-Copy-Item (Join-Path $pluginSrc "runtime\codebuddy.json") (Join-Path $tempDir ".codebuddy\mcp.json") -Force
 
 # Tier 2（CodeBuddy，自有格式）：市场通道三文件
 Copy-Item (Join-Path $pluginSrc ".mcp.json") (Join-Path $tempDir "deep-review.plugin\.mcp.json") -Force
@@ -261,7 +258,6 @@ $requiredFiles = @(
     "deep-review.plugin\plugin.json",
     "deep-review.plugin\mcp.json",
     ".opencode\opencode.json",
-    ".codebuddy\mcp.json",
     "deep-review.plugin\.mcp.json",
     "deep-review.plugin\.codebuddy-plugin\plugin.json",
     ".codebuddy-plugin\marketplace.json",

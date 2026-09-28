@@ -1,15 +1,17 @@
 #!/usr/bin/env pwsh
-# 将 deep-review.plugin/ (配置真相源 + Agent Plugins 1.0 插件包) 单向同步到各 Agent harness 项目目录:
-#   .trae/  .opencode/  .codebuddy/
+# 将 deep-review.plugin/ (配置真相源 + Agent Plugins 1.0 插件包) 单向同步到 Tier 2 原生 harness 项目目录:
+#   .trae/  .opencode/
+#
+# 注：CodeBuddy 与 VS Code 走 Tier 1 插件通道（deep-review.plugin/ 即 Agent Plugins 1.0 包，
+#      经 .codebuddy-plugin/marketplace.json 本地市场安装），不再生成 .codebuddy/ 原生目录。
 #
 # 用法:
-#   ./scripts/sync-agent-configs.ps1                 # 同步全部
+#   ./scripts/sync-agent-configs.ps1                 # 同步全部 (Tier 2: .trae + .opencode)
 #   ./scripts/sync-agent-configs.ps1 -SkipTrae       # 跳过 Trae
 [CmdletBinding()]
 param(
     [switch]$SkipTrae,
-    [switch]$SkipOpencode,
-    [switch]$SkipCodebuddy
+    [switch]$SkipOpencode
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,7 +37,7 @@ Write-Host "$Cyan=== DeepReview AAIF Config Sync ===$NC"
 Write-Host "项目根目录: $ProjectRoot"
 Write-Host "配置源: deep-review.plugin/ (AAIF 标准 + Agent Plugins 1.0)"
 
-# ── 先重新生成三个 AAIF 声明文件（tools/triggers/workflows.json）──
+# ── 先重新生成 AAIF 声明文件（tools/triggers/workflows.json）──
 function Invoke-AaifDeclarations {
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
         Write-Host "$Red未找到 uv，无法生成 AAIF 声明文件 (tools.json/triggers.json/workflows.json)$NC" -ForegroundColor Red
@@ -94,17 +96,6 @@ function Generate-OpencodeConfig {
     }
 }
 
-function Generate-CodebuddyConfig {
-    $codebuddyDir = Join-Path $ProjectRoot '.codebuddy'
-    New-Item -ItemType Directory -Force -Path $codebuddyDir | Out-Null
-    $source = Join-Path $PluginRuntime 'codebuddy.json'
-    if (Test-Path $source) {
-        Write-Host "$Yellow复制 CodeBuddy 配置 → .codebuddy/$NC"
-        Copy-Item -Force $source (Join-Path $codebuddyDir 'mcp.json')
-        Write-Host "$Green  已生成 CodeBuddy 配置$NC"
-    }
-}
-
 # ── 主流程 ──
 Invoke-AaifDeclarations
 
@@ -119,12 +110,6 @@ if (-not $SkipOpencode) {
     Sync-Skills (Join-Path $ProjectRoot '.opencode')
     Sync-AgentsMd (Join-Path $ProjectRoot '.opencode')
     Generate-OpencodeConfig
-}
-if (-not $SkipCodebuddy) {
-    Write-Host "`n$Cyan--- CodeBuddy ---$NC"
-    Sync-Skills (Join-Path $ProjectRoot '.codebuddy')
-    Sync-AgentsMd (Join-Path $ProjectRoot '.codebuddy')
-    Generate-CodebuddyConfig
 }
 
 Write-Host "`n$Cyan=== 同步完成 ===$NC"

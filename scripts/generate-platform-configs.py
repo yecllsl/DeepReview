@@ -2,8 +2,12 @@
 """Generate AAIF platform runtime configs into deep-review.plugin/runtime/.
 
 The generated files are consumed by scripts/sync-agent-configs(.ps1/.sh),
-which distributes them to the .trae / .opencode / .codebuddy
-platform directories.
+which distributes them to the .trae / .opencode platform directories.
+
+Note: CodeBuddy and VS Code use the Tier 1 plugin channel (the
+deep-review.plugin/ Agent Plugins 1.0 package, installed via the
+.codebuddy-plugin/marketplace.json local market for CodeBuddy), so no
+.codebuddy runtime config is generated here.
 
 Usage:
     python scripts/generate-platform-configs.py
@@ -49,23 +53,6 @@ def generate_opencode() -> dict:
     }
 
 
-def generate_codebuddy() -> dict:
-    return {
-        "mcpServers": {
-            "deep-review-mcp": {
-                "command": "uv",
-                "args": [
-                    "run",
-                    "--no-sync",
-                    "--directory",
-                    "${workspaceFolder}/deep-review.plugin/deep-review-mcp",
-                    "deep-review-mcp",
-                ],
-            }
-        }
-    }
-
-
 def main() -> None:
     (RUNTIME_DIR / "trae.json").write_text(
         json.dumps(generate_trae(), indent=2) + "\n", encoding="utf-8"
@@ -73,10 +60,7 @@ def main() -> None:
     (RUNTIME_DIR / "opencode.json").write_text(
         json.dumps(generate_opencode(), indent=2) + "\n", encoding="utf-8"
     )
-    (RUNTIME_DIR / "codebuddy.json").write_text(
-        json.dumps(generate_codebuddy(), indent=2) + "\n", encoding="utf-8"
-    )
-    print("已生成所有平台配置 (deep-review.plugin/runtime/)")
+    print("已生成 Tier 2 平台配置 (deep-review.plugin/runtime/): trae.json, opencode.json")
 
 
 if __name__ == "__main__":

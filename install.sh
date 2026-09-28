@@ -8,7 +8,7 @@
 #
 # 可选参数：
 #   --fix-path                将 deep-review.plugin/runtime 中 ${workspaceFolder} 替换为绝对路径（并重新同步各平台目录）
-#   --agent-runtime <name>    配置 Agent 运行时 (trae/codebuddy/opencode/all)
+#   --agent-runtime <name>    配置 Agent 运行时 (vscode/trae/codebuddy/opencode/all)
 #
 # 前置要求：
 #   - Python 3.12+
@@ -33,7 +33,7 @@ done
 
 # 校验 AgentRuntime 值
 case "$AGENT_RUNTIME" in
-    ""|trae|codebuddy|opencode|all) ;;
+    ""|vscode|trae|codebuddy|opencode|all) ;;
     *) echo "错误: --agent-runtime 仅支持 trae/codebuddy/opencode/all"; exit 1 ;;
 esac
 
@@ -47,7 +47,7 @@ fi
 echo ""
 echo "========================================"
 echo "  DeepReview v0.6.0 安装向导"
-echo "  (Trae + CodeBuddy + opencode)"
+echo "  (VS Code / CodeBuddy 走插件通道 · Trae / opencode 走原生目录)"
 echo "========================================"
 echo ""
 
@@ -120,28 +120,37 @@ if [ -n "$AGENT_RUNTIME" ]; then
     echo -e "${CYAN}=== Agent Runtime 配置 ===${NC}"
 
     case "$AGENT_RUNTIME" in
-        "trae")
-            echo -e "  ${YELLOW}Trae 配置说明:${NC}"
-            echo "  1. 用 Trae 打开项目文件夹"
-            echo "  2. 设置 > MCP > 启用「项目级 MCP」"
-            echo "  3. 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
+        "vscode")
+            echo -e "  ${YELLOW}VS Code 配置说明 (Tier 1 · Agent Plugins 1.0):${NC}"
+            echo "  1. 用 VS Code 打开项目文件夹"
+            echo "  2. 在 Agent 面板添加本地 Agent Plugin，指向目录: deep-review.plugin/"
+            echo "     (含 plugin.json + mcp.json + skills/，即 Agent Plugins 1.0 包)"
             ;;
         "codebuddy")
-            echo -e "  ${YELLOW}正在同步 CodeBuddy 配置...${NC}"
+            echo -e "  ${YELLOW}CodeBuddy 配置说明 (Tier 1 · 本地插件市场):${NC}"
+            echo "  1. 用 CodeBuddy 打开项目文件夹"
+            echo "  2. 在对话框执行: /plugin marketplace add $PROJECT_ROOT"
+            echo "     (该目录含 .codebuddy-plugin/marketplace.json，source 指向 ./deep-review.plugin)"
+            echo "  3. 执行: /plugin install deep-review@deep-review-local-market"
+            echo "  4. 必要时执行: /reload-plugins"
+            ;;
+        "trae")
+            echo -e "  ${YELLOW}正在同步 Trae 配置 (Tier 2 原生目录)...${NC}"
             if [ -f "$SYNC_SCRIPT" ]; then
                 bash "$SYNC_SCRIPT" --skip-opencode
                 echo ""
                 echo -e "  ${YELLOW}下一步:${NC}"
-                echo "  1. 用 CodeBuddy 打开项目文件夹"
-                echo "  2. 在 MCP 配置中信任 deep-review-mcp"
+                echo "  1. 用 Trae 打开项目文件夹"
+                echo "  2. 设置 > MCP > 启用「项目级 MCP」"
+                echo "  3. 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
             else
                 echo -e "  ${RED}  同步脚本不存在: $SYNC_SCRIPT${NC}"
             fi
             ;;
         "opencode")
-            echo -e "  ${YELLOW}正在同步 opencode 配置...${NC}"
+            echo -e "  ${YELLOW}正在同步 opencode 配置 (Tier 2 原生目录)...${NC}"
             if [ -f "$SYNC_SCRIPT" ]; then
-                bash "$SYNC_SCRIPT" --skip-codebuddy
+                bash "$SYNC_SCRIPT" --skip-trae
                 echo ""
                 echo -e "  ${YELLOW}下一步:${NC}"
                 echo "  1. 在项目目录运行 opencode"
@@ -151,14 +160,17 @@ if [ -n "$AGENT_RUNTIME" ]; then
             fi
             ;;
         "all")
-            echo -e "  ${YELLOW}正在同步所有 Agent Runtime 配置...${NC}"
+            echo -e "  ${YELLOW}正在同步 Tier 2 配置 (Trae + opencode)...${NC}"
             if [ -f "$SYNC_SCRIPT" ]; then
                 bash "$SYNC_SCRIPT"
                 echo ""
-                echo -e "  ${GREEN}所有配置已同步。各运行时下一步:${NC}"
+                echo -e "  ${GREEN}Tier 2 配置已同步。各运行时下一步:${NC}"
                 echo "  Trae: 设置 > 规则 > 开启「将 AGENTS.md 包含在上下文中」"
-                echo "  CodeBuddy: 在 MCP 配置中信任 deep-review-mcp"
                 echo "  opencode: 在项目目录运行 opencode"
+                echo ""
+                echo -e "  ${YELLOW}Tier 1 (VS Code / CodeBuddy) 请手动安装插件:${NC}"
+                echo "  VS Code:   添加本地 Agent Plugin → deep-review.plugin/"
+                echo "  CodeBuddy: /plugin marketplace add $PROJECT_ROOT → /plugin install deep-review@deep-review-local-market"
             else
                 echo -e "  ${RED}  同步脚本不存在: $SYNC_SCRIPT${NC}"
             fi
@@ -209,7 +221,7 @@ if [ "$FIX_PATH" = true ]; then
     echo ""
     echo "  正在修复 runtime 配置路径（deep-review.plugin/runtime）..."
     FIXED_ANY=false
-    for f in trae.json codebuddy.json; do
+    for f in trae.json; do
         T="$RUNTIME_DIR/$f"
         if [ -f "$T" ]; then
             if grep -q '\${workspaceFolder}' "$T" 2>/dev/null; then
@@ -257,7 +269,7 @@ echo "========================================"
 echo -e "  ${GREEN}✓ 安装完成！${NC}"
 echo "========================================"
 echo ""
-echo "下一步操作（Trae / CodeBuddy / opencode 操作一致）："
+echo "下一步操作（按所用运行时选择对应通道）："
 echo ""
 echo "  1. 用对应运行时打开此文件夹"
 echo "     文件 → 打开文件夹 → 选择: $PROJECT_ROOT"
