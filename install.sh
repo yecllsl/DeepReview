@@ -46,7 +46,7 @@ fi
 
 echo ""
 echo "========================================"
-echo "  DeepReview v0.6.0 安装向导"
+echo "  DeepReview v0.6.1 安装向导"
 echo "  (VS Code / CodeBuddy 走插件通道 · Trae / opencode 走原生目录)"
 echo "========================================"
 echo ""
@@ -210,7 +210,7 @@ if [ -f "$TRAE_JSON" ]; then
     if grep -q '${workspaceFolder}' "$TRAE_JSON" 2>/dev/null; then
         echo ""
         echo -e "  ${CYAN}ℹ 检测到 runtime 配置使用了 \${workspaceFolder} 变量${NC}"
-        echo "    Trae / CodeBuddy 会自动替换此变量，无需手动配置"
+        echo "    Trae 会自动替换此变量，无需手动配置"
         echo "    如果你的环境不支持变量替换，请运行："
         echo "    ./install.sh --fix-path"
     fi
@@ -255,7 +255,7 @@ if [ -f "$HOOK_SRC" ]; then
     mkdir -p "$PROJECT_ROOT/.git/hooks"
     cp -f "$HOOK_SRC" "$HOOK_DST"
     chmod +x "$HOOK_DST"
-    echo -e "  ${GREEN}✓ 已安装 pre-commit 钩子（拦截直接修改生成目录 .trae/.opencode/.codebuddy 的违规提交）${NC}"
+    echo -e "  ${GREEN}✓ 已安装 pre-commit 钩子（拦截直接修改生成目录 .trae/.opencode 的违规提交）${NC}"
     echo -e "  ${GRAY}    若需手动安装：cp scripts/pre-commit .git/hooks/pre-commit${NC}"
 else
     echo -e "  ${YELLOW}⚠ 未找到 $HOOK_SRC，跳过钩子安装${NC}"

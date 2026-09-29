@@ -2,13 +2,13 @@
 # 从源码生成可分发的 zip 包（白名单复制策略，避免误打包 .venv）
 #
 # 使用方法：
-#   pwsh .\scripts\build-release.ps1 [-Version "0.6.0"]
+#   pwsh .\scripts\build-release.ps1 [-Version "0.6.1"]
 #
 # 输出：
-#   dist/DeepReview-v0.6.0.zip
+#   dist/DeepReview-v0.6.1.zip
 
 param(
-    [string]$Version = "0.6.0"
+    [string]$Version = "0.6.1"
 )
 
 $ErrorActionPreference = "Stop"
@@ -69,7 +69,7 @@ New-Item -ItemType Directory -Path (Join-Path $tempDir ".trae\skills") -Force | 
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\skills") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\runtime") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".opencode\skills") -Force | Out-Null
-# CodeBuddy 插件清单目录（Tier 2 市场通道）：插件根内 .codebuddy-plugin/ + 根级 .codebuddy-plugin/
+# CodeBuddy 插件清单目录（Tier 1 市场通道）：插件根内 .codebuddy-plugin/ + 根级 .codebuddy-plugin/
 New-Item -ItemType Directory -Path (Join-Path $tempDir "deep-review.plugin\.codebuddy-plugin") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir ".codebuddy-plugin") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tempDir "scripts") -Force | Out-Null
@@ -163,7 +163,7 @@ foreach ($harness in @("opencode")) {
 # .opencode/opencode.json（instructions 指向 deep-review.plugin/AGENTS.md，cwd 为相对路径）
 Copy-Item (Join-Path $pluginSrc "runtime\opencode.json") (Join-Path $tempDir ".opencode\opencode.json") -Force
 
-# Tier 2（CodeBuddy，自有格式）：市场通道三文件
+# Tier 1（CodeBuddy，自有市场格式）：市场通道三文件
 Copy-Item (Join-Path $pluginSrc ".mcp.json") (Join-Path $tempDir "deep-review.plugin\.mcp.json") -Force
 Copy-Item (Join-Path $pluginSrc ".codebuddy-plugin\plugin.json") (Join-Path $tempDir "deep-review.plugin\.codebuddy-plugin\plugin.json") -Force
 Copy-Item (Join-Path $projectRoot ".codebuddy-plugin\marketplace.json") (Join-Path $tempDir ".codebuddy-plugin\marketplace.json") -Force

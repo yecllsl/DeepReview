@@ -24,7 +24,7 @@ $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " DeepReview v0.6.0 安装向导" -ForegroundColor Cyan
+Write-Host " DeepReview v0.6.1 安装向导" -ForegroundColor Cyan
 Write-Host "  (VS Code / CodeBuddy 走插件通道 · Trae / opencode 走原生目录)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
@@ -204,7 +204,7 @@ if (Test-Path $traeJson) {
     if ($mcpContent -match '\$\{workspaceFolder\}') {
         Write-Host ""
         Write-Host "  ℹ 检测到 runtime 配置使用了 \${workspaceFolder} 变量" -ForegroundColor Cyan
-        Write-Host "    Trae / CodeBuddy 会自动替换此变量，无需手动配置" -ForegroundColor Cyan
+        Write-Host "    Trae 会自动替换此变量，无需手动配置" -ForegroundColor Cyan
         Write-Host "    如果你的环境不支持变量替换，请运行：" -ForegroundColor Cyan
         Write-Host "    .\install.ps1 -FixPath" -ForegroundColor White
     }
@@ -249,7 +249,7 @@ $HookSrc = Join-Path $projectRoot "scripts/pre-commit"
 $HookDst = Join-Path $projectRoot ".git/hooks/pre-commit"
 if (Test-Path $HookSrc) {
     Copy-Item -Path $HookSrc -Destination $HookDst -Force
-    Write-Host "  ✓ 已安装 pre-commit 钩子（拦截直接修改生成目录 .trae/.opencode/.codebuddy 的违规提交）" -ForegroundColor Green
+    Write-Host "  ✓ 已安装 pre-commit 钩子（拦截直接修改生成目录 .trae/.opencode 的违规提交）" -ForegroundColor Green
     Write-Host "    若需手动安装：Copy-Item scripts/pre-commit .git/hooks/pre-commit" -ForegroundColor DarkGray
 } else {
     Write-Host "  ⚠ 未找到 $HookSrc，跳过钩子安装" -ForegroundColor Yellow

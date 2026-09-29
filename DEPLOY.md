@@ -114,7 +114,7 @@ CodeBuddy 经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marke
 3. 预期：插件被识别为 **5 skills + 1 MCP server**（deep-review-mcp）
 4. 发起 `/capture`，确认 MCP 工具 `save_wrong_question` 可调用并落盘 `data/wrong_questions/`
 
-**Tier 2 — CodeBuddy（本地 / 远程插件市场通道）**
+**Tier 1 — CodeBuddy（本地 / 远程插件市场通道）**
 
 1. 打开 CodeBuddy → **插件管理 → 插件市场 → 添加本地市场**
 2. 选择仓库（或发布包解压后）根目录（内含 `.codebuddy-plugin/marketplace.json`）
@@ -127,7 +127,7 @@ CodeBuddy 经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marke
 | 通道 | 日期 | 结果 | 备注 |
 |------|------|------|------|
 | Tier 1 VS Code Agents Window | - | 未实测 | |
-| Tier 2 CodeBuddy 本地市场 | - | 未实测 | |
+| Tier 1 CodeBuddy 本地市场 | - | 未实测 | |
 
 ### 手动配置（回退方案）
 
@@ -306,7 +306,7 @@ DeepReview/
 │       │   ├── analysis_reports/          # 分析报告
 │       │   ├── review_plans/              # 复习计划
 │       │   └── exports/                   # 导出文件
-│       ├── pyproject.toml                 # Python 项目配置（version 0.6.0）
+│       ├── pyproject.toml                 # Python 项目配置（version 0.6.1）
 │       └── uv.lock                        # 依赖锁定
 ├── package.json                           # AAIF 声明入口（main）+ publish 脚本（agents publish）
 ├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 deep-review.plugin/AGENTS.md）
@@ -331,15 +331,15 @@ DeepReview/
 
 ```powershell
 # Windows (PowerShell 7+)
-pwsh .\scripts\build-release.ps1 -Version 0.6.0
+pwsh .\scripts\build-release.ps1 -Version 0.6.1
 ```
 
 ```bash
 # Linux / macOS
-bash scripts/build-release.sh 0.6.0
+bash scripts/build-release.sh 0.6.1
 ```
 
-产物：`dist/DeepReview-v0.6.0.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
+产物：`dist/DeepReview-v0.6.1.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
 
 构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（配置真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/` 与 CodeBuddy 市场通道文件 `.mcp.json` / `.codebuddy-plugin/`）、`.trae/` `.opencode/`（Tier 2 harness 配置）、根 `.codebuddy-plugin/marketplace.json`（本地市场清单）、`scripts/`（同步工具链）、`package.json`（发布入口），自动排除：
 

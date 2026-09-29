@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "版本号（不含 v 前缀），如 0.6.0"
+        description: "版本号（不含 v 前缀），如 0.6.1"
         required: true
-        default: "0.6.0"
+        default: "0.6.1"
 
 permissions:
   contents: write  # 创建 release 需要

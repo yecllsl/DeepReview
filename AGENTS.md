@@ -22,8 +22,8 @@
 ```
 用户交互层
 ├── 对话式交互 (命令 / 自然语言)
-├── Tier 1 (Agent Plugins 1.0 插件标准): VS Code / Copilot — 插件形态分发（plugin.json + mcp.json + skills/）
-├── Tier 2 (免费额度/开箱即用): Trae + CodeBuddy + OpenCode — 原生目录 + install 脚本
+├── Tier 1 (Agent Plugins 1.0 插件标准): VS Code / Copilot 与 CodeBuddy — 插件形态分发（plugin.json + mcp.json + skills/）
+├── Tier 2 (免费额度/开箱即用): Trae + OpenCode — 原生目录 + install 脚本
 ├── Web 可视化 (deep_review_mcp/web — 同包内 FastAPI 子模块，非独立组件)
     ↓
 Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 单向同步到 Tier 2 平台)

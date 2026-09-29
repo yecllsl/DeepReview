@@ -5,11 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.1] - 2026-09-29
+
+### Added
+
+- **Git URL 远程安装（方式 B）**：QUICKSTART / README / DEPLOY 补充 VS Code 与 CodeBuddy 直接把 GitHub 仓库（`https://github.com/yecllsl/DeepReview.git`）作为插件市场来源的安装步骤、排障与验收说明，无需下载 Release 压缩包
+- **`插件安装验证.md`**：记录 VS Code / CodeBuddy 两条通道在本机的实际安装落盘位置与验证结论（带日期的验证快照，不随版本回填）
 
 ### Changed
+
 - **CodeBuddy 改走 Tier 1 插件通道**：CodeBuddy 不再生成 `.codebuddy/` 原生目录，改用根目录 `.codebuddy-plugin/marketplace.json` 本地市场安装；`scripts/sync-agent-configs` 不再生成 `.codebuddy/`，`generate-platform-configs.py` 不再生成 `runtime/codebuddy.json`，`build-release` 不再打包 `.codebuddy/` 原生目录；`pre-commit` / `check-config-drift.sh` 不再将 `.codebuddy/` 视为生成目录
 - **安装脚本按通道分流**：`install.ps1` / `install.sh` 新增 `vscode` 运行时；`vscode` / `codebuddy` 走 Tier 1 插件安装指引，`trae` / `opencode` 走 Tier 2 原生同步
+- **MCP 启动去掉 `--no-sync`**：`deep-review.plugin/mcp.json` 与 `.mcp.json` 恢复 `uv run` 默认同步行为，插件首启自动构建虚拟环境（Git URL 远程安装场景必需）
+- **文档层级标注与基线对齐**：README 架构图/技术栈/「支持的 Harness」表、`deep-review.plugin/AGENTS.md` 架构图（及其生成的根 `AGENTS.md`、`.opencode/AGENTS.md`）、DEPLOY「手动 E2E 验收」小节与验收表、`build-release.{ps1,sh}` 与 `install.{ps1,sh}` 提示文案，统一将 CodeBuddy 表述为 Tier 1 市场通道，不再写作 Tier 2 / 单向同步目标；pre-commit 钩子提示移除 `.codebuddy/`
+
+### Removed
+
+- **`.codebuddy/` 原生配置目录**：`AGENTS.md`、`mcp.json`、5 个 Skill 与 `runtime/codebuddy.json` 全部删除，仅保留 `.codebuddy/settings.json` 与运行时自有数据（memory 等），不再参与同步与漂移校验
 
 ## [0.6.0] - 2026-09-28
 

@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="${1:-0.6.0}"
+VERSION="${1:-0.6.1}"
 
 # ──────────────────────────────────────────
 # 路径定义
@@ -60,7 +60,7 @@ mkdir -p "$STAGING_DIR/.trae/skills"
 mkdir -p "$STAGING_DIR/deep-review.plugin/skills"
 mkdir -p "$STAGING_DIR/deep-review.plugin/runtime"
 mkdir -p "$STAGING_DIR/.opencode/skills"
-# CodeBuddy 插件清单目录（Tier 2 市场通道）：插件根内 .codebuddy-plugin/ + 根级 .codebuddy-plugin/
+# CodeBuddy 插件清单目录（Tier 1 市场通道）：插件根内 .codebuddy-plugin/ + 根级 .codebuddy-plugin/
 mkdir -p "$STAGING_DIR/deep-review.plugin/.codebuddy-plugin"
 mkdir -p "$STAGING_DIR/.codebuddy-plugin"
 mkdir -p "$STAGING_DIR/scripts"
@@ -145,7 +145,7 @@ done
 # .opencode/opencode.json（instructions 指向 deep-review.plugin/AGENTS.md，cwd 为相对路径）
 cp "$PLUGIN_SRC/runtime/opencode.json" "$STAGING_DIR/.opencode/opencode.json"
 
-# Tier 2（CodeBuddy，自有格式）：市场通道三文件
+# Tier 1（CodeBuddy，自有市场格式）：市场通道三文件
 cp "$PLUGIN_SRC/.mcp.json" "$STAGING_DIR/deep-review.plugin/.mcp.json"
 cp "$PLUGIN_SRC/.codebuddy-plugin/plugin.json" "$STAGING_DIR/deep-review.plugin/.codebuddy-plugin/plugin.json"
 cp "$PROJECT_ROOT/.codebuddy-plugin/marketplace.json" "$STAGING_DIR/.codebuddy-plugin/marketplace.json"

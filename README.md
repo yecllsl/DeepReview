@@ -19,8 +19,8 @@
 ```
 用户交互层
 ├── 对话式交互 (命令/自然语言)
-├── Tier 1 (Agent Plugins 1.0 插件标准): VS Code / Copilot — 插件形态分发
-├── Tier 2 (免费额度/开箱即用): Trae + CodeBuddy + opencode — 原生目录 + install 脚本
+├── Tier 1 (Agent Plugins 1.0 插件标准): VS Code / Copilot + CodeBuddy — 插件形态分发
+├── Tier 2 (免费额度/开箱即用): Trae + opencode — 原生目录 + install 脚本
 └── Web 可视化界面 (本地浏览器 http://127.0.0.1:8001)
     ↓
 Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平台)
@@ -38,7 +38,7 @@ Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平�
 ## 技术栈
 
 - **插件层**: Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系）——`deep-review.plugin/plugin.json` + `mcp.json`（`${PLUGIN_ROOT}` 内联 MCP 启动），根 `package.json` 提供 `agents publish deep-review.plugin` 标准发布
-- **配置层**: 配置唯一真相源（`deep-review.plugin/`）+ 多 Agent harness（Trae/CodeBuddy/opencode，单向同步；另含 tools/triggers/workflows.json 三个 AAIF 声明）
+- **配置层**: 配置唯一真相源（`deep-review.plugin/`）+ Tier 2 原生 harness（Trae/opencode，单向同步；另含 tools/triggers/workflows.json 三个 AAIF 声明）
 - **MCP Server**: Python 3.12+ / FastMCP
 - **Web 可视化**: FastAPI + HTMX（OOB 局部刷新）+ Alpine.js（轻量交互）+ ECharts（图表）
 - **图片解析**: 宿主 LLM 多模态直接看图解析（无需额外图像识别依赖）
@@ -53,7 +53,7 @@ Harness 支持只分两层，判定标准是「是否采纳 Agent Plugins 1.0 �
 
 | 层 | 代表 | 交付形态 | 说明 |
 |----|------|---------|------|
-| **Tier 1 — Agent Plugins 1.0 插件标准** | VS Code / Copilot | `deep-review.plugin/` 插件目录（`plugin.json` + `mcp.json` + `skills/`） | 任何采纳 Agent Plugins 1.0 的客户端可直接指向该目录，不为单个客户端新增同步目标。该规范不携带 AGENTS.md，规则文件走 Tier 2 与仓库根 |
+| **Tier 1 — Agent Plugins 1.0 插件标准** | VS Code / Copilot、CodeBuddy | `deep-review.plugin/` 插件目录（`plugin.json` + `mcp.json` + `skills/`） | 任何采纳 Agent Plugins 1.0 的客户端可直接指向该目录，不为单个客户端新增同步目标。CodeBuddy 另经本地/Git URL 插件市场通道安装（`.codebuddy-plugin/marketplace.json`，自有格式）。该规范不携带 AGENTS.md，规则文件走 Tier 2 与仓库根 |
 | **Tier 2 — 免费额度 / 开箱即用** | Trae、OpenCode | `.trae/` / `.opencode/` 原生目录 + `install.*` | 有免费额度，用户解压即用，零额外付费门槛 |
 
 > 交付状态如实记录：CodeBuddy（本地 / Git URL 远程市场）与 VS Code Agents Window 通道的端到端实测**尚未执行**，验收方法见 DEPLOY「手动 E2E 验收方法」，实测后回填结果。
@@ -89,7 +89,7 @@ Harness 支持只分两层，判定标准是「是否采纳 Agent Plugins 1.0 �
 
 #### 1. 下载并解压（方式 A）
 
-下载 `DeepReview-v0.6.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
+下载 `DeepReview-v0.6.1.zip`，解压到任意目录（如 `D:\DeepReview\`）。
 
 #### 2. 运行安装脚本
 
@@ -251,7 +251,7 @@ DeepReview/
 │       │   └── web/                       # Web 可视化模块（薄编排层）
 │       ├── tests/                         # 测试套件
 │       ├── data/                          # 运行时数据（被 .gitignore）
-│       ├── pyproject.toml                 # Python 项目配置（version 0.6.0）
+│       ├── pyproject.toml                 # Python 项目配置（version 0.6.1）
 │       └── uv.lock                        # 依赖锁定文件
 ├── package.json                           # AAIF 声明入口（main）+ publish 脚本（agents publish）
 ├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 deep-review.plugin/AGENTS.md）
@@ -374,15 +374,15 @@ uv sync --extra optimize
 
 ```powershell
 # Windows
-pwsh .\scripts\build-release.ps1 -Version 0.6.0
+pwsh .\scripts\build-release.ps1 -Version 0.6.1
 ```
 
 ```bash
 # Linux / macOS
-bash scripts/build-release.sh 0.6.0
+bash scripts/build-release.sh 0.6.1
 ```
 
-产物：`dist/DeepReview-v0.6.0.{zip,tar.zst,tar.gz}`。
+产物：`dist/DeepReview-v0.6.1.{zip,tar.zst,tar.gz}`。
 
 ### CI/CD
 
