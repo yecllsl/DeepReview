@@ -109,10 +109,11 @@ CodeBuddy 经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marke
 **Tier 1 — VS Code / Copilot（Agent Plugins 1.0 插件标准）**
 
 1. 打开 VS Code → Agents Window → 插件面板
-2. 选择 **Install from Source**，指向仓库（或发布包解压目录）内的 `deep-review.plugin/`
-   - 或**无需下载**：Install from Source / 添加远程插件源，填入 `https://github.com/yecllsl/DeepReview.git`（或其内 `deep-review.plugin/` 目录 URL），客户端拉取插件包
-3. 预期：插件被识别为 **5 skills + 1 MCP server**（deep-review-mcp）
-4. 发起 `/capture`，确认 MCP 工具 `save_wrong_question` 可调用并落盘 `data/wrong_questions/`
+2. **本地安装**：选择 **Install from Source**，指向本地仓库内的 `deep-review.plugin/` 目录（其根含 `plugin.json`）
+3. **远程安装（GitHub，无需下载）**：在 settings.json 的 `chat.plugins.marketplaces` 加入 `"yecllsl/DeepReview"`（仓库根 `marketplace.json` 的 `source` 指向 `./deep-review.plugin`）→ 重新加载 → Browse Marketplace / 浏览插件市场 → 安装 `deep-review`
+   - 注：VS Code 的 **Install from Source** 要求 `plugin.json` 在仓库根；本仓库插件位于 `deep-review.plugin/` 子目录，故不能填仓库根 URL 或子目录 URL 直装，必须经远程市场间接层
+4. 预期：插件被识别为 **5 skills + 1 MCP server**（deep-review-mcp）
+5. 发起 `/capture`，确认 MCP 工具 `save_wrong_question` 可调用并落盘 `data/wrong_questions/`
 
 **Tier 1 — CodeBuddy（本地 / 远程插件市场通道）**
 
@@ -126,8 +127,8 @@ CodeBuddy 经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marke
 
 | 通道 | 日期 | 结果 | 备注 |
 |------|------|------|------|
-| Tier 1 VS Code Agents Window | - | 未实测 | |
-| Tier 1 CodeBuddy 本地市场 | - | 未实测 | |
+| Tier 1 VS Code（远程市场 chat.plugins.marketplaces） | 2026-09-29 | ✅ 通过 | 仓库根 marketplace.json 的 source 解析 ./deep-review.plugin |
+| Tier 1 CodeBuddy 本地/远程市场 | - | ✅ 已实测 | /plugin marketplace add 安装 deep-review |
 
 ### 手动配置（回退方案）
 

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **仓库根 `marketplace.json`（VS Code / Copilot 远程市场）**：新增 Claude Code / Copilot CLI 同源市场格式清单，插件条目 `source` 指向 `./deep-review.plugin`，使 VS Code 经 `chat.plugins.marketplaces: ["yecllsl/DeepReview"]` 远程市场安装 DeepReview 走通（VS Code 的 Install from Source 要求 `plugin.json` 在仓库根，本仓库插件在子目录，故不能用仓库根/子目录 URL 直装）；`scripts/check_version.py` 已纳入该清单的版本守卫
+
+### Changed
+
+- **文档对齐 VS Code 远程市场安装**：README / DEPLOY / QUICKSTART / AGENTS.md 将 VS Code 的 GitHub 安装统一描述为经根 `marketplace.json` 的远程市场方式，删除「子目录 URL 直装」的错误说法，并在 AGENTS.md 注明插件刻意收纳于子目录、勿为远程市场把插件移到仓库根（防误重构）
+
 ## [0.6.1] - 2026-09-29
 
 ### Added
