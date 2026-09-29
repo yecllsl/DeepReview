@@ -2,13 +2,13 @@
 # 从源码生成可分发的 zip 包（白名单复制策略，避免误打包 .venv）
 #
 # 使用方法：
-#   pwsh .\scripts\build-release.ps1 [-Version "0.6.1"]
+#   pwsh .\scripts\build-release.ps1 [-Version "0.6.2"]
 #
 # 输出：
-#   dist/DeepReview-v0.6.1.zip
+#   dist/DeepReview-v0.6.2.zip
 
 param(
-    [string]$Version = "0.6.1"
+    [string]$Version = "0.6.2"
 )
 
 $ErrorActionPreference = "Stop"
@@ -233,7 +233,7 @@ Write-Ok "source copied"
 # [5/6] 复制顶层文档和安装脚本
 # ──────────────────────────────────────────
 Write-Step "[5/6] Copy docs and install scripts..."
-$topFiles = @("install.ps1", "install.sh", "README.md", "DEPLOY.md", "QUICKSTART.md", "LICENSE", "AGENTS.md", "package.json")
+$topFiles = @("install.ps1", "install.sh", "README.md", "DEPLOY.md", "QUICKSTART.md", "LICENSE", "AGENTS.md", "package.json", "marketplace.json")
 foreach ($f in $topFiles) {
     $src = Join-Path $projectRoot $f
     if (Test-Path $src) {
@@ -270,7 +270,8 @@ $requiredFiles = @(
     "deep-review.plugin\deep-review-mcp\src\deep_review_mcp\server.py",
     "install.ps1",
     "install.sh",
-    "README.md"
+    "README.md",
+    "marketplace.json"
 )
 
 $missing = @()

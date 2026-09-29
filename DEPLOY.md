@@ -307,7 +307,7 @@ DeepReview/
 │       │   ├── analysis_reports/          # 分析报告
 │       │   ├── review_plans/              # 复习计划
 │       │   └── exports/                   # 导出文件
-│       ├── pyproject.toml                 # Python 项目配置（version 0.6.1）
+│       ├── pyproject.toml                 # Python 项目配置（version 0.6.2）
 │       └── uv.lock                        # 依赖锁定
 ├── package.json                           # AAIF 声明入口（main）+ publish 脚本（agents publish）
 ├── .trae/                                  # [生成] Trae 配置（sync 单向覆盖；规则已合并入 deep-review.plugin/AGENTS.md）
@@ -332,17 +332,17 @@ DeepReview/
 
 ```powershell
 # Windows (PowerShell 7+)
-pwsh .\scripts\build-release.ps1 -Version 0.6.1
+pwsh .\scripts\build-release.ps1 -Version 0.6.2
 ```
 
 ```bash
 # Linux / macOS
-bash scripts/build-release.sh 0.6.1
+bash scripts/build-release.sh 0.6.2
 ```
 
-产物：`dist/DeepReview-v0.6.1.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
+产物：`dist/DeepReview-v0.6.2.{zip,tar.zst,tar.gz}`，结构与 GitHub Release 资产一致。
 
-构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（配置真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/` 与 CodeBuddy 市场通道文件 `.mcp.json` / `.codebuddy-plugin/`）、`.trae/` `.opencode/`（Tier 2 harness 配置）、根 `.codebuddy-plugin/marketplace.json`（本地市场清单）、`scripts/`（同步工具链）、`package.json`（发布入口），自动排除：
+构建脚本采用**白名单复制策略**，打包 `deep-review.plugin/`（配置真相源 + Agent Plugins 1.0 插件包，含内联 `deep-review-mcp/` 与 CodeBuddy 市场通道文件 `.mcp.json` / `.codebuddy-plugin/`）、`.trae/` `.opencode/`（Tier 2 harness 配置）、根 `.codebuddy-plugin/marketplace.json`（本地市场清单）、`scripts/`（同步工具链）、`package.json`（发布入口）、根 `marketplace.json`（VS Code 远程市场清单），自动排除：
 
 - `__pycache__/`、`.pytest_cache/`、`*.pyc`
 - `.venv/`、`.git/`、`.vscode/`

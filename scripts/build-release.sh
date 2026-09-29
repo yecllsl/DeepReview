@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="${1:-0.6.1}"
+VERSION="${1:-0.6.2}"
 
 # ──────────────────────────────────────────
 # 路径定义
@@ -204,7 +204,7 @@ log_ok "source copied"
 # [5/6] 复制顶层文档和安装脚本
 # ──────────────────────────────────────────
 log_step "[5/6] Copy docs and install scripts..."
-for f in install.ps1 install.sh README.md DEPLOY.md QUICKSTART.md LICENSE AGENTS.md package.json; do
+for f in install.ps1 install.sh README.md DEPLOY.md QUICKSTART.md LICENSE AGENTS.md package.json marketplace.json; do
     [ -f "$PROJECT_ROOT/$f" ] && cp "$PROJECT_ROOT/$f" "$STAGING_DIR/$f"
 done
 log_ok "docs copied"
@@ -238,6 +238,7 @@ required=(
     "install.ps1"
     "install.sh"
     "README.md"
+    "marketplace.json"
 )
 missing=()
 for rf in "${required[@]}"; do
