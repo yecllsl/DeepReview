@@ -1,8 +1,20 @@
 # DeepReview 快速入门
 
-## 3 步开始使用
+## 前置要求（四种运行时都需要）
 
-### 第 1 步：下载并解压
+- **Python 3.12+**，且 `python` 命令在 PATH（安装脚本会以 `python --version` 校验）
+- **uv** 包管理器：`powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`（或见 https://docs.astral.sh/uv/getting-started/installation/）
+
+> ⚠️ **前置**：MCP server 由 `uv run` 启动。VS Code / CodeBuddy（Tier 1，含 Git URL 远程安装）会在首次启动时自动 `uv sync` 构建虚拟环境；Trae / opencode（Tier 2）需先跑一次安装脚本（`uv sync` 建环境 + 同步原生目录）。只要本机已装 `uv` 与 Python 3.12+ 即可。
+
+## 开始使用（两种方式）
+
+DeepReview 提供**两种获取方式，结果完全一致**——都拿到插件包 `deep-review.plugin/`（`mcp.json` + `skills/` + `AGENTS.md` + `deep-review-mcp/`）：
+
+- **方式 A — 下载并解压**：从 GitHub Release 取压缩包，全部运行时通用。
+- **方式 B — Git URL / 仓库安装**：仅 VS Code / CodeBuddy 支持，把 GitHub 仓库直接作为插件市场来源加载，**无需下载压缩包**。
+
+### 方式 A：下载并解压
 
 从 [GitHub Releases](https://github.com/yecllsl/DeepReview/releases) 下载最新版本，按需选择格式：
 
@@ -12,7 +24,16 @@
 
 解压到任意目录（如 `D:\DeepReview\` 或 `~/DeepReview/`）。
 
-### 第 2 步：安装依赖
+### 方式 B：Git URL / 仓库安装（VS Code / CodeBuddy，无需下载）
+
+VS Code 与 CodeBuddy 支持把 **GitHub 仓库 / Git URL 直接作为插件市场来源**，客户端自动克隆插件包到其市场缓存目录，**无需手动下载 Release 压缩包**。插件包（`mcp.json` + `skills/` + `AGENTS.md` + `deep-review-mcp/`）随之一并加载：
+
+- **CodeBuddy**：对话中执行 `/plugin marketplace add https://github.com/yecllsl/DeepReview.git`（或简写 `yecll/DeepReview`）添加远程市场 → `/plugin marketplace list` 确认市场名（GitHub 仓库通常形如 `yecllsl-deep-review`）→ `/plugin install deep-review@<市场名>` → 必要时 `/reload-plugins`。
+- **VS Code（Agent Plugins 1.0）**：在 Agents 面板选择 **Install from Source / 添加远程插件源**，填入仓库 URL（或仓库内 `deep-review.plugin/` 目录 URL），客户端拉取插件包。
+
+> 方式 B 下 MCP server 首次启动时 `uv run` 会自动 `uv sync` 构建虚拟环境，无需手动执行；`skills/` 与 `AGENTS.md` 随插件包一并加载。Trae / opencode 不支持此方式，请走方式 A。
+
+### 安装依赖（仅方式 A 需要）
 
 ```powershell
 # Windows: 右键 install.ps1 → "使用 PowerShell 运行"
@@ -24,32 +45,74 @@
 chmod +x install.sh && ./install.sh
 ```
 
-### 第 3 步：配置 Agent 运行时
+> 方式 B（VS Code / CodeBuddy 远程安装）由客户端托管插件包，`uv run` 自动同步依赖，**无需运行安装脚本**。
+
+### 配置 Agent 运行时（方式 A 按通道分流）
 
 安装脚本通过 `-AgentRuntime` 指定要配置的运行时（缺省只装依赖，不配置运行时）：
 
 ```powershell
-# Windows：Tier 2 一次配置全部（Trae + opencode）
-.\install.ps1 -AgentRuntime all
-# 或只配置单个：.\install.ps1 -AgentRuntime trae / opencode
-# VS Code / CodeBuddy 走 Tier 1 插件通道，无需此步（见下方表格）
+# Windows
+.\install.ps1 -AgentRuntime vscode     # 或 trae / codebuddy / opencode / all
 ```
 
 ```bash
 # Linux/macOS
-./install.sh --agent-runtime all
+./install.sh --agent-runtime vscode    # 或 trae / codebuddy / opencode / all
 ```
 
-| 运行时 | 通道 | 使用方式 |
-|--------|------|---------|
-| VS Code | Tier 1 插件 | 打开项目 → Agent 面板添加本地 Agent Plugin → 指向 `deep-review.plugin/` |
-| CodeBuddy | Tier 1 插件 | 打开项目 → `/plugin marketplace add <根目录>` → `/plugin install deep-review@deep-review-local-market` |
-| Trae | Tier 2 原生 | 打开项目 → 设置 → MCP → 启用项目级 MCP（`.trae/` 由 install 同步生成） |
-| opencode | Tier 2 原生 | 项目目录运行 `opencode`，自动加载（`.opencode/` 由 install 同步生成） |
+| 运行时 | 通道 | 获取方式 | 使用方式 |
+|--------|------|---------|---------|
+| VS Code | Tier 1 插件 | 方式 A 或 **方式 B** | A：打开项目 → Agent 面板添加本地 Agent Plugin → 指向 `deep-review.plugin/`<br>B：Agents 面板 Install from Source → 仓库 URL |
+| CodeBuddy | Tier 1 插件 | 方式 A 或 **方式 B** | A：打开项目 → `/plugin marketplace add <根目录>` → install<br>B：`/plugin marketplace add <仓库URL>` → install |
+| Trae | Tier 2 原生 | 仅方式 A | 打开项目 → 设置 → MCP → 启用项目级 MCP（`.trae/` 由 install 同步生成） |
+| opencode | Tier 2 原生 | 仅方式 A | 在项目根目录运行 `opencode`（`.opencode/` 由 install 同步生成） |
 
-### 第 4 步：开始使用
+#### VS Code（Tier 1 · Agent Plugins 1.0）
+
+- **方式 B（推荐，无需下载）**：Agents 面板 → **Install from Source / 添加远程插件源** → 填入 `https://github.com/yecllsl/DeepReview.git`（或仓库内 `deep-review.plugin/` 目录 URL），客户端拉取插件包（含 `plugin.json` + `mcp.json` + `skills/` + `AGENTS.md`）。
+- **方式 A（下载解压）**：`.\install.ps1 -AgentRuntime vscode`（或 `./install.sh --agent-runtime vscode`）→ 用 VS Code 打开项目文件夹 → 在 Agent 面板**添加本地 Agent Plugin**，目录指向 `deep-review.plugin/`。
+- 调用 `/capture` 等 Skill 即可使用。
+
+#### CodeBuddy（Tier 1 · 插件市场）
+
+- **方式 B（推荐，无需下载）**：对话中执行 `/plugin marketplace add https://github.com/yecllsl/DeepReview.git`（或 `yecll/DeepReview`）添加远程市场 → `/plugin marketplace list` 确认市场名 → `/plugin install deep-review@<市场名>` → 必要时 `/reload-plugins`。
+- **方式 A（下载解压）**：`.\install.ps1 -AgentRuntime codebuddy` → 用 CodeBuddy 打开项目文件夹 → 对话中执行 `/plugin marketplace add <项目根目录绝对路径>`（根目录含 `.codebuddy-plugin/marketplace.json`，其 `source` 指向 `./deep-review.plugin`）→ `/plugin install deep-review@deep-review-local-market` → `/reload-plugins`。
+
+> CodeBuddy **不再生成 `.codebuddy/` 原生目录**，插件内容全部来自 `deep-review.plugin/`，不会与旧配置重复加载。
+
+#### Trae（Tier 2 · 原生目录）
+
+1. `.\install.ps1 -AgentRuntime trae`（会 `uv sync` 并同步生成 `.trae/`：`mcp.json` + `skills/` + 根 `AGENTS.md`）
+2. 用 Trae 打开项目文件夹
+3. 设置 → **MCP** → 启用「项目级 MCP」
+4. 设置 → **规则** → 开启「将 AGENTS.md 包含在上下文中」（Trae 读项目根 `AGENTS.md`）
+
+> 若 Trae 不识别 `${workspaceFolder}` 变量，改用 `.\install.ps1 -AgentRuntime trae -FixPath` 替换为绝对路径。
+
+#### opencode（Tier 2 · 原生目录）
+
+1. `./install.sh --agent-runtime opencode`（会 `uv sync` 并同步生成 `.opencode/`：`opencode.json` + `skills/` + `AGENTS.md`）
+2. 在**项目根目录**运行 `opencode`
+3. 它会自动加载 `.opencode/opencode.json`（MCP）与 `AGENTS.md`
+
+### 开始使用
 
 输入 `/capture`、`/batch-capture`、`/analyze`、`/review` 或 `/stats` 即可！
+
+### 验证安装
+
+让 LLM 执行 `/capture`（或直接问「查询我的错题」）——若能调用到 `deep-review-mcp` 工具即正常；也可在各运行时的 MCP 面板确认 `deep-review-mcp` 已连接。
+
+### 排障
+
+- **MCP 起不来**：确认本机 `uv` 与 `python`(3.12+) 在 PATH；方式 B（VS Code / CodeBuddy 远程安装）首启会自动 `uv sync`，方式 A 请先跑安装脚本或手动 `cd deep-review.plugin/deep-review-mcp && uv sync`
+- **Trae 读不到规则**：确认已开启「将 AGENTS.md 包含在上下文中」，必要时用 `-FixPath`
+- **CodeBuddy 插件未生效**：执行 `/plugin marketplace list` 确认市场已添加，再 `/reload-plugins`
+
+### 数据位置
+
+全部数据存于本地 `deep-review.plugin/deep-review-mcp/data/`。
 
 ---
 

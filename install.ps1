@@ -25,7 +25,7 @@ $ErrorActionPreference = "Stop"
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " DeepReview v0.6.0 安装向导" -ForegroundColor Cyan
-Write-Host "  (Trae + CodeBuddy + opencode)" -ForegroundColor Cyan
+Write-Host "  (VS Code / CodeBuddy 走插件通道 · Trae / opencode 走原生目录)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

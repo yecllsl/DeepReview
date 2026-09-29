@@ -38,6 +38,8 @@ chmod +x install.sh
 # 4. 重启运行时
 ```
 
+> **提示**：VS Code / CodeBuddy 还支持**「方式 B」Git URL 远程安装**——直接把 `https://github.com/yecllsl/DeepReview.git` 作为插件市场来源加载，**无需下载 Release 压缩包**（插件包由客户端自动克隆）。详见 [QUICKSTART.md](QUICKSTART.md)。
+
 ## 环境要求
 
 | 依赖 | 最低版本 | 安装方式 |
@@ -89,6 +91,7 @@ v0.3.0 起支持 Agent 运行时（harness）：Trae / CodeBuddy / opencode；v0
 - CodeBuddy 走 Agent Plugins 1.0 插件通道（**不再生成 `.codebuddy/` 原生目录**）
 - 用 CodeBuddy 打开项目文件夹，在对话框执行：`/plugin marketplace add <项目根目录>`（根目录含 `.codebuddy-plugin/marketplace.json`，其 `source` 指向 `./deep-review.plugin`）
 - 再执行：`/plugin install deep-review@deep-review-local-market`，必要时 `/reload-plugins`
+- **或无需下载**（方式 B · Git URL 远程市场）：对话中执行 `/plugin marketplace add https://github.com/yecllsl/DeepReview.git`（或 `yecll/DeepReview`）→ `/plugin marketplace list` 确认市场名 → `/plugin install deep-review@<市场名>` → `/reload-plugins`；插件包由客户端克隆到市场缓存目录，MCP 首启自动 `uv sync`
 
 ### opencode（项目级）
 
@@ -97,7 +100,7 @@ v0.3.0 起支持 Agent 运行时（harness）：Trae / CodeBuddy / opencode；v0
 
 ### CodeBuddy 插件市场通道（Tier 1 主通道）
 
-CodeBuddy 经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marketplace.json`，市场名 `deep-review-local-market`）：**插件管理 → 插件市场 → 添加本地市场** → 选择仓库根目录 → 安装 `deep-review` 插件。
+CodeBuddy 经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marketplace.json`，市场名 `deep-review-local-market`）：**插件管理 → 插件市场 → 添加本地市场** → 选择仓库根目录 → 安装 `deep-review` 插件。也可**添加远程市场（Git URL）**：`/plugin marketplace add https://github.com/yecllsl/DeepReview.git`，同样安装 `deep-review` 插件，**无需先下载仓库**。
 
 ### 手动 E2E 验收方法（Tier 1 / Tier 2 交付链路）
 
@@ -107,14 +110,16 @@ CodeBuddy 经本地插件市场一键安装（仓库根 `.codebuddy-plugin/marke
 
 1. 打开 VS Code → Agents Window → 插件面板
 2. 选择 **Install from Source**，指向仓库（或发布包解压目录）内的 `deep-review.plugin/`
+   - 或**无需下载**：Install from Source / 添加远程插件源，填入 `https://github.com/yecllsl/DeepReview.git`（或其内 `deep-review.plugin/` 目录 URL），客户端拉取插件包
 3. 预期：插件被识别为 **5 skills + 1 MCP server**（deep-review-mcp）
 4. 发起 `/capture`，确认 MCP 工具 `save_wrong_question` 可调用并落盘 `data/wrong_questions/`
 
-**Tier 2 — CodeBuddy（本地插件市场通道）**
+**Tier 2 — CodeBuddy（本地 / 远程插件市场通道）**
 
 1. 打开 CodeBuddy → **插件管理 → 插件市场 → 添加本地市场**
 2. 选择仓库（或发布包解压后）根目录（内含 `.codebuddy-plugin/marketplace.json`）
-3. 从市场 `deep-review-local-market` 安装 `deep-review` 插件
+   - 或**无需下载**：添加远程市场 `/plugin marketplace add https://github.com/yecllsl/DeepReview.git`（或 `yecll/DeepReview`）
+3. `/plugin marketplace list` 确认市场名（本地市场为 `deep-review-local-market`，GitHub 仓库通常形如 `yecllsl-deep-review`）→ `/plugin install deep-review@<市场名>`
 4. 预期：插件安装成功、`deep-review-mcp` 出现在 MCP 列表；发起 `/capture` 验证工具链路
 
 **验收记录**

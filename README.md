@@ -56,7 +56,7 @@ Harness 支持只分两层，判定标准是「是否采纳 Agent Plugins 1.0 �
 | **Tier 1 — Agent Plugins 1.0 插件标准** | VS Code / Copilot | `deep-review.plugin/` 插件目录（`plugin.json` + `mcp.json` + `skills/`） | 任何采纳 Agent Plugins 1.0 的客户端可直接指向该目录，不为单个客户端新增同步目标。该规范不携带 AGENTS.md，规则文件走 Tier 2 与仓库根 |
 | **Tier 2 — 免费额度 / 开箱即用** | Trae、OpenCode | `.trae/` / `.opencode/` 原生目录 + `install.*` | 有免费额度，用户解压即用，零额外付费门槛 |
 
-> 交付状态如实记录：CodeBuddy 本地市场通道与 VS Code Agents Window 通道的端到端实测**尚未执行**，验收方法见 DEPLOY「手动 E2E 验收方法」，实测后回填结果。
+> 交付状态如实记录：CodeBuddy（本地 / Git URL 远程市场）与 VS Code Agents Window 通道的端到端实测**尚未执行**，验收方法见 DEPLOY「手动 E2E 验收方法」，实测后回填结果。
 
 ### 各客户端安装方式对照
 
@@ -66,6 +66,8 @@ Harness 支持只分两层，判定标准是「是否采纳 Agent Plugins 1.0 �
 | CodeBuddy | **插件管理 → 插件市场 → 添加本地市场**（`.codebuddy-plugin/marketplace.json`，市场 `deep-review-local-market`） | ❌ 自有市场格式 | Tier 1 | 未实测 |
 | OpenCode | `opencode.json` 的 `mcp` 字段 + `.opencode/skills/`（`install.ps1 -AgentRuntime opencode`） | ❌ | Tier 2 | 未实测 |
 | Trae | 内置 MCP 市场 / `.trae/mcp.json` + `.trae/skills/`（`install.ps1 -AgentRuntime trae`） | ❌ | Tier 2 | 未实测 |
+
+> **VS Code / CodeBuddy 还支持「方式 B」Git URL 远程安装**：直接把 `https://github.com/yecllsl/DeepReview.git` 作为插件市场来源加载，无需下载 Release 压缩包，插件包（mcp.json + skills/ + AGENTS.md + deep-review-mcp/）由客户端自动克隆（详见 [QUICKSTART.md](QUICKSTART.md)）。
 
 > OpenCode / Trae 的「插件」（IDE 扩展或 hook 插件）与 Agent Plugins 1.0 打包标准不是一回事；两者均**未采纳**该标准，故 MCP+skills 只能走原生目录/市场。若将来采纳，按「先归层再加」升入 Tier 1。
 
@@ -81,7 +83,11 @@ Harness 支持只分两层，判定标准是「是否采纳 Agent Plugins 1.0 �
 
 ### 安装步骤
 
-#### 1. 下载并解压
+> **获取插件包有两种方式，结果一致**：
+> - **方式 A — 下载并解压**：从 GitHub Release 取压缩包（全部运行时通用，见下「1. 下载并解压」）。
+> - **方式 B — Git URL / 仓库安装**：VS Code / CodeBuddy 直接把 GitHub 仓库（`https://github.com/yecllsl/DeepReview.git`）作为插件市场来源远程加载，**无需下载压缩包**；插件包（mcp.json + skills/ + AGENTS.md + deep-review-mcp/）由客户端克隆加载。详见 [QUICKSTART.md](QUICKSTART.md)。
+
+#### 1. 下载并解压（方式 A）
 
 下载 `DeepReview-v0.6.0.zip`，解压到任意目录（如 `D:\DeepReview\`）。
 
@@ -100,18 +106,20 @@ chmod +x install.sh
 ./install.sh
 ```
 
-安装脚本会自动检查环境、创建虚拟环境并安装所有依赖。
+安装脚本会自动检查环境，并在 `deep-review.plugin/deep-review-mcp/` 下执行 `uv sync` 创建虚拟环境、安装依赖（MCP server 依赖此虚拟环境启动）。
 
-#### 3. 配置 Agent 运行时（多 harness）
+#### 3. 配置 Agent 运行时（按通道分流）
 
-安装脚本支持通过 `-AgentRuntime` 指定要配置的运行时：
+安装脚本通过 `-AgentRuntime` 指定运行时：`vscode` / `codebuddy` 走 **Tier 1 插件通道**，`trae` / `opencode` 走 **Tier 2 原生目录**同步。（VS Code / CodeBuddy 也可走「方式 B」Git URL 远程安装，跳过本步与安装脚本，详见 [QUICKSTART.md](QUICKSTART.md)）
 
 ```powershell
-# Windows：一次性配置全部（Trae/CodeBuddy/opencode）
+# Windows：Tier 2 一次配置全部（Trae + opencode）
 .\install.ps1 -AgentRuntime all
 
 # 或只配置单个运行时
+.\install.ps1 -AgentRuntime vscode
 .\install.ps1 -AgentRuntime codebuddy
+.\install.ps1 -AgentRuntime trae
 .\install.ps1 -AgentRuntime opencode
 ```
 
@@ -119,6 +127,8 @@ chmod +x install.sh
 # Linux/macOS
 ./install.sh --agent-runtime all
 ```
+
+> 四种运行时的**完整首次使用步骤**（各客户端具体操作、验证与排障）见 [QUICKSTART.md](QUICKSTART.md)。
 
 Tier 2 两个项目级运行时的配置目录（`.trae/` `.opencode/`）由 `scripts/sync-agent-configs` 从 `deep-review.plugin/`（配置唯一真相源）单向生成（CodeBuddy / VS Code 走 Tier 1 插件通道，不产生原生目录）：
 
