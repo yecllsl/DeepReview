@@ -63,7 +63,7 @@ Harness 支持只分两层，判定标准是「是否采纳 Agent Plugins 1.0 �
 | 客户端 | 安装 MCP + skills 的方式 | 用 Agent Plugins 1.0 插件包？ | 层 | 实测 |
 |--------|--------------------------|------------------------------|----|------|
 | VS Code / Copilot | 本地：Agents Window → **Install from Source** 指向 `deep-review.plugin/`<br>远程：settings.json `chat.plugins.marketplaces` 加 `yecllsl/DeepReview` → Browse Marketplace 安装 `deep-review` | ✅ 是 | Tier 1 | ✅ 是（远程市场） |
-| CodeBuddy | **插件管理 → 插件市场 → 添加本地市场**（`.codebuddy-plugin/marketplace.json`，市场 `deep-review-local-market`） | ❌ 自有市场格式 | Tier 1 | 未实测 |
+| CodeBuddy | **插件管理 → 插件市场 → 添加本地市场**（`.codebuddy-plugin/marketplace.json`，市场 `deep-review-local-market`） | ❌ 自有市场格式 | Tier 1 | ✅ 是（本地/远程市场） |
 | OpenCode | `opencode.json` 的 `mcp` 字段 + `.opencode/skills/`（`install.ps1 -AgentRuntime opencode`） | ❌ | Tier 2 | 未实测 |
 | Trae | 内置 MCP 市场 / `.trae/mcp.json` + `.trae/skills/`（`install.ps1 -AgentRuntime trae`） | ❌ | Tier 2 | 未实测 |
 
