@@ -1,0 +1,16 @@
+{
+  "name": "deep-review-local-market",
+  "description": "DeepReview 插件市场（单插件，供 VS Code / Copilot CLI 经 Agent Plugins 1.0 远程市场安装；source 指向 ./deep-review.plugin）",
+  "owner": {
+    "name": "yecll"
+  },
+  "plugins": [
+    {
+      "name": "deep-review",
+      "description": "DeepReview K12 错题收集与智能分析 Agent Plugin：拍照/文本录入 → 多模态解析 → 智能分类 → 本地保存 → FSRS v6 复习排程 → 到期推荐 → 深度原因分析。",
+      "version": "0.6.1",
+      "source": "./deep-review.plugin",
+      "license": "MIT"
+    }
+  ]
+}

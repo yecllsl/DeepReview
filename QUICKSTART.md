@@ -29,7 +29,7 @@ DeepReview 提供**两种获取方式，结果完全一致**——都拿到插�
 VS Code 与 CodeBuddy 支持把 **GitHub 仓库 / Git URL 直接作为插件市场来源**，客户端自动克隆插件包到其市场缓存目录，**无需手动下载 Release 压缩包**。插件包（`mcp.json` + `skills/` + `AGENTS.md` + `deep-review-mcp/`）随之一并加载：
 
 - **CodeBuddy**：对话中执行 `/plugin marketplace add https://github.com/yecllsl/DeepReview.git`（或简写 `yecll/DeepReview`）添加远程市场 → `/plugin marketplace list` 确认市场名（GitHub 仓库通常形如 `yecllsl-deep-review`）→ `/plugin install deep-review@<市场名>` → 必要时 `/reload-plugins`。
-- **VS Code（Agent Plugins 1.0）**：在 Agents 面板选择 **Install from Source / 添加远程插件源**，填入仓库 URL（或仓库内 `deep-review.plugin/` 目录 URL），客户端拉取插件包。
+- **VS Code（Agent Plugins 1.0）**：在 VS Code `settings.json` 的 `chat.plugins.marketplaces` 加入 `"yecllsl/DeepReview"`（仓库根含 `marketplace.json`，其 `source` 指向 `./deep-review.plugin`）→ 打开 Agents 面板 → **Browse Marketplace / 浏览插件市场** → 安装 `deep-review`，客户端克隆插件包到市场缓存目录。
 
 > 方式 B 下 MCP server 首次启动时 `uv run` 会自动 `uv sync` 构建虚拟环境，无需手动执行；`skills/` 与 `AGENTS.md` 随插件包一并加载。Trae / opencode 不支持此方式，请走方式 A。
 
@@ -63,14 +63,15 @@ chmod +x install.sh && ./install.sh
 
 | 运行时 | 通道 | 获取方式 | 使用方式 |
 |--------|------|---------|---------|
-| VS Code | Tier 1 插件 | 方式 A 或 **方式 B** | A：打开项目 → Agent 面板添加本地 Agent Plugin → 指向 `deep-review.plugin/`<br>B：Agents 面板 Install from Source → 仓库 URL |
+| VS Code | Tier 1 插件 | 方式 A 或 **方式 B** | A：打开项目 → Agent 面板添加本地 Agent Plugin → 指向 `deep-review.plugin/`<br>B：settings.json `chat.plugins.marketplaces` 加 `yecllsl/DeepReview` → 浏览市场安装 `deep-review` |
 | CodeBuddy | Tier 1 插件 | 方式 A 或 **方式 B** | A：打开项目 → `/plugin marketplace add <根目录>` → install<br>B：`/plugin marketplace add <仓库URL>` → install |
 | Trae | Tier 2 原生 | 仅方式 A | 打开项目 → 设置 → MCP → 启用项目级 MCP（`.trae/` 由 install 同步生成） |
 | opencode | Tier 2 原生 | 仅方式 A | 在项目根目录运行 `opencode`（`.opencode/` 由 install 同步生成） |
 
 #### VS Code（Tier 1 · Agent Plugins 1.0）
 
-- **方式 B（推荐，无需下载）**：Agents 面板 → **Install from Source / 添加远程插件源** → 填入 `https://github.com/yecllsl/DeepReview.git`（或仓库内 `deep-review.plugin/` 目录 URL），客户端拉取插件包（含 `plugin.json` + `mcp.json` + `skills/` + `AGENTS.md`）。
+- **方式 B（推荐，无需下载 · GitHub 远程市场）**：在 VS Code `settings.json` 加入 `"chat.plugins.marketplaces": ["yecllsl/DeepReview"]`（仓库根含 `marketplace.json`，其 `source` 指向 `./deep-review.plugin`）→ 打开 Agents 面板 → **Browse Marketplace / 浏览插件市场** → 安装 `deep-review`（含 `plugin.json` + `mcp.json` + `skills/` + `AGENTS.md`）。
+  - 注：VS Code 的 **Install from Source** 要求在仓库**根**存在 `plugin.json`，本仓库插件在 `deep-review.plugin/` 子目录，故不能用「子目录 URL」直装；远程市场方式借助根 `marketplace.json` 的 `source` 间接层解析子目录，是本仓库走 GitHub 的正确路径。
 - **方式 A（下载解压）**：`.\install.ps1 -AgentRuntime vscode`（或 `./install.sh --agent-runtime vscode`）→ 用 VS Code 打开项目文件夹 → 在 Agent 面板**添加本地 Agent Plugin**，目录指向 `deep-review.plugin/`。
 - 调用 `/capture` 等 Skill 即可使用。
 

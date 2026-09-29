@@ -49,6 +49,7 @@ MANIFEST_VERSIONS: list[tuple[str, tuple[str | int, ...]]] = [
     ("deep-review.plugin/plugin.json", ("version",)),
     ("deep-review.plugin/.codebuddy-plugin/plugin.json", ("version",)),
     (".codebuddy-plugin/marketplace.json", ("plugins", 0, "version")),
+    ("marketplace.json", ("plugins", 0, "version")),
     ("deep-review.plugin/tools.json", ("version",)),
 ]
 
