@@ -5,6 +5,7 @@
 底层调用 Storage 引擎完成实际的文件IO操作。
 """
 
+import os
 from pathlib import Path
 
 from deep_review_mcp.models import (
@@ -44,8 +45,13 @@ def _fill_required_defaults(question_data: dict) -> dict:
 
 
 def get_storage() -> Storage:
-    """获取默认Storage实例（指向项目data目录）"""
-    return Storage(base_dir=_DEFAULT_DATA_DIR)
+    """获取默认Storage实例（指向项目data目录，DEEP_REVIEW_DATA_DIR 环境变量可覆盖）
+
+    环境变量用于 DeepTutor 多实例隔离（每学生一个 stdio 实例、各自数据目录）；
+    未设置时保持默认行为，standalone 消费（其他 harness）零感知。
+    """
+    env_dir = os.environ.get("DEEP_REVIEW_DATA_DIR")
+    return Storage(base_dir=Path(env_dir) if env_dir else _DEFAULT_DATA_DIR)
 
 
 def save_wrong_question(question_data: dict) -> dict:

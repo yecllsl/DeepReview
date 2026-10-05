@@ -5,6 +5,7 @@ import pytest
 
 from deep_review_mcp.storage import Storage
 from deep_review_mcp.tools.crud import (
+    get_storage,
     query_wrong_questions,
     save_wrong_question,
     update_wrong_question,
@@ -81,3 +82,9 @@ def test_update_fills_required_defaults(tmp_storage, monkeypatch):
     saved = query_wrong_questions(filters={})["questions"][0]
     assert saved["structured"]["subject"] == "数学"
     assert saved["classification"]["error_type"] == "知识漏洞"
+
+
+def test_get_storage_env_data_dir_override(monkeypatch, tmp_path):
+    """DEEP_REVIEW_DATA_DIR 环境变量覆盖数据根（DeepTutor 多实例隔离），默认行为不变"""
+    monkeypatch.setenv("DEEP_REVIEW_DATA_DIR", str(tmp_path))
+    assert get_storage().base_dir == tmp_path
