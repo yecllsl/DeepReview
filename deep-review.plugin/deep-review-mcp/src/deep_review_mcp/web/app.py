@@ -2,7 +2,7 @@
 """FastAPI 应用工厂与启动入口
 
 创建 FastAPI 应用实例，挂载静态文件，注册路由。
-提供 main() 作为 CLI 入口，绑定 127.0.0.1:8001 启动 uvicorn。
+提供 main() 作为 CLI 入口，绑定 127.0.0.1:8004 启动 uvicorn。
 """
 from pathlib import Path
 
@@ -72,7 +72,7 @@ def create_app() -> FastAPI:
 def main():
     """CLI 入口：启动 uvicorn 服务
 
-    绑定 127.0.0.1:8001，仅本机访问。
+    绑定 127.0.0.1:8004，仅本机访问。
     """
     import uvicorn
 
@@ -80,7 +80,7 @@ def main():
         "deep_review_mcp.web.app:create_app",
         factory=True,
         host="127.0.0.1",
-        port=8001,
+        port=8004,
         reload=False,
     )
 

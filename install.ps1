@@ -281,5 +281,5 @@ Write-Host "     /stats         - 查看错题统计" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "  可选：启动 Web 可视化界面" -ForegroundColor Cyan
 Write-Host "     cd deep-review.plugin/deep-review-mcp && uv run deep-review-web" -ForegroundColor DarkGray
-Write-Host "     浏览器访问 http://127.0.0.1:8001" -ForegroundColor DarkGray
+Write-Host "     浏览器访问 http://127.0.0.1:8004" -ForegroundColor DarkGray
 Write-Host ""

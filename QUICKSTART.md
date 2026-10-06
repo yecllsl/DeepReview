@@ -126,7 +126,7 @@ cd deep-review.plugin/deep-review-mcp
 uv run deep-review-web
 ```
 
-浏览器访问 http://127.0.0.1:8001 即可使用四大页面：
+浏览器访问 http://127.0.0.1:8004 即可使用四大页面：
 
 | 页面 | 功能 |
 |------|------|

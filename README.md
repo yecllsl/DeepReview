@@ -21,7 +21,7 @@
 ├── 对话式交互 (命令/自然语言)
 ├── Tier 1 (Agent Plugins 1.0 插件标准): VS Code / Copilot + CodeBuddy — 插件形态分发
 ├── Tier 2 (免费额度/开箱即用): Trae + opencode — 原生目录 + install 脚本
-└── Web 可视化界面 (本地浏览器 http://127.0.0.1:8001)
+└── Web 可视化界面 (本地浏览器 http://127.0.0.1:8004)
     ↓
 Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平台)
 ├── 5 个 Skill: capture / batch-capture / analyze / review / stats
@@ -155,7 +155,7 @@ cd deep-review.plugin/deep-review-mcp
 uv run deep-review-web
 ```
 
-浏览器访问 http://127.0.0.1:8001 即可使用可视化界面。
+浏览器访问 http://127.0.0.1:8004 即可使用可视化界面。
 
 ## 下载与发布
 
@@ -212,7 +212,7 @@ npm run check-drift    # 校验配置漂移
 
 ### Web 可视化界面
 
-启动 Web 服务后，访问 http://127.0.0.1:8001 可使用四大功能页面：
+启动 Web 服务后，访问 http://127.0.0.1:8004 可使用四大功能页面：
 
 1. **概览 Dashboard**：错题总数、今日待复习、本周新增、学科分布、错误类型分布、30天趋势
 2. **错题列表与详情**：筛选查看、编辑保存（学科/难度/错误类型等字段可在线修改）
@@ -299,7 +299,7 @@ DeepReview/
 Web 可视化模块位于 `deep-review.plugin/deep-review-mcp/src/deep_review_mcp/web/`，提供本地 Web 界面：
 
 - **技术栈**: FastAPI（后端）+ HTMX（局部更新）+ Alpine.js（表单状态）+ ECharts（图表渲染）
-- **启动方式**: `uv run deep-review-web`，访问 http://127.0.0.1:8001
+- **启动方式**: `uv run deep-review-web`，访问 http://127.0.0.1:8004
 - **四大页面**:
   - 概览 Dashboard：KPI 指标、学科分布、错误类型分布、30天趋势
   - 错题列表与详情：筛选查看、编辑保存（支持 HTMX 局部更新）

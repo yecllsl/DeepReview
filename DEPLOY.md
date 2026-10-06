@@ -192,7 +192,7 @@ cd deep-review.plugin/deep-review-mcp
 uv run deep-review-web
 ```
 
-浏览器访问 http://127.0.0.1:8001
+浏览器访问 http://127.0.0.1:8004
 
 ### 四大页面
 
@@ -265,9 +265,9 @@ uv sync
 ### Q5: Web 可视化界面无法访问
 
 **检查项：**
-1. 端口 8001 是否被占用：`netstat -ano | findstr 8001`（Windows）/ `lsof -i :8001`（macOS/Linux）
-2. 浏览器是否访问 `http://127.0.0.1:8001`（不是 `localhost` 或局域网 IP）
-3. Trae 是否占用了 8001 端口（Trae 内部服务）
+1. 端口 8004 是否被占用：`netstat -ano | findstr 8004`（Windows）/ `lsof -i :8004`（macOS/Linux）
+2. 浏览器是否访问 `http://127.0.0.1:8004`（不是 `localhost` 或局域网 IP）
+3. 是否有其他程序（如 DeepTutor）占用了 8004 端口
 
 **解决方案：**
 - 修改端口：在 `deep-review.plugin/deep-review-mcp/src/deep_review_mcp/web/app.py` 中调整 `port` 参数
