@@ -49,7 +49,7 @@ Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 单向同步到 
 - **复习算法**: FSRS v6 间隔重复调度（DSR 记忆模型，4 档评分，支持个性化参数优化），替代固定艾宾浩斯查表
 - **图片解析**: 宿主 LLM 多模态能力直接看图解析（MCP 侧零图像处理代码）
 - **Web 可视化**: FastAPI + Jinja2 + HTMX/Alpine.js + ECharts
-- **数据存储**: JSON 文件（本地存储，原子写入）
+- **数据存储**: JSON 文件（本地存储，原子写入）；数据根可由 `DEEP_REVIEW_DATA_DIR` 环境变量覆盖（默认项目 `data/`，standalone 消费零感知；用于 DeepTutor 多学生实例隔离）
 - **包管理**: uv
 - **测试**: pytest + pytest-asyncio + pytest-cov
 - **插件规范**: Agent Plugins 1.0（Vercel 等厂商中立打包规范，与 AAIF 无隶属关系），`agent-plugins.org/schemas/1.0.0/plugin.schema.json` + `mcp.schema.json`

@@ -42,7 +42,7 @@ Skills 编排层 (配置定义，由 deep-review.plugin/skills/ 同步到多平�
 - **MCP Server**: Python 3.12+ / FastMCP
 - **Web 可视化**: FastAPI + HTMX（OOB 局部刷新）+ Alpine.js（轻量交互）+ ECharts（图表）
 - **图片解析**: 宿主 LLM 多模态直接看图解析（无需额外图像识别依赖）
-- **数据存储**: JSON 文件（本地存储，原子写入）
+- **数据存储**: JSON 文件（本地存储，原子写入）；数据根可由 `DEEP_REVIEW_DATA_DIR` 环境变量覆盖（默认项目 `data/`，standalone 消费零感知；用于 DeepTutor 多学生实例隔离）
 - **包管理**: uv（现代高速 Python 包管理器）
 - **测试**: pytest + pytest-asyncio + pytest-cov + Playwright（E2E）
 - **CI/CD**: GitHub Actions（Tests + Release）
